@@ -241,31 +241,42 @@ def starterClock( cursor, argDict ) :
 # output nothing
 def rewrite( EOT, ruleMeta, cursor ) :
 
-  # rewrite intitial facts and rules
+  # ----------------------------------------------------------------------------- #
+  # dedalus rewrite
+  # extract all info from dedalus rules into IR database
+
   dedalusRewriter.rewriteDedalus( cursor )
 
+  # ----------------------------------------------------------------------------- #
   # rewrite negated subgoals with wildcards
+
   try :
     rewriteWildcards = tools.getConfig( "DEFAULT", "REWRITE_WILDCARDS", bool )
     if rewriteWildcards :
       rewriteNegativeSubgoalsWithWildcards.rewriteNegativeSubgoalsWithWildcards( cursor )
+
   except ConfigParser.NoOptionError :
     print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
     pass
 
   original_prog = c4_translator.c4datalog( cursor ) # assumes c4 evaluator
 
+  # ----------------------------------------------------------------------------- #
   # negative writes
+
   NEGPROV = tools.getConfig( "DEFAULT", "NEGPROV", bool )
   if NEGPROV :
     newDMRuleMeta = negativeWrites.negativeWrites( EOT, original_prog, cursor )
     ruleMeta.extend( newDMRuleMeta )
 
+  # ----------------------------------------------------------------------------- #
+  # provenance rewrite
+  # add provenance rules
+
   print ":::::::::::::::::::::::::::::::::"
   print ":: STARTING PROVENANCE REWRITE ::"
   print ":::::::::::::::::::::::::::::::::"
 
-  # add provenance rules
   provenanceRewriter.rewriteProvenance( ruleMeta, cursor )
 
   return original_prog

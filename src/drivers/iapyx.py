@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-driver1.py
+iapyx.py
 '''
 
 # **************************************** #
@@ -38,9 +38,9 @@ TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/pro
 os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/graphOutput/*.png" )
 
 ##########
-#  ORIK  #
+#  IAPYX #
 ##########
-def orik() :
+def iapyx() :
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
@@ -56,7 +56,7 @@ def orik() :
   # initialize core
   c = Core.Core( argDict, cursor )
 
-  # run orik on given spec (in file provided in argDict)
+  # run iapyx on given spec (in file provided in argDict)
   c.run_workflow()
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
@@ -68,7 +68,7 @@ def orik() :
 #########################
 #  THREAD OF EXECUTION  #
 #########################
-orik()
+iapyx()
 
 
 #########

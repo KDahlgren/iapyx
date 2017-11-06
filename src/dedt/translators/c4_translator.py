@@ -24,7 +24,6 @@ from dedt  import Rule
 C4_TRANSLATOR_DEBUG   = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG", bool )
 C4_TRANSLATOR_DEBUG_1 = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG1", bool )
 
-
 #####################
 #  EXISTING DEFINE  #
 #####################
@@ -212,6 +211,13 @@ def c4datalog( cursor ) :
   #tableListArray.append( "not_clock" )
 
   # ----------------------------------------------------------- #
+  # add crash define
+
+  definesList.append( "define(crash,{string,string,int});\n" )
+  tableListStr += "crash,"
+  tableListArray.append( "crash" )
+
+  # ----------------------------------------------------------- #
   # add facts
 
   cursor.execute( "SELECT fid FROM Fact" )
@@ -237,8 +243,8 @@ def c4datalog( cursor ) :
 
   crashFactList = dumpers_c4.dump_crash( cursor )
 
-  print crashFactList
-  tools.bp( __name__, inspect.stack()[0][3], "blah" )
+  #print crashFactList
+  #tools.bp( __name__, inspect.stack()[0][3], "blah" )
 
   if C4_TRANSLATOR_DEBUG :
     print "c4_translator: crashFactList = " + str( crashFactList )
