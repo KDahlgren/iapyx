@@ -1,4 +1,7 @@
 .DS_Store
+examples/omissionProblem/data/*
+examples/delayProblem/data/*
+examples/simplog/data/*
 
 
 # Byte-compiled / optimized / DLL files
