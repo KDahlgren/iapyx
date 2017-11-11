@@ -578,9 +578,9 @@ def addAdditionalTimeDom( EOT, att, rid, cursor ) :
     cursor.execute( "INSERT INTO Fact VALUES ('" + fid + "','" + name + "','" + str( timeArg ) + "')" )
 
     # ------------------------------------- #
-    # add info to FactAtt
+    # add info to FactData
     attName = i
-    cursor.execute( "INSERT INTO FactAtt VALUES ('" + fid + "','" + str( attID ) + "','" + str( attName ) + "','" + attType + "')" )
+    cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str( attID ) + "','" + str( attName ) + "','" + attType + "')" )
 
 
 ##############
@@ -955,8 +955,8 @@ def saveDomFacts( childParentAttMap, domNameBase, attDomsMap, posName, pResults,
       # ............................................ #
       # perform insertion
       thisID = 0 # contant because domain relations are unary.
-      #print "INSERT INTO FactAtt VALUES ('" + fid + "','" + str(thisID) + "','" + data + "','" + attType + "')"
-      cursor.execute( "INSERT INTO FactAtt VALUES ('" + fid + "','" + str(thisID) + "','" + str( data ) + "','" + attType + "')" )
+      #print "INSERT INTO FactData VALUES ('" + fid + "','" + str(thisID) + "','" + data + "','" + attType + "')"
+      cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str(thisID) + "','" + str( data ) + "','" + attType + "')" )
 
     # -------------------------------------------- #
     # collect domain subgoal names for convenience

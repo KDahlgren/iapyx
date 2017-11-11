@@ -84,7 +84,7 @@ def initClockRelation( cursor, argDict ) :
 
     # collect all connection info
     # assumes topology facts characterized by name == "node"
-    cursor.execute( "SELECT Fact.fid, FactAtt.attID, FactAtt.attName, Fact.timeArg FROM Fact, FactAtt WHERE Fact.fid == FactAtt.fid AND Fact.name == 'node'" )
+    cursor.execute( "SELECT Fact.fid, FactData.attID, FactData.attName, Fact.timeArg FROM Fact, FactData WHERE Fact.fid == FactData.fid AND Fact.name == 'node'" )
 
     # collect all node connections
     topology = []

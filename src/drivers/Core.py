@@ -39,8 +39,6 @@ class Core :
   #############
   argDict                  = None  # dictionary of commaned line args
   cursor                   = None  # a reference to the IR database
-  original_prog_lines_only = None  # dictionary of the original lines of the c4 program
-                                   # sans any rewrites
 
   # --------------------------------- #
 
@@ -68,9 +66,7 @@ class Core :
     # ---------------------------------------------------------------- #
 
     # allProgramData := [ allProgramLines, tableListArray ]
-    programData                   = self.dedalus_to_datalog( self.argDict, self.cursor )
-    allProgramData                = programData[0]
-    self.original_prog_lines_only = programData[1]
+    allProgramData = self.dedalus_to_datalog( self.argDict, self.cursor )
 
     # ----------------------------------------------- #
     # 2. evaluate                                     #

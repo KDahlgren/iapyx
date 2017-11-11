@@ -153,7 +153,7 @@ def c4datalog( cursor ) :
       tableListArray.append( factName )
 
       # get goal attribute list
-      cursor.execute( "SELECT attID,attType From FactAtt WHERE fid = '" + fid + "'" )
+      cursor.execute( "SELECT attID,attType From FactData WHERE fid = '" + fid + "'" )
       factAttList = cursor.fetchall()
       factAttList = tools.toAscii_multiList( factAttList )
 

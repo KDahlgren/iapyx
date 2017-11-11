@@ -6,7 +6,8 @@ tools.py
    sanity-check particular properties.
 '''
 
-import ConfigParser, inspect, os, random, re, string, sys, numbers
+import ConfigParser, inspect, logging, os, random, re, string, sys, numbers
+import __main__
 random.seed(42) # seed with the answer to life, the universe, and everything.
 
 # ------------------------------------------------------ #
@@ -340,58 +341,116 @@ def skip( line ) :
   return True
 
 
-############################
-#  GET ALL INCLUDED FILES  #
-############################
+###################
+#  GET FULL PATH  #
+###################
+# given a file path, return the full path.
+def getFullPath( currPath ) :
+
+  logging.debug( "  GET FULL PATH : running process..." )
+  logging.debug( "  GET FULL PATH : currPath = " + str( currPath ) )
+
+  prepend    = os.path.abspath( sys.modules['__main__'].__file__)
+  initialDir = "/" + prepend.split( "/" )[1]
+
+  # ------------------------------------------------------ #
+  # CASE : user provides full path
+  if currPath.startswith( initialDir ) :
+    chosenPath = currPath
+
+  # ------------------------------------------------------ #
+  # CASE : user provides full path relative to main thread of execution
+  elif prepend in currPath :
+    chosenPath = currPath
+
+  # ------------------------------------------------------ #
+  # CASE : user doesn't provide full path, so assume relative paths are relative to main thread of execution
+  else :
+    chosenPath = os.path.abspath( os.path.dirname( os.path.abspath(sys.modules['__main__'].__file__) ) + "/" + currPath )
+
+  # ------------------------------------------------------ #
+  if os.path.isfile( chosenPath ) :
+    return chosenPath
+  else :
+    sys.exit( "ERROR : could not open file at '" + chosenPath + "'. aborting..." )
+
+
+################################
+#  GET ALL INCLUDE FILE PATHS  #
+################################
 # input a dictionary of file names and examinations statuses
 # output a complete list of files associated with a particular Dedalus program
+def get_all_include_file_paths( currPath ) :
 
-def getAllIncludedFiles( fileDict ) :
+  logging.debug( "  GET ALL INCLUDE FILES : running process..." )
 
-  # base case
-  noMoreNewFiles = True
-  for k,v in fileDict.items() :
-    if v == False :
-      noMoreNewFiles = False
+  currPath = getFullPath( currPath )
 
-  # unexplored files exist
-  if not noMoreNewFiles :
-    if TOOLS_DEBUG :
-      print "fileDict1 = " + str( fileDict )
+  logging.debug( "  CONTAINS INCLUDE : currPath = " + currPath )
 
-    # iterate over all files
-    for filename, status in fileDict.items() :
+  # -------------------------------------------------- #
+  # BASE CASE : file does not contain an 'include'
 
-      # hit an unexplored file
-      if status == False :
+  if not containsInclude( currPath ) :
+    logging.debug( "  GET ALL INCLUDE FILES : returning [ " +  currPath + " ]" )
+    return [ currPath ]
 
-        # check if file exists
-        filepath = os.path.abspath( filename )
-        if os.path.isfile( filepath ) :
-          infile = open( filename, 'r' )
+  # -------------------------------------------------- #
+  # RECURSIVE CASE : file contains an 'include'
 
-          # iterate over all lines in input file
-          for line in infile :
-            if not skip( line ) :
-              if "include" in line :
-                line    = line.split( " " )
-                newfile = line[1]
-                newfile = newfile.replace( ";", "" )
-                newfile = newfile.replace( '"', "" )
-                newfile = newfile.replace( "'", "" )
-                newfile  = newfile.translate( None, string.whitespace ) # removes extra spaces and newlines
-                fileDict[ newfile ] = False
-          infile.close()
-          fileDict[ filename ] = True
+  else :
 
-        else :
-          sys.exit( "ERROR : file does not exist: " + str(filename) )
+    if os.path.isfile( currPath ) :
 
-    if TOOLS_DEBUG :
-      print "fileDict2 = " + str( fileDict )
-    fileDict = getAllIncludedFiles( fileDict )
+      currFile = open( currPath, "r" )
 
-  return fileDict
+      raw_fileNameList = []
+      for line in currFile :
+        if "include" in line :
+          raw_fileNameList.extend( re.findall( '"([^"]*)"', line ) )
+
+      currFile.close()
+
+    logging.debug( "  GET ALL INCLUDE FILES : raw_fileNameList = " + str( raw_fileNameList )  )
+
+    fileNameList = []
+    for fileName in raw_fileNameList :
+      logging.debug( "  GET ALL INCLUDE FILES : fileName = " + fileName )
+      fileNameList.extend( get_all_include_file_paths( fileName ) )
+
+    fileNameList.append( currPath )
+    logging.debug( "  GET ALL INCLUDE FILES : fileNameList = " + str( fileNameList )  )
+    return fileNameList
+
+
+
+######################
+#  CONTAINS INCLUDE  #
+######################
+# check if the input file contains an 'include' line
+def containsInclude( currPath ) :
+
+  logging.debug( "  CONTAINS INCLUDE : running process..." )
+  logging.debug( "  CONTAINS INCLUDE : currPath = " + currPath )
+
+  if os.path.isfile( currPath ) :
+
+    fo = open( currPath )
+
+    for line in fo :
+      line = line.translate( None, string.whitespace )
+
+      logging.debug( "  CONTAINS INCLUDE : line = " + line )
+
+      if "include" in line and line.endswith( ";" ) :
+        if '"' in line or "'" in line :
+          logging.debug( "  CONTAINS INCLUDE : returning True" )
+          return True
+
+    fo.close()
+
+  logging.debug( "  CONTAINS INCLUDE : returning False" )
+  return False
 
 
 ###################
@@ -592,7 +651,7 @@ def isFactNode( goalName, triggerRecordList, cursor ) :
 
   print "runnin isFactNode on goalName = " + goalName 
 
-  cursor.execute( "SELECT Fact.fid,attID,attName,timeArg FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + str(goalName) + "'" )
+  cursor.execute( "SELECT Fact.fid,attID,attName,timeArg FROM Fact,FactData WHERE Fact.fid==FactData.fid AND Fact.name=='" + str(goalName) + "'" )
   factRecords_raw = cursor.fetchall()
   factRecords_raw = toAscii_multiList( factRecords_raw )
 
@@ -880,7 +939,7 @@ def getVarType( var, rid, cursor ) :
   #          bp( __name__, inspect.stack()[0][3], "FATAL ERROR: clock only has schema arity 4, attempting to access index " + ( attID ) )
   #
   #      elif isFact( subgoalName, cursor ) :
-  #        cursor.execute( "SELECT attType FROM Fact,FactAtt WHERE Fact.fid==FactAtt.fid AND Fact.name=='" + subgoalName + "' AND FactAtt.attID=='" + str( attID ) + "'" )
+  #        cursor.execute( "SELECT attType FROM Fact,FactData WHERE Fact.fid==FactData.fid AND Fact.name=='" + subgoalName + "' AND FactData.attID=='" + str( attID ) + "'" )
   #        thisType = cursor.fetchone()
   #        #print "IS FACT:"
   #        #print "subgoalName = " + subgoalName

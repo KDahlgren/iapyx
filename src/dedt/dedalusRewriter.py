@@ -473,7 +473,7 @@ def updateFactSchemas( fids, cursor ) :
     timeArg = tools.toAscii_str( timeArg )
 
     # get max attID
-    cursor.execute( "SELECT max(attID) FROM FactAtt WHERE fid=='" + fid + "'" )
+    cursor.execute( "SELECT max(attID) FROM FactData WHERE fid=='" + fid + "'" )
     maxID = cursor.fetchone()
     maxID = maxID[0]
 
@@ -487,9 +487,9 @@ def updateFactSchemas( fids, cursor ) :
     name = tools.toAscii_str( name )
     #if name == "bcast" :
     #  print "1CHECK THIS BCAST INSERT!!!"
-    #  print "INSERT INTO FactAtt VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')"
+    #  print "INSERT INTO FactData VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')"
 
-    cursor.execute( "INSERT INTO FactAtt VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')" )
+    cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')" )
 
 
 ######################

@@ -88,7 +88,7 @@ def dumpSingleFact_c4( fid, cursor ) :
   factName    = tools.toAscii_str( factName )
 
   # get list of attribs in fact
-  factList    = cursor.execute( "SELECT attName FROM FactAtt WHERE fid == '" + fid + "'" ) # list of fact atts
+  factList    = cursor.execute( "SELECT attName FROM FactData WHERE fid == '" + fid + "'" ) # list of fact atts
   factList    = cursor.fetchall()
   factList    = tools.toAscii_list( factList )
 

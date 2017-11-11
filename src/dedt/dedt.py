@@ -9,19 +9,19 @@ dedt.py
 '''
 IR SCHEMA:
 
-Fact           ( fid text, name text,     timeArg text                                           )
-FactAtt        ( fid text, attID int,     attName text,     attType text                         )
-Rule           ( rid text, goalName text, goalTimeArg text, rewritten text                       )
-GoalAtt        ( rid text, attID int,     attName text,     attType text                         )
-Subgoals       ( rid text, sid text,      subgoalName text, subgoalTimeArg text                  )
-SubgoalAtt     ( rid text, sid text,      attID int,        attName text,        attType text    )
-SubgoalAddArgs ( rid text, sid text,      argName text                                           )
-Equation       ( rid text, eid text,      eqn text                                               )
-Clock          ( src text, dest text,     sndTime int,      delivTime int,       simInclude text )
+  Fact         ( fid text, name text,     timeArg text                                                )
+  FactData     ( fid text, attID int,     attName text,     attType text                              )
+  Rule         ( rid text, goalName text, goalTimeArg text, rewritten text                            )
+  GoalAtt      ( rid text, attID int,     attName text,     attType text                              )
+  Subgoals     ( rid text, sid text,      subgoalName text, subgoalPolarity text, subgoalTimeArg text )
+  SubgoalAtt   ( rid text, sid text,      attID int,        attName text,         attType text        )
+  Equation     ( rid text, eid text,      eqn text                                                    )
+  EquationVars ( rid text, eid text,      varID int,        var text                                  )
+  Clock        ( src text, dest text,     sndTime int,      delivTime int,        simInclude text     )
 
 '''
 
-import inspect, os, string, sqlite3, sys
+import inspect, logging, os, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -47,11 +47,13 @@ import ConfigParser
 
 # ------------------------------------------------------ #
 
+
 #############
 #  GLOBALS  #
 #############
 DEDT_DEBUG  = tools.getConfig( "DEDT", "DEDT_DEBUG", bool )
 DEDT_DEBUG1 = tools.getConfig( "DEDT", "DEDT_DEBUG1", bool )
+
 
 ###############
 #  DED TO IR  #
@@ -64,164 +66,76 @@ def dedToIR( filename, cursor ) :
   parsedLines = []
   parsedLines = dedalusParser.parseDedalus( filename ) # program exits here if file cannot be opened.
 
-  # collect fact and rule metadata for future dumping
+  logging.debug( "  DED TO IR : parsedLines = " + str( parsedLines ) )
+
+  # collect fact and rule metadata for future dumping.
+  # these are lists of object pointers.
   factMeta = []
   ruleMeta = []
+
+  # ----------------------------------------------- #
+  #                     FACTS                       #
+  # ----------------------------------------------- #
+  # process facts first to establish 
+  # all fact data types.
 
   # iterate over parsed lines
   for line in parsedLines :
 
-    print ">> PROCESSING LINE : " + str( line )
+    if line[0] == "fact" :
 
-    # ----------------------------------------------- #
-    #                     FACTS                       #
+      logging.debug( ">> PROCESSING FACT : " + str( line ) )
 
-    if line[0] == "fact" : # save facts
+      # get data for fact
+      factData = line[1]
 
       # generate random ID for fact
       fid = tools.getID()
 
-      # extract fact info
-      name    = extractors.extractName(    line[1] )
-      attList = extractors.extractAttList( line[1] )
-      attList = attList[0].split( "," )
-      timeArg = extractors.extractTimeArg( line[1] )
-
-      if DEDT_DEBUG :
-        print "dedt sanity check:"
-        print "fact name    = " + name
-        print "fact attList = " + str(attList)
-        print "fact timeArg = " + str(timeArg)
-
       # save fact data in persistent DB using IR
-      newFact = Fact.Fact( fid, cursor )
-      newFact.setFactInfo( name, timeArg )
-      newFact.setAttList(  attList       )
-      newFact.setAttTypes() # set types for all fact components first.
+      newFact = Fact.Fact( fid, factData, cursor )
 
       # save fact metadata (aka object)
       factMeta.append( newFact )
 
-      # check for bugs
-      if DEDT_DEBUG :
-        print "newFact.getName()    : " + str( newFact.getName()    )
-        print "newFact.getAttList() : " + str( newFact.getAttList() )
-        print "newFact.getTimeArg() : " + str( newFact.getTimeArg() )
-        print "newFact.display() = " + newFact.display()
+  # ----------------------------------------------- #
+  #                     RULES                       #
+  # ----------------------------------------------- #
+  # process rules after consuming all facts
 
-    # ----------------------------------------------- #
-    #                     RULES                       #
+  # iterate over parsed lines
+  for line in parsedLines :
 
-    elif line[0] == "rule" : # save rules
+    if line[0] == "rule" : # save rules
+
+      logging.debug( ">> PROCESSING RULE : " + str( line ) )
+
+      # get data for rule
+      ruleData = line[1]
 
       # generate a random ID for the rule
       rid = tools.getID()
-      print "random rid : " + rid
-
-      # --------------------------- #
-      #            GOAL             #
-
-      # extract goal info
-      goal          = extractors.extractGoal(    line[1] )
-      goalName      = extractors.extractName(    goal    )
-      goalAttList   = extractors.extractAttList( goal    )
-      goalTimeArg   = extractors.extractTimeArg( goal    )
-      rewrittenFlag = "False" # all new goals have not yet been rewritten
-
-      # check for bugs
-      if DEDT_DEBUG :
-        print "goal        = " + str(goal)
-        print "goalName    = " + str(goalName)
-        print "goalAttList = " + str(goalAttList)
-        print "goalTimeArg = " +  str(goalTimeArg)
 
       # save rule goal info
-      newRule = Rule.Rule(     rid, cursor                          )
-      newRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag )
-      newRule.setGoalAttList(  goalAttList                          )
+      newRule = Rule.Rule( rid, ruleData, cursor )
 
-      # check for bugs
-      if DEDT_DEBUG :
-        print "newRule.getGoalName()    : " + str( newRule.getGoalName()    )
-        print "newRule.getGoalAttList() : " + str( newRule.getGoalAttList() )
-        print "newRule.getGoalTimeArg() : " + str( newRule.getGoalTimeArg() )
+  # ------------------------------------------- #
+  #                 DERIVE TYPES                #
+  # ------------------------------------------- #
+  # all rules now exist in the IR database.
+  # fire the logic for deriving data types for all
+  # goals and subgoals per rule.
+
+  getTypes( cursor )
+
+  return [ factMeta, ruleMeta ]
 
 
-      # --------------------------- #
-      #           SUBGOALS          #
-
-      # extract subgoal info
-      subgoalList = extractors.extractSubgoalList( line[1] )
-
-      # save subgoal name, time arg, and additional args
-      for sub in subgoalList :
-
-        # generate random ID for subgoal
-        sid = tools.getID()
-
-        # ................................. #
-        #if "@" in sub :
-        #  tools.bp( __name__, inspect.stack()[0][3], "sub = " + str(sub) )
-        # ................................. #
-
-        subgoalName    = extractors.extractSubgoalName(    sub )
-        subgoalAttList = extractors.extractAttList(        sub ) # returns list
-        subgoalTimeArg = extractors.extractTimeArg(        sub )
-        subgoalAddArgs = extractors.extractAdditionalArgs( sub ) # returns list
-
-        # check for bugs
-        if DEDT_DEBUG :
-          print "subgoalName    = " + str(subgoalName)
-          print "subgoalAttList = " + str(subgoalAttList)
-          print "subgoalTimeArg = " + str(subgoalTimeArg)
-          print "subgoalAddArgs = " + str(subgoalAddArgs)
-
-        if goalName == "pre" and subgoalName == "___notin___bcast" :
-          print "why is this not picking up the time arg???"
-          print "subgoalTimeArg = "  + str( subgoalTimeArg )
-          #tools.bp( __name__, inspect.stack()[0][3], "blah" )
-
-        newRule.setSingleSubgoalInfo( sid, subgoalName, subgoalTimeArg )
-        newRule.setSingleSubgoalAttList( sid, subgoalAttList )
-        newRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
-
-      # check for bugs
-      if DEDT_DEBUG :
-        print "newRule.getSubgoalList = " + str( newRule.getSubgoalListStr() )
-
-      # --------------------------- #
-      #          EQUATIONS          #
-
-      # extract equation info
-      eqnList = extractors.extractEqnList( line[1] )
-
-      for eqn in eqnList :
-        # generate random ID for eqn
-        eid = tools.getID()
-
-        # save eqn
-        newRule.setSingleEqn( eid, eqn )
-
-      # check for bugs
-      if DEDT_DEBUG :
-        print "newRule.getEquationList() = " + newRule.getEquationListStr()
-
-      # --------------------------- #
-      # save new rule
-      ruleMeta.append( newRule )
-
-      # check for bugs
-      if DEDT_DEBUG :
-        print "newRule.display() = " + newRule.display()
-
-      print "FINAL RULE : " + dumpers.reconstructRule(rid, cursor )
-
-  # ----------------------------------------------------------- #
-  # set goal attribute types for all rules
-  for rule in ruleMeta :
-    rule.setAttTypes() # allows undefines to bleed through????
-
-  return ( factMeta, ruleMeta )
+###############
+#  GET TYPES  #
+###############
+def getTypes( cursor ) :
+  return None
 
 
 ###################
@@ -240,6 +154,10 @@ def starterClock( cursor, argDict ) :
 # input cursor, assume IR successful
 # output nothing
 def rewrite( EOT, ruleMeta, cursor ) :
+
+  logging.debug( "  REWRITE : running process..." )
+
+  #sys.exit( "hit rewrite" )
 
   # ----------------------------------------------------------------------------- #
   # dedalus rewrite
@@ -273,9 +191,9 @@ def rewrite( EOT, ruleMeta, cursor ) :
   # provenance rewrite
   # add provenance rules
 
-  print ":::::::::::::::::::::::::::::::::"
-  print ":: STARTING PROVENANCE REWRITE ::"
-  print ":::::::::::::::::::::::::::::::::"
+  #print ":::::::::::::::::::::::::::::::::"
+  #print ":: STARTING PROVENANCE REWRITE ::"
+  #print ":::::::::::::::::::::::::::::::::"
 
   provenanceRewriter.rewriteProvenance( ruleMeta, cursor )
 
@@ -290,31 +208,39 @@ def rewrite( EOT, ruleMeta, cursor ) :
 # use IR or cmdline args to create clock relation
 # use IR and clock relation to create equivalent datalog program
 # output nothing
-
-# WARNING: CANNOT write rules or facts on multiple lines.
 def runTranslator( cursor, dedFile, argDict, evaluator ) :
 
+  # ------------------------------------------------------------- #
   # ded to IR
+
   meta     = dedToIR( dedFile, cursor )
   ruleMeta = meta[1] # observe fact meta not used.
 
+  # ------------------------------------------------------------- #
   # generate the first clock
+
   starterClock( cursor, argDict )
 
-  # dedalus and provenance rewrite to final IR
-  original_prog_lines_only = rewrite( argDict[ "EOT" ], ruleMeta, cursor ) # <- here.
+  # ------------------------------------------------------------- #
+  # apply all rewrites to generate final IR version
 
-  # check for bugs
-  if DEDT_DEBUG :
-    dumpers.programDump( cursor )
+  rewrite( argDict[ "EOT" ], ruleMeta, cursor )
+  #logging.debug( dumpers.programDump( cursor ) )
 
+  # ------------------------------------------------------------- #
   # translate IR into datalog
+
   if evaluator == "c4" :
     allProgramLines = c4_translator.c4datalog( cursor ) # <- here.
+
   elif evaluator == "pyDatalog" :
     allProgramLines = pydatalog_translator.getPyDatalogProg( cursor )
 
-  return [ allProgramLines, original_prog_lines_only ]
+  # ------------------------------------------------------------- #
+
+  #print allProgramLines
+
+  return allProgramLines
 
 
 ##############################
@@ -322,13 +248,13 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
 ##############################
 def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
-  cursor.execute('''CREATE TABLE IF NOT EXISTS FactAtt    (fid text, attID int, attName text, attType text)''')   # fact attributes list
+  cursor.execute('''CREATE TABLE IF NOT EXISTS FactData   (fid text, dataID int, data text, dataType text)''')   # fact attributes list
   cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text, attType text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalPolarity text, subgoalTimeArg text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text, attType text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAddArgs (rid text, sid text, argName text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS EquationVars  (rid text, eid text, varID int, var text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
   cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, delivTime int, simInclude text)''')
@@ -350,37 +276,42 @@ def cleanUp( IRDB, saveDB ) :
 # output abs path to datalog program
 def translateDedalus( argDict, cursor ) :
 
+  logging.debug( "  TRANSLATE DEDALUS : running process..." )
+
+  # ----------------------------------------------------------------- #
   # create tables
   createDedalusIRTables( cursor )
+  logging.debug( "  TRANSLATE DEDALUS : created IR tables" )
 
   # ----------------------------------------------------------------- #
-
   # get all input files
-  dedfilename = ""
-  fileDict    = {}
-  for key in argDict :
-    if "file" in key :
-      dedfilename             = argDict[ key ]
-      fileDict[ dedfilename ] = False
 
-  fileDict = tools.getAllIncludedFiles( fileDict )
+  starterFile = argDict[ 'file' ]
+  fileList    = tools.get_all_include_file_paths( starterFile )
 
-  # translate all input dedalus files into a single datalog program
-  evaluator = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
+  logging.debug( "  TRANSLATE DEDALUS : fileList = " + str( fileList ) )
 
-  for dedfilename, status in fileDict.items() :
-    data = runTranslator( cursor, dedfilename, argDict, evaluator )
-    allProgramData           = data[0]
-    original_prog_lines_only = data[1]
+  # ----------------------------------------------------------------- #
+  # parse each file
 
-  if DEDT_DEBUG1 :
-    dumpers.factDump(  cursor )
-    dumpers.ruleDump(  cursor )
-    dumpers.clockDump( cursor )
+  evaluator      = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
+  allProgramData = []
+
+  for fileName in fileList :
+    logging.debug( "  TRANSLATE DEDALUS : fileName = " + fileName )
+    allProgramData.extend( runTranslator( cursor, fileName, argDict, evaluator ) )
+
+
+  sys.exit( "wut" )
+
+  logging.debug( dumpers.factDump( cursor ) )
+  logging.debug( dumpers.ruleDump( cursor ) )
+  logging.debug( dumpers.clockDump( cursor ) )
 
   # ----------------------------------------------------------------- #
 
-  return [ allProgramData, original_prog_lines_only ]
+  return allProgramData
+
 
 #########
 #  EOF  #

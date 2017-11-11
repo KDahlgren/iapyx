@@ -120,8 +120,8 @@ def addDomainEDBs( original_prog, cursor ) :
         else :
           d = 9999999999
 
-        print ">>> INSERT INTO FactAtt (" + fid + "," + str( fattID ) + "," + str( d ) + "," + attType + ")"
-        cursor.execute( "INSERT INTO FactAtt VALUES ('" + fid + "','" + str( fattID ) + "','" + str( d ) + "','" + str( attType ) + "')" )
+        print ">>> INSERT INTO FactData (" + fid + "," + str( fattID ) + "," + str( d ) + "," + attType + ")"
+        cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str( fattID ) + "','" + str( d ) + "','" + str( attType ) + "')" )
 
         fattID += 1
 
@@ -156,8 +156,8 @@ def addDomainEDBs( original_prog, cursor ) :
             d = '"' + d + '"'
 
           # set fact data
-          print ">>> INSERT INTO FactAtt (" + fid + "," + str(fattID) + "," + str( d ) + "," + attType + ")"
-          cursor.execute( "INSERT INTO FactAtt VALUES ('" + fid + "','" + str(fattID) + "','" + str( d ) + "','" + str( attType ) + "')" )
+          print ">>> INSERT INTO FactData (" + fid + "," + str(fattID) + "," + str( d ) + "," + attType + ")"
+          cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str(fattID) + "','" + str( d ) + "','" + str( attType ) + "')" )
 
           fattID += 1
 
@@ -627,7 +627,7 @@ def collectExistentialBoundSubgoals( universalBoundSubgoals, posNameRIDs, cursor
           thisSubgoalEDBFID = tools.toAscii_str( thisSubgoalEDBFID )
 
           # get fact data
-          cursor.execute( "SELECT attID,attName,attType FROM FactAtt WHERE fid=='" + thisSubgoalEDBFID + "'" )
+          cursor.execute( "SELECT attID,attName,attType FROM FactData WHERE fid=='" + thisSubgoalEDBFID + "'" )
           factData = cursor.fetchall()
           factData = tools.toAscii_multiList( factData )
 

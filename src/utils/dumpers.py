@@ -5,7 +5,7 @@ dumpers.py
    Methods for dumping specific contents from the database.
 '''
 
-import inspect, os, sys
+import inspect, logging, os, sys
 import tools
 
 # ------------------------------------------------------ #
@@ -35,7 +35,7 @@ def programDump( cursor ) :
 # output nothing, print all rules to stdout
 def ruleDump( cursor ) :
 
-  print "********************\nProgram Rules :"
+  logging.debug( "  RULE DUMP : running process..." )
 
   rules = []
 
@@ -73,9 +73,9 @@ def ruleDump( cursor ) :
       else :
         newRule.append( goalList[j] + ")" )
     if not goalTimeArg == "" :
-      newRule.append( "@" + goalTimeArg + " :- " )
+      newRule.append( "@" + goalTimeArg + ":-" )
     else :
-      newRule.append( " :- " )
+      newRule.append( ":-" )
 
     # --------------------------------------------------------------- #
     #                         SUBGOALS                                #
@@ -96,26 +96,26 @@ def ruleDump( cursor ) :
       if not subgoalName == None :
         subgoalName = tools.toAscii_str( subgoalName )
 
-        if DUMPERS_DEBUG :
-          print "subgoalName = " + subgoalName
-
+        # --------------------------------------- #
         # get subgoal attribute list
         subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + i + "' AND sid == '" + s + "'" )
         subAtts = cursor.fetchall()
         subAtts = tools.toAscii_list( subAtts )
 
+        # --------------------------------------- #
         # get subgoal time arg
-        cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
-        subTimeArg = cursor.fetchone() # assume only one additional arg
+        cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + i + "' AND sid == '" + s + "'" )
+        subTimeArg = cursor.fetchone()
         subTimeArg = tools.toAscii_str( subTimeArg )
 
+        # --------------------------------------- #
         # get subgoal additional args
-        cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + i + "' AND sid == '" + s + "'" ) # get list of sids for this rule
-        subAddArg = cursor.fetchone() # assume only one additional arg
-        if not subAddArg == None :
-          subAddArg = tools.toAscii_str( subAddArg )
+        cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + i + "' AND sid == '" + s + "'" )
+        subAddArg = cursor.fetchone()
+        subAddArg = tools.toAscii_str( subAddArg )
+        if subAddArg == "notin" :
           subAddArg += " "
-          newRule.append( subAddArg )
+          newRule.append( " " + subAddArg )
 
         # all subgoals have a name and open paren
         newRule.append( subgoalName + "(" )
@@ -149,13 +149,17 @@ def ruleDump( cursor ) :
 
     # --------------------------------------------------------------- #
 
-    newRule.append( " ;" ) # end all rules with a semicolon
+    newRule.append( ";" ) # end all rules with a semicolon
     rules.append( newRule )
     newRule = []
 
-  # print rules
+  logging.debug( "  RULE DUMP : rules = " + str( rules ) )
+
+  returnRules = []
   for r in rules :
-    print ''.join(r)
+    returnRules.append( ''.join(r) )
+
+  return returnRules
 
 
 ###############
@@ -165,7 +169,7 @@ def ruleDump( cursor ) :
 # output nothing, print all facts to stdout
 def factDump( cursor ) :
 
-  print "********************\nProgram Facts :"
+  logging.debug( "  FACT DUMP : running process..." )
 
   facts = []
 
@@ -178,13 +182,15 @@ def factDump( cursor ) :
   newFact = []
   for i in factIDs :
     cursor.execute( "SELECT name FROM Fact WHERE fid == '" + str(i) + "'" ) # get fact name
-    factName    = cursor.fetchone()
-    factName    = tools.toAscii_str( factName )
+    factName = cursor.fetchone()
+    factName = tools.toAscii_str( factName )
 
     # get list of attribs in fact
-    factList    = cursor.execute( "SELECT attName FROM FactAtt WHERE fid == '" + str(i) + "'" ) # list of fact atts
-    factList    = cursor.fetchall()
-    factList    = tools.toAscii_list( factList )
+    factList = cursor.execute( "SELECT data FROM FactData WHERE fid == '" + str(i) + "'" ) # list of fact atts
+    factList = cursor.fetchall()
+    factList = tools.toAscii_list( factList )
+
+    logging.debug( "  FACT DUMP : factList = " + str( factList ) )
 
     # get fact time arg
     factTimeArg = ""
@@ -192,29 +198,65 @@ def factDump( cursor ) :
     factTimeArg = cursor.fetchone()
     factTimeArg = tools.toAscii_str( factTimeArg )
 
-    # convert fact info to pretty string
+    # convert fact info to formatted string
     newFact.append( factName + "(" )
     for j in range(0,len(factList)) :
-
-      # this should only appear if facts are rewritten in the 
-      # dedalus rewrite phase.
-      if factTimeArg and j==len(factList)-2 :
-        continue
 
       if j < (len(factList) - 1) :
         newFact.append( factList[j] + "," )
       else :
         newFact.append( factList[j] + ")" )
+
     if not factTimeArg == "" :
       newFact.append( "@" + factTimeArg )
 
-    newFact.append( " ;" ) # end all facts with a semicolon
+    newFact.append( ";" ) # end all facts with a semicolon
     facts.append( newFact )
     newFact = []
 
-  # print facts
+  logging.debug( "  FACT DUMP : facts = " + str( facts ) )
+
+  returnFacts = []
   for f in facts :
-    print ''.join(f)
+    returnFacts.append( ''.join(f) )
+
+  return returnFacts
+
+
+##############
+#  EQN DUMP  #
+##############
+# input database cursor
+# output eqn data
+def eqnDump( cursor ) :
+
+  logging.debug( "  EQN DUMP : running process..." )
+
+  eqns = {}
+
+  # get all eqn ids
+  cursor.execute( "SELECT eid FROM Equation" )
+  eqnIDs = cursor.fetchall()
+  eqnIDs = tools.toAscii_list( eqnIDs )
+
+  # iterate over eqn ids
+  for i in eqnIDs :
+
+    # get eqn string
+    cursor.execute( "SELECT eqn FROM Equation WHERE eid == '" + str(i) + "'" )
+    eqnStr = cursor.fetchone()
+    eqnStr = tools.toAscii_str( eqnStr )
+
+    # get list of variables in the equation
+    cursor.execute( "SELECT var FROM EquationVars WHERE eid == '" + str(i) + "'" ) # list of fact atts
+    varList = cursor.fetchall()
+    varList = tools.toAscii_list( varList )
+
+    eqns[ eqnStr ] = varList 
+
+  logging.debug( "  EQN DUMP : eqns = " + str( eqns ) )
+
+  return eqns
 
 
 ################
@@ -269,7 +311,7 @@ def reconstructRule( rid, cursor ) :
     else :
       rule += goalList[j] + ")"
   if not goalTimeArg == "" :
-    rule += "@" + goalTimeArg + " :- "
+    rule += "@" + goalTimeArg + ":-"
   else :
     rule += " <= "
 
@@ -296,9 +338,6 @@ def reconstructRule( rid, cursor ) :
     if not subgoalName == None :
       subgoalName = tools.toAscii_str( subgoalName )
 
-      if DUMPERS_DEBUG :
-        print "subgoalName = " + subgoalName
-
       # get subgoal attribute list
       subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
       subAtts = cursor.fetchall()
@@ -311,9 +350,9 @@ def reconstructRule( rid, cursor ) :
 
       # get subgoal additional args
       subAddArg = None
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
       subAddArg = cursor.fetchone() # assume only one additional arg
-      if subAddArg :
+      if not subAddArg == "" :
         subAddArg = tools.toAscii_str( subAddArg )
         subAddArg += " "
         newSubgoal += subAddArg
