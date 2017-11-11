@@ -245,6 +245,21 @@ def isFixedInt( att ) :
 def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
 
   # ------------------------------------------ #
+  # make sure all subgoals in next rules have
+  # identical first attributes
+
+  if ruleData[ "goalTimeArg" ] == "next" :
+    subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
+    firstAtts          = []
+    for sub in subgoalListOfDicts :
+      subgoalAttList = sub[ "subgoalAttList" ]
+      firstAtts.append( subgoalAttList[0] )
+
+    firstAtts = set( firstAtts )
+    if not len( firstAtts ) < 2 :
+      sys.exit( "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + ruleLine + "'\n    all subgoals in next rules must have identical first attributes.\n" )
+
+  # ------------------------------------------ #
   # make sure all goal and subgoal attribute 
   # variables start with a captial letter
 

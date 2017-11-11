@@ -494,13 +494,13 @@ class Test_dedt( unittest.TestCase ) :
     # test 10 : good rule line with equations, goal time arg, subgoal time arg, negation
     # specify input file path
     
-    dedLine = "a(X,Y)@next:-X>Y,b(X,Y)@2,X==Y, notin c(Y)@1,X>=Y;"
+    dedLine = "a(X,Y)@async:-X>Y,b(X,Y)@2,X==Y, notin c(Y)@1,X>=Y;"
     
     # run program
     actualParse = dedalusParser.parse( dedLine )
   
     # grab expected parse
-    expectedParse = ['rule', {'relationName': 'a', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'b', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '2'}, {'polarity': 'notin', 'subgoalName': 'c', 'subgoalAttList': ['Y'], 'subgoalTimeArg': '1'}], 'eqnDict': {'X>Y': ['X', 'Y'], 'X>=Y': ['X', 'Y'], 'X==Y': ['X', 'Y']}, 'goalAttList': ['X', 'Y'], 'goalTimeArg': 'next'}]
+    expectedParse = ['rule', {'relationName': 'a', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'b', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '2'}, {'polarity': 'notin', 'subgoalName': 'c', 'subgoalAttList': ['Y'], 'subgoalTimeArg': '1'}], 'eqnDict': {'X>Y': ['X', 'Y'], 'X>=Y': ['X', 'Y'], 'X==Y': ['X', 'Y']}, 'goalAttList': ['X', 'Y'], 'goalTimeArg': 'async'}]
 
     self.assertEqual( actualParse, expectedParse )
 
@@ -576,7 +576,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 15 : bad rule line. fails goal attribute capitalization post check
     # specify input file path
 
-    dedLine = 'a(x,Y)@next:-X>Y,b(X,Y)@2,X=="thing", notin c(Y)@1,X>=Y;'
+    dedLine = 'a(x,Y)@async:-X>Y,b(X,Y)@2,X=="thing", notin c(Y)@1,X>=Y;'
 
     # run program and catch error
     try :
@@ -593,7 +593,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 16 : bad rule line. fails subgoal attribute capitalization post check
     # specify input file path
     
-    dedLine = 'a(Xasdf,Yasdf)@next:-Xasdf>Yasdf,b(Xasdf,blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
+    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
     
     # run program and catch error
     try :
@@ -610,7 +610,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 17 : bad rule line. fails goal name lower case requirement post check
     # specify input file path
     
-    dedLine = 'A(Xasdf,Yasdf)@next:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
+    dedLine = 'A(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
     
     # run program and catch error
     try :
@@ -625,7 +625,23 @@ class Test_dedt( unittest.TestCase ) :
 
     # ====================================================== #
     # test 18 : bad rule line. fails subgoal name lower case requirement post check
-    # specify input file path
+   
+    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin Cat(Yasdf)@1,Xasdf>=Yasd;'
+   
+    # run program and catch error
+    try :
+      actualParse = dedalusParser.parse( dedLine )
+    except :
+      actual_results = self.getError( sys.exc_info() )
+
+    # grab expected parse
+    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    The subgoal name 'Cat' contains an upper-case letter. \n    relation names must contain only lower-case characters."
+
+    self.assertEqual( actual_results, expected_error )
+
+    # ====================================================== #
+    # test 19 : bad rule line. not all subgoals in next rule 
+    #           have identical first attributes.
    
     dedLine = 'a(Xasdf,Yasdf)@next:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin Cat(Yasdf)@1,Xasdf>=Yasd;'
    
@@ -636,7 +652,7 @@ class Test_dedt( unittest.TestCase ) :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    The subgoal name 'Cat' contains an upper-case letter. \n    relation names must contain only lower-case characters."
+    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    all subgoals in next rules must have identical first attributes.\n"
 
     self.assertEqual( actual_results, expected_error )
 

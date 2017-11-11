@@ -126,15 +126,32 @@ def dedToIR( filename, cursor ) :
   # fire the logic for deriving data types for all
   # goals and subgoals per rule.
 
-  getTypes( cursor )
+  setTypes( cursor )
 
   return [ factMeta, ruleMeta ]
 
 
 ###############
-#  GET TYPES  #
+#  SET TYPES  #
 ###############
-def getTypes( cursor ) :
+# update the IR database to assign data types
+# to all goal and subgoal attrbutes in all rules.
+def setTypes( cursor ) :
+
+  # ---------------------------------------------------- #
+  # PASS 1 : populate data types for edb subgoals
+
+  # grab all rule ids
+
+  # grab all subgoal ids per rule
+
+  # if subgoal is edb, grab the types
+
+  # ---------------------------------------------------- #
+  # PASS 2 : populate data types for idb subgoals 
+  #          (and a subset of idb goals in the process)
+
+  #
   return None
 
 

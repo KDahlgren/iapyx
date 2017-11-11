@@ -1,4 +1,5 @@
 .DS_Store
+*.swp
 examples/omissionProblem/data/*
 examples/delayProblem/data/*
 examples/simplog/data/*
