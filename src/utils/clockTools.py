@@ -132,13 +132,14 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   #subgoalAttList = [ firstAtt, secondAtt, timeAtt_snd, timeAtt_deliv ]
   subgoalAttList = [ firstAtt, secondAtt, timeAtt_snd, "_" ]
   subgoalTimeArg = ""
-  subgoalAddArgs = [ "" ]
+  subgoalPolarity = ""
 
   # generate random ID for subgoal
-  sid = tools.getID()
+  #sid = tools.getID()
+  sid = tools.getIDFromCounters( "sid" )
 
   # save name and time arg
-  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity + "','" + subgoalTimeArg + "')")
 
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
@@ -154,10 +155,6 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
     else :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
-
-  # save subgoal additional args
-  for addArg in subgoalAddArgs :
-    cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
 
   # reset variables for next async rule
   firstSubgoalAtts = []
@@ -200,13 +197,14 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   #subgoalAttList = [ firstAtt, secondAtt, timeAtt_snd, timeAtt_deliv ]
   subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
   subgoalTimeArg = ""
-  subgoalAddArgs = [ "" ]
+  subgoalPolarity = ""
 
   # generate random ID for subgoal
-  sid = tools.getID()
+  #sid = tools.getID()
+  sid = tools.getIDFromCounters( "sid" )
 
   # save name and time arg
-  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity +"','" + subgoalTimeArg + "')")
 
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
@@ -222,10 +220,6 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
     else :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
-
-  # save subgoal additional args
-  for addArg in subgoalAddArgs :
-    cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
 
   # reset variables for next async rule
   firstSubgoalAtts = []
@@ -264,13 +258,14 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
   subgoalName    = "clock"
   subgoalAttList = [ firstAtt, secondAtt, timeAtt_snd, timeAtt_deliv ]
   subgoalTimeArg = ""
-  subgoalAddArgs = [ "" ]
+  subgoalPolarity = ""
 
   # generate random ID for subgoal
-  sid = tools.getID()
+  #sid = tools.getID()
+  sid = tools.getIDFromCounters( "sid" )
 
   # save name and time arg
-  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+  cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity +"','" + subgoalTimeArg + "')")
 
   # save subgoal attributes
   cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
@@ -286,10 +281,6 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
     else :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','int')")
     newAttID += 1
-
-  # save subgoal additional args
-  for addArg in subgoalAddArgs :
-    cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + addArg + "')")
 
   # reset variables for next async rule
   firstSubgoalAtts = []

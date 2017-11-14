@@ -5,7 +5,7 @@ c4.py
    Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
-import inspect, os, re, string, sqlite3, sys
+import inspect, logging, os, re, string, sqlite3, sys
 import dumpers_c4
 
 # ------------------------------------------------------ #
@@ -46,6 +46,8 @@ def existingDefine( name, definesNames ) :
 # output the full path for the intermediate file containing the c4 datalog program.
 
 def c4datalog( cursor ) :
+
+  logging.debug( "  C4 DATALOG : running process..." )
 
   goalName         = None
   provGoalNameOrig = None
@@ -153,7 +155,7 @@ def c4datalog( cursor ) :
       tableListArray.append( factName )
 
       # get goal attribute list
-      cursor.execute( "SELECT attID,attType From FactData WHERE fid = '" + fid + "'" )
+      cursor.execute( "SELECT dataID,dataType From FactData WHERE fid = '" + fid + "'" )
       factAttList = cursor.fetchall()
       factAttList = tools.toAscii_multiList( factAttList )
 
@@ -313,6 +315,7 @@ def c4datalog( cursor ) :
   tableListArray = set( tableListArray )
   tableListArray = list( tableListArray )
 
+  logging.debug( "  C4 DATALOG : ...done." )
   return [ allProgramLines, tableListArray ]
 
 

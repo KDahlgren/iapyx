@@ -35,7 +35,7 @@ class Fact :
   #################
   #  CONSTRUCTOR  #
   #################
-  # factData = [ 'fact', { relationName:'relationNameStr', dataList:[ data1, ... , dataN ] } ]
+  # factData = [ 'fact', { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> } ]
   def __init__( self, fid, factData, cursor ) :
 
     self.fid      = fid
@@ -95,23 +95,31 @@ class Fact :
   ###############
   # save fact name and time argument
   def saveFactInfo( self ) :
-    logging.debug( "INSERT INTO Fact VALUES ('" + self.fid + "','" + self.relationName + "','" + self.factTimeArg + "')" )
-    self.cursor.execute( "INSERT INTO Fact VALUES ('" + self.fid + "','" + self.relationName + "','" + self.factTimeArg + "')" )
+
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM Fact WHERE fid='%s'" % str( self.fid ) )
+
+    logging.debug( "INSERT INTO Fact VALUES ('" + str( self.fid ) + "','" + self.relationName + "','" + self.factTimeArg + "')" )
+
+    self.cursor.execute( "INSERT INTO Fact VALUES ('" + str( self.fid ) + "','" + self.relationName + "','" + self.factTimeArg + "')" )
 
 
-  ####################
-  #  SAVE DATA LIST  #
-  ####################
+  #########################
+  #  SAVE FACT DATA LIST  #
+  #########################
   # save the fact data in the IR database
   def saveFactDataList( self ) :
+
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM FactData WHERE fid='%s'" % str( self.fid ) )
 
     dataID = 0  # allows duplicate data in dataList
 
     for d in self.dataListWithTypes :
       thisData = d[0]
       thisType = d[1]
-      logging.debug( "INSERT INTO FactData VALUES ('" + self.fid + "','" + str( dataID ) + "','" + str( thisData ) + "','" + str( thisType ) + "')" )
-      self.cursor.execute( "INSERT INTO FactData VALUES ('" + self.fid + "','" + str( dataID ) + "','" + str( thisData ) + "','" + str( thisType ) + "')" )
+      logging.debug( "INSERT INTO FactData VALUES ('" + str( self.fid ) + "','" + str( dataID ) + "','" + str( thisData ) + "','" + str( thisType ) + "')" )
+      self.cursor.execute( "INSERT INTO FactData VALUES ('" + str( self.fid ) + "','" + str( dataID ) + "','" + str( thisData ) + "','" + str( thisType ) + "')" )
       dataID += 1
 
 

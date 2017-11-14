@@ -88,7 +88,7 @@ def dumpSingleFact_c4( fid, cursor ) :
   factName    = tools.toAscii_str( factName )
 
   # get list of attribs in fact
-  factList    = cursor.execute( "SELECT attName FROM FactData WHERE fid == '" + fid + "'" ) # list of fact atts
+  factList    = cursor.execute( "SELECT data FROM FactData WHERE fid == '" + fid + "'" ) # list of fact atts
   factList    = cursor.fetchall()
   factList    = tools.toAscii_list( factList )
 
@@ -197,21 +197,12 @@ def dumpSingleRule_c4( rid, cursor ) :
       subTimeArg = cursor.fetchone() # assume only one time arg
       subTimeArg = tools.toAscii_str( subTimeArg )
 
-      #if goalName == "pre" and subgoalName == "bcast" :
-      #  print "............................................"
-      #  print dumpers.reconstructRule( rid, cursor )
-      #  print "subgoalName = " + subgoalName
-      #  print "subAtts     = " + str( subAtts )
-      #  print "subTimeArg  = " + str( subTimeArg )
-      #  tools.bp( __name__, inspect.stack()[0][3], "stuff" )
-
-      # get subgoal additional args
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
-      subAddArg = cursor.fetchone() # assume only one additional arg
-      if not subAddArg == None :
-        subAddArg = tools.toAscii_str( subAddArg )
-        subAddArg += " "
-        newSubgoal += subAddArg
+      # get subgoal polarity
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
+      subPolarity  = cursor.fetchone() # assume only one additional arg
+      subPolarity  = tools.toAscii_str( subPolarity )
+      subPolarity += " "
+      newSubgoal  += subPolarity
 
       # all subgoals have a name and open paren
       newSubgoal += subgoalName + "("
@@ -285,7 +276,7 @@ def prioritizeNegatedLast( rid, subIDs, cursor ) :
   # branch on result.
   for subID in subIDs :
 
-    cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + rid + "' AND sid=='" + subID + "'" )
+    cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + subID + "'" )
     sign = cursor.fetchone()
 
     # positive subgoals may have no argName data

@@ -9,7 +9,7 @@ Rule.py
 IR TABLES STORING RULE DATA
 
   Fact         ( fid text, name text,     timeArg text                                                )
-  FactData     ( fid text, attID int,     attName text,     attType text                              )
+  FactData     ( fid text, dataID int,    data text,        dataType text                             )
   Rule         ( rid text, goalName text, goalTimeArg text, rewritten text                            )
   GoalAtt      ( rid text, attID int,     attName text,     attType text                              )
   Subgoals     ( rid text, sid text,      subgoalName text, subgoalPolarity text, subgoalTimeArg text )
@@ -67,7 +67,7 @@ class Rule :
   #################
   # ruleData = { relationName : 'relationNameStr', 
   #              goalAttList:[ data1, ... , dataN ], 
-  #              goalTimeArg : <anInteger>, 
+  #              goalTimeArg : ""/next/async,
   #              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
   #                                       subgoalAttList : [ data1, ... , dataN ], 
   #                                       polarity : 'notin' OR '', 
@@ -126,7 +126,10 @@ class Rule :
 
     rewrittenFlag = False # all rules are initially NOT rewritten
 
-    self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + self.rid + "','" + self.relationName + "','" + self.goalTimeArg + "','" + str( rewrittenFlag ) + "')")
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM Rule WHERE rid='%s'" % str( self.rid ) )
+
+    self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + str( self.rid ) + "','" + self.relationName + "','" + self.goalTimeArg + "','" + str( rewrittenFlag ) + "')")
 
 
   ######################
@@ -136,11 +139,14 @@ class Rule :
   # GoalAtt( rid text, attID int, attName text, attType text )
   def saveToGoalAtt( self ) :
 
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM GoalAtt WHERE rid='%s'" % str( self.rid ) )
+
     attID = 0  # allows duplicate attributes in attList
 
     for attName in self.goalAttList :
 
-      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + self.rid + "','" + str( attID ) + "','" + str( attName ) + "','UNDEFINEDTYPE')")
+      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + str( self.rid ) + "','" + str( attID ) + "','" + str( attName ) + "','UNDEFINEDTYPE')")
 
       attID += 1
 
@@ -155,6 +161,9 @@ class Rule :
   #                          subgoalTimeArg : <anInteger> }, ... ]
   def saveSubgoals( self ) :
 
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) )
+
     for sub in self.subgoalListOfDicts :
 
       # ----------------------------- #
@@ -168,7 +177,8 @@ class Rule :
       # ----------------------------- #
       # generate random subgoal id 
 
-      sid = tools.getID()
+      #sid = tools.getID()
+      sid = tools.getIDFromCounters( "sid" )
 
       # ----------------------------- #
       # save subgoal data 
@@ -184,11 +194,11 @@ class Rule :
   # Subgoals( rid text, sid text, subgoalName text, subgoalTimeArg text )
   def saveToSubgoals( self, sid, subgoalName, subgoalPolarity, subgoalTimeArg ) :
 
-    self.cursor.execute( "INSERT INTO Subgoals VALUES ('" + self.rid        + "','" \
-                                                          + sid             + "','" \
-                                                          + subgoalName     + "','" \
-                                                          + subgoalPolarity + "','" \
-                                                          + str( subgoalTimeArg ) +"')" )
+    self.cursor.execute( "INSERT INTO Subgoals VALUES ('" + str( self.rid )        + "','" \
+                                                          + str( sid )             + "','" \
+                                                          + subgoalName            + "','" \
+                                                          + subgoalPolarity        + "','" \
+                                                          + str( subgoalTimeArg )  +"')" )
 
 
   #########################
@@ -201,9 +211,9 @@ class Rule :
     attID = 0
     for attName in subgoalAttList :
 
-      self.cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + self.rid     + "','" \
-                                                              + sid          + "','" \
-                                                              + str( attID ) + "','" \
+      self.cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + str( self.rid )     + "','" \
+                                                              + str( sid )          + "','" \
+                                                              + str( attID )        + "','" \
                                                               + attName \
                                                               + "','UNDEFINEDTYPE')" )
       attID += 1
@@ -218,6 +228,9 @@ class Rule :
   #             'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] } }
   def saveEquations( self ) :
 
+    # delete all data for this id in the table, if applicable
+    self.cursor.execute( "DELETE FROM Equation WHERE rid='%s'" % str( self.rid ) )
+
     for eqnStr in self.eqnDict :
 
       # ----------------------------- #
@@ -228,7 +241,8 @@ class Rule :
       # ----------------------------- #
       # generate random eqn id 
 
-      eid = tools.getID()
+      #eid = tools.getID()
+      eid = tools.getIDFromCounters( "eid" )
 
       # ----------------------------- #
       # save equation data 
@@ -246,8 +260,8 @@ class Rule :
   # Equation( rid text, eid text, eqn text )
   def saveToEquation( self, eid, eqnStr ) :
 
-    self.cursor.execute( "INSERT INTO Equation VALUES ('" + self.rid + "','" \
-                                                          + eid      + "','" \
+    self.cursor.execute( "INSERT INTO Equation VALUES ('" + str( self.rid ) + "','" \
+                                                          + str( eid )      + "','" \
                                                           + eqnStr + "')" )
 
 
@@ -261,9 +275,9 @@ class Rule :
     varID = 0
     for var in variableList :
 
-      self.cursor.execute( "INSERT INTO EquationVars VALUES ('" + self.rid     + "','" \
-                                                                + eid          + "','" \
-                                                                + str( varID ) + "','" \
+      self.cursor.execute( "INSERT INTO EquationVars VALUES ('" + str( self.rid )     + "','" \
+                                                                + str( eid )          + "','" \
+                                                                + str( varID )        + "','" \
                                                                 + var + "')" )
       varID += 1
 

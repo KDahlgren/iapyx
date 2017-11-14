@@ -26,6 +26,44 @@ operators = [ "<", ">", "<=", ">=", "==",  "+", "-", "*", "/", "!=" ]
 TOOLS_DEBUG = False
 
 
+###################################
+#  COMPILE FULL PROGRAM AND SAVE  #
+###################################
+# input all file paths to files
+# save call file contents into a single file,
+# orderedby last to first.
+# return the full path to the generated file.
+def compile_full_program_and_save( fileList ) :
+
+  logging.debug( "  COMPILE FULL PROGRAM AND SAVE : fileList = " + str( fileList ) )
+
+  # get starter file prepend path
+  starterFile_path = fileList[-1]
+  prepend = starterFile_path.split( "/" )
+  prepend = prepend[:-1]
+  prepend = "/".join( prepend )
+
+  # use cwd as the save file path
+  save_file_path = prepend + "/complete_dedalus_program.ded"
+
+  # open save file
+  # observe 'w' completely overwrites any existing files by the same name
+  fw = open( save_file_path, "w" )
+
+  for filepath in reversed( fileList ) :
+    logging.debug( "  COMPILE FULL PROGRAM AND SAVE : filepath = " + filepath )
+    fr = open( filepath, "r" )
+    for line in fr :
+      fw.write( line )
+    fr.close()
+
+  fw.close()
+
+  logging.info( "  COMPILE FULL PROGRAM AND SAVE : saving compled dedalus program to " + save_file_path )
+  return save_file_path
+
+
+
 ###################
 #  DUMP AND TERM  #
 ###################
@@ -110,6 +148,45 @@ def getConfig( section, option, dataType ) :
   # otherwise treat as a string
   else :
     return configs.get(section, option)
+
+
+##########################
+#  GET ID FROM COUNTERS  #
+##########################
+# input nothing
+# output a deterministic id
+def getIDFromCounters( idType ) :
+
+  import globalCounters
+
+  # return a fact fid
+  if idType == "fid" :
+    globalCounters.fidCounter += 1
+    return globalCounters.fidCounter
+
+  # return a rule rid
+  elif idType == "rid" :
+    globalCounters.ridCounter += 1
+    return globalCounters.ridCounter
+
+  # return a subgoal rid
+  elif idType == "sid" :
+    globalCounters.sidCounter += 1
+    return globalCounters.sidCounter
+
+  # return a rule rid
+  elif idType == "eid" :
+    globalCounters.eidCounter += 1
+    return globalCounters.eidCounter
+
+  # return a provenance rule id
+  elif idType == "provid" :
+    globalCounters.provRuleCounter += 1
+    return globalCounters.provRuleCounter
+
+  # wtf???
+  else :
+    sys.exit( "  UTILS : specified counter '" + idType + "' not recognized." )
 
 
 ############
@@ -341,40 +418,6 @@ def skip( line ) :
   return True
 
 
-###################
-#  GET FULL PATH  #
-###################
-# given a file path, return the full path.
-def getFullPath( currPath ) :
-
-  logging.debug( "  GET FULL PATH : running process..." )
-  logging.debug( "  GET FULL PATH : currPath = " + str( currPath ) )
-
-  prepend    = os.path.abspath( sys.modules['__main__'].__file__)
-  initialDir = "/" + prepend.split( "/" )[1]
-
-  # ------------------------------------------------------ #
-  # CASE : user provides full path
-  if currPath.startswith( initialDir ) :
-    chosenPath = currPath
-
-  # ------------------------------------------------------ #
-  # CASE : user provides full path relative to main thread of execution
-  elif prepend in currPath :
-    chosenPath = currPath
-
-  # ------------------------------------------------------ #
-  # CASE : user doesn't provide full path, so assume relative paths are relative to main thread of execution
-  else :
-    chosenPath = os.path.abspath( os.path.dirname( os.path.abspath(sys.modules['__main__'].__file__) ) + "/" + currPath )
-
-  # ------------------------------------------------------ #
-  if os.path.isfile( chosenPath ) :
-    return chosenPath
-  else :
-    sys.exit( "ERROR : could not open file at '" + chosenPath + "'. aborting..." )
-
-
 ################################
 #  GET ALL INCLUDE FILE PATHS  #
 ################################
@@ -383,10 +426,15 @@ def getFullPath( currPath ) :
 def get_all_include_file_paths( currPath ) :
 
   logging.debug( "  GET ALL INCLUDE FILES : running process..." )
+  logging.debug( "  GET ALL INCLUDE FILE PATHS : currPath = " + currPath )
 
-  currPath = getFullPath( currPath )
+  # -------------------------------------------------- #
+  # grab directory path leading to current file
 
-  logging.debug( "  CONTAINS INCLUDE : currPath = " + currPath )
+  prepend = currPath.split( "/" )[:-1]
+  prepend = "/".join( prepend )
+
+  logging.debug( "  GET ALL INCLUDE FILE PATHS : prepend = " + prepend )
 
   # -------------------------------------------------- #
   # BASE CASE : file does not contain an 'include'
@@ -402,6 +450,7 @@ def get_all_include_file_paths( currPath ) :
 
     if os.path.isfile( currPath ) :
 
+      # grab the complete list of raw include paths from the current file
       currFile = open( currPath, "r" )
 
       raw_fileNameList = []
@@ -415,11 +464,13 @@ def get_all_include_file_paths( currPath ) :
 
     fileNameList = []
     for fileName in raw_fileNameList :
-      logging.debug( "  GET ALL INCLUDE FILES : fileName = " + fileName )
+      fileName = prepend + "/" + fileName 
+      logging.debug( "  GET ALL INCLUDE FILES : recursing on fileName = " + fileName )
       fileNameList.extend( get_all_include_file_paths( fileName ) )
 
     fileNameList.append( currPath )
-    logging.debug( "  GET ALL INCLUDE FILES : fileNameList = " + str( fileNameList )  )
+
+    logging.debug( "  GET ALL INCLUDE FILES : returning fileNameList = " + str( fileNameList )  )
     return fileNameList
 
 
@@ -448,6 +499,8 @@ def containsInclude( currPath ) :
           return True
 
     fo.close()
+  else :
+    sys.exit( "  CONTAINS INCLUDE : ERROR : could not open file currPath '" + currPath + "'"  )
 
   logging.debug( "  CONTAINS INCLUDE : returning False" )
   return False

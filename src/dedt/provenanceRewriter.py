@@ -6,7 +6,7 @@ provenanceRewriter.py
    to the datalog program.
 '''
 
-import inspect, os, sys
+import inspect, logging, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -22,215 +22,260 @@ import Rule
 #  GLOBALS  #
 #############
 PROVENANCEREWRITE_DEBUG = tools.getConfig( "DEDT", "PROVENANCEREWRITE_DEBUG", bool )
-aggOps = [ "min<", "max<", "sum<", "avg<", "count<" ] # TODO: make this configurable
+aggOps = [ "min", "max", "sum", "avg", "count" ]
 
 timeAtt = "SndTime"
 
 ##############
 #  AGG PROV  #
 ##############
-def aggProv( aggRule, nameAppend, cursor ) :
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+#
 
-  # create bindings rule (see LDFI paper section 4.1.2)
-  bindingsRule = regProv( aggRule, nameAppend, cursor )
+def aggProv( aggRule, provid, cursor ) :
 
-  # generate random ID
-  rid = tools.getID()
+  logging.debug( "  AGG PROV : running aggProv..." )
 
-  # initialize firings rule
-  firingsRule  = Rule.Rule( rid, cursor )
+  orig_aggRule_goalAttList = aggRule.ruleData[ "goalAttList" ]
 
-  # goal info
-  goalName      = aggRule.getGoalName() + "_prov" + str(rid) # allows tables for duplicate names
-  goalAttList   = aggRule.getGoalAttList()
-  goalTimeArg   = ""
-  rewrittenFlag = 0 # new rules have not yet been rewritten
+  logging.debug( "  AGG PROV : orig_aggRule_goalAttList = " + str( orig_aggRule_goalAttList ) )
 
-  # check for bugs
-  if PROVENANCEREWRITE_DEBUG :
-    print "aggProv: goalName    = " + goalName
-    print "aggProv: goalAttList = " + str(goalAttList)
+  # ------------------------------------------------------ #
+  #                 BUILD THE BINDINGS RULE                #
+  # ------------------------------------------------------ #
 
-  # subgoal list info
-  subgoalName         = bindingsRule.getGoalName()
-  subgoalAttList_init = bindingsRule.getGoalAttList()
+  # ------------------------------------------------------ #
+  # generate a random ID for the new provenance rule
 
-  # check for bugs
-  if PROVENANCEREWRITE_DEBUG :
-    print "aggProv: subgoalName         = " + subgoalName
-    print "aggProv: subgoalAttList_init = " + str(subgoalAttList_init)
+  bindings_rid = tools.getIDFromCounters( "rid" )
 
-  aggAtts = []
-  for att in goalAttList :
-    containsAgg = False
-    for op in aggOps :
-      if op in att :
-        containsAgg = True
-    if containsAgg :
-      att = att.split("<")
-      att = att[1].replace(">", "")
-      aggAtts.append( att )
+  # ------------------------------------------------------ #
+  # initialize the prov rule to old version of
+  # meta rule
 
-  subgoalAttList_final = []
-  for att in subgoalAttList_init :
-    for a in aggAtts :
-      if a == att:
-        subgoalAttList_final.append( "_" )
-      else :
-        subgoalAttList_final.append( att )
+  bindingsmeta_ruleData = aggRule.ruleData
 
-  # check for bugs
-  if PROVENANCEREWRITE_DEBUG :
-    print "aggProv: subgoalAttList_final = " + str(subgoalAttList_final)
+  logging.debug( "  AGG PROV : bindingsmeta_ruleData = " + str( bindingsmeta_ruleData ) )
 
-  sid = tools.getID()
-  subgoalTimeArg = ""
-  subgoalAddArgs = ""
+  # ------------------------------------------------------ #
+  # the provenance rule name ends with "_prov" appended 
+  # with a unique number
 
-  # save rule
-  firingsRule.setGoalInfo(               goalName, goalTimeArg, rewrittenFlag  )
-  firingsRule.setGoalAttList(            goalAttList                           )
-  firingsRule.setSingleSubgoalInfo(      sid, subgoalName, subgoalTimeArg      )
-  firingsRule.setSingleSubgoalAttList(   sid, subgoalAttList_final             )
-  firingsRule.setSingleSubgoalAddArgs(   sid, subgoalAddArgs                   )
+  bindingsmeta_ruleData[ "relationName" ] = bindingsmeta_ruleData[ "relationName" ] + "_bindings" + str( provid )
 
-  # ----------------------------------------------------------- #
-  # set goal attribute types for all rules
-  firingsRule.setAttTypes()
+  # ------------------------------------------------------ #
+  # the goal att list consists of all subgoal atts
+
+  bindings_goalAttList = []
+
+  # grab all goal atts
+  old_bindings_goalAttList = bindingsmeta_ruleData[ "goalAttList" ]
+  bindings_goalAttList     = getAllGoalAtts_noAggs( old_bindings_goalAttList )
+
+  # grab all subgoal atts
+  subgoalListOfDicts = bindingsmeta_ruleData[ "subgoalListOfDicts" ]
+
+  logging.debug( "  AGG PROV : subgoalListOfDicts = " + str( subgoalListOfDicts ) )
+
+  for subgoal in subgoalListOfDicts :
+    subgoalAttList = subgoal[ "subgoalAttList" ]
+    for att in subgoalAttList :
+
+      # don't duplicate atts in the prov head
+      if not att in bindings_goalAttList :
+
+        # do not wildcards and fixed integer inputs
+        if not att == "_" and not att.isdigit() :
+
+          # fixed string inputs
+          if not isFixedString( att ) :
+            bindings_goalAttList.append( att )
+
+  bindingsmeta_ruleData[ "goalAttList" ] = bindings_goalAttList
+
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
+
+  bindings_rule = Rule.Rule( bindings_rid, bindingsmeta_ruleData, cursor )
+
+
+  # ------------------------------------------------------ #
+  #              BUILD THE AGG PROVENANCE RULE             #
+  # ------------------------------------------------------ #
+
+  # ------------------------------------------------------ #
+  # generate a random ID for the new provenance rule
+
+  aggprovmeta_rid = tools.getIDFromCounters( "rid" )
+
+  # ------------------------------------------------------ #
+  # initialize rule data
+
+  aggprovmeta_ruleData = {}
+
+  # ------------------------------------------------------ #
+  # the provenance rule name ends with "_bindings" appended 
+  # with a unique number
+
+  aggprovmeta_ruleData[ "relationName" ] = aggRule.ruleData[ "relationName" ] + "_prov" + str( provid )
+
+  # ------------------------------------------------------ #
+  # the goal att list consists of all subgoal atts
+
+  aggprovmeta_ruleData[ "goalAttList" ] = orig_aggRule_goalAttList
+
+  # ------------------------------------------------------ #
+  # define goal time arg as empty
+
+  aggprovmeta_ruleData[ "goalTimeArg" ] = ""
+
+  # ------------------------------------------------------ #
+  # define subgoal list of dicts
+  # agg prov rules only have one subgoal in the head of
+  # the previously defined bindings rule
+
+  subgoalListOfDicts = []
+  bindings_subgoal   = {}
+  bindings_subgoal[ "subgoalName" ] = bindingsmeta_ruleData[ "relationName" ]
+
+  # replace all existential vars in the subgoal att list with wildcards
+  allGoalAtts    = getAllGoalAtts_noAggs( aggprovmeta_ruleData[ "goalAttList" ] )
+  allSubgoalAtts = bindingsmeta_ruleData[ "goalAttList" ]
+
+  subgoalAttList = []
+  for att in allSubgoalAtts :
+    if not att in allGoalAtts :
+      subgoalAttList.append( "_" )
+    else :
+      subgoalAttList.append( att )
+
+  bindings_subgoal[ "subgoalAttList" ] = subgoalAttList
+  bindings_subgoal[ "polarity" ]       = ""
+  bindings_subgoal[ "subgoalTimeArg" ] = ""
+
+  subgoalListOfDicts.append( bindings_subgoal )
+  aggprovmeta_ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
+
+  # ------------------------------------------------------ #
+  # define eqnDict as empty
+
+  aggprovmeta_ruleData[ "eqnDict" ] = {}
+
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
+
+  aggprovmeta_rule = Rule.Rule( aggprovmeta_rid, aggprovmeta_ruleData, cursor )
+
+
+  return [ bindings_rule, aggprovmeta_rule ]
+
+
+
+###############################
+#  GET ALL GOAL ATTS NO AGGS  #
+###############################
+# return the list of attributes in the att list
+# after extracting attributes from any aggregate
+# functions
+def getAllGoalAtts_noAggs( attList ) :
+
+  atts_wo_aggs_list = []
+
+  for att in attList :
+    if hasAgg( att ) :
+      att_wo_agg = att.split( "<")
+      att_wo_agg = att_wo_agg[1]
+      att_wo_agg = att_wo_agg.replace( ">", "" )
+      atts_wo_aggs_list.append( att_wo_agg )
+    else :
+      atts_wo_aggs_list.append( att )
+
+  return atts_wo_aggs_list
 
 
 #######################
 #  REGULAR RULE PROV  #
 #######################
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
 def regProv( regRule, nameAppend, cursor ) :
 
-  if PROVENANCEREWRITE_DEBUG :
-    print " ... running regProv ..."
+  logging.debug( "  REG PROV : running regProv..." )
 
-  #sys.exit( "BREAKPOINT: regRule = " + str(regRule.getSubgoalListStr()) )
+  # ------------------------------------------------------ #
+  # generate a random ID for the new provenance rule
 
-  # -------------------------------------------------- #
-  # parse rule
-  parsedRule = dedalusParser.parse( regRule.display() )
+  rid = tools.getIDFromCounters( "rid" )
 
-  #sys.exit( "BREAKPOINT: regRule.display() = " + str( regRule.display() ) + "\nparsedRule = " + str(parsedRule) )
+  # ------------------------------------------------------ #
+  # initialize the prov rule to old version of
+  # meta rule
 
-  # -------------------------------------------------- #
-  # generate random ID for new rule
-  rid = tools.getID()
+  new_provmeta_ruleData = regRule.ruleData
 
-  # -------------------------------------------------- #
-  # initialize new rule
-  firingsRule = Rule.Rule( rid, cursor )
+  # ------------------------------------------------------ #
+  # the provenance rule name ends with "_prov" appended 
+  # with a unique number
 
-  # -------------------------------------------------- #
-  # get goal info
-  goalName      = regRule.getGoalName() + nameAppend + str(rid)
-  goalTimeArg   = ""
-  rewrittenFlag = 1  # new log rules are not rewritten
+  new_provmeta_ruleData[ "relationName" ] = new_provmeta_ruleData[ "relationName" ] + nameAppend
 
-  # check for bugs
-  if PROVENANCEREWRITE_DEBUG :
-    print "regProv: goalName     = " + goalName
+  # ------------------------------------------------------ #
+  # the goal att list consists of all subgoal atts
 
-  # -------------------------------------------------- #
-  # get subgoal array
-  subgoalArray = extractors.extractSubgoalList( parsedRule[1] )
+  provGoalAttList = []
 
-  # ................................... #
-  #if goalName.startswith( "pre_prov" ) :
-  #  tools.bp( __name__, inspect.stack()[0][3], "subgoalArray = " + str(subgoalArray) )
-  # ................................... #
+  # grab all goal atts
+  goalAttList = new_provmeta_ruleData[ "goalAttList" ]
 
-  # check for bugs
-  if PROVENANCEREWRITE_DEBUG :
-    print "regProv: subgoalArray = " + str(subgoalArray)
+  # save to provenance rule goal attribute list
+  provGoalAttList.extend( goalAttList )
 
-  # -------------------------------------------------- #
-  # collect goal args while inserting subgoals
-  firstSubgoalAtts = []
-  goalAttList = []
-
-  # -------------------------------------------------- #
-  # populate with original goal atts first
-  goalAttList = regRule.getGoalAttList()
-
-  if PROVENANCEREWRITE_DEBUG :
-    print ">>>>>>>> goalAttList init = " + str(goalAttList)
-
-  # -------------------------------------------------- #
-  # then populate with remaining subgoal atts
-  for subgoal in subgoalArray :
-    # generate random ID for subgoal
-    sid = tools.getID()
-
-    # -------------------------------------------------- #
-    # extract info
-    subgoalName    = extractors.extractSubgoalName(     subgoal )
-    subgoalAttList = extractors.extractAttList(         subgoal ) # returns list
-    subgoalTimeArg = ""
-    subgoalAddArgs = extractors.extractAdditionalArgs(  subgoal ) # returns list 
-
-    # check for bugs
-    if PROVENANCEREWRITE_DEBUG :
-      print "regProv: subgoal        = " + str(subgoal)
-      print "regProv: subgoalName    = " + subgoalName
-      print "regProv: subgoalAttList = " + str(subgoalAttList)
-      print "regProv: subgoalAddArgs = " + str(subgoalAddArgs)
-
-    # -------------------------------------------------- #
-    # catch first subgoal att
-    if len(subgoalAddArgs) == 0 :
-      firstSubgoalAtts.append( subgoalAttList[0] )
-
-    # -------------------------------------------------- #
-    # populate goal attribute list
+  # grab all subgoal atts
+  subgoalListOfDicts = new_provmeta_ruleData[ "subgoalListOfDicts" ]
+  for subgoal in subgoalListOfDicts :
+    subgoalAttList = subgoal[ "subgoalAttList" ]
     for att in subgoalAttList :
-      if (not att in goalAttList) and (not att.isdigit()) and (not att == "_") :  # exclude numbers from goal atts
-        goalAttList.append( att )
 
-    # -------------------------------------------------- #
-    # make sure time attribute appears as rightmost attribute
-    if not goalAttList == None :
+      # don't duplicate atts in the prov head
+      if not att in provGoalAttList :
 
-      for att in goalAttList :
+        # do not wildcards and fixed integer inputs
+        if not att == "_" and not att.isdigit() :
 
-        # make sure time attribute(s) appear in the rightmost columns
-        if "SndTime" in att :
-          goalAttList = [x for x in goalAttList if x != att ]
-          goalAttList.append( att )
+          # fixed string inputs
+          if not isFixedString( att ) :
+            provGoalAttList.append( att )
 
-    # -------------------------------------------------- #
-    # save firings subgoal
-    firingsRule.setSingleSubgoalInfo( sid, subgoalName, subgoalTimeArg )
-    firingsRule.setSingleSubgoalAttList( sid, subgoalAttList )
-    firingsRule.setSingleSubgoalAddArgs( sid, subgoalAddArgs )
+  new_provmeta_ruleData[ "goalAttList" ] = provGoalAttList
 
-  if PROVENANCEREWRITE_DEBUG :
-    print ">>>>>>>> goalAttList final = " + str(goalAttList)
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
 
-  # -------------------------------------------------- #
-  # get eqn array
-  eqnArray = regRule.getEquationListArray()
+  provRule = Rule.Rule( rid, new_provmeta_ruleData, cursor )
 
-  # save firings rule equations
-  for eqn in eqnArray :
-    # generate random ID
-    eid = tools.getID()
+  logging.debug( "  REG PROV : returning provRule.ruleData = " + str( provRule.ruleData ) )
 
-    # save eqn
-    firingsRule.setSingleEqn( eid, eqn )
-
-  # -------------------------------------------------- #
-  # save firings rule goal
-  firingsRule.setGoalInfo(     goalName, goalTimeArg, rewrittenFlag  )
-  firingsRule.setGoalAttList(  goalAttList                           )
-
-  # ----------------------------------------------------------- #
-  # set goal attribute types for all rules
-  firingsRule.setAttTypes()
-
-  return firingsRule
+  return provRule
 
 
 ########################
@@ -238,39 +283,93 @@ def regProv( regRule, nameAppend, cursor ) :
 ########################
 def rewriteProvenance( ruleMeta, cursor ) :
 
-  if PROVENANCEREWRITE_DEBUG :
-    print " ... running rewriteProvenance ... "
+  logging.debug( " REWRITE PROVENANCE : running process..." ) 
+  logging.debug( " REWRITE PROVENANCE : len( ruleMeta ) = " + str( len( ruleMeta ) ) ) 
 
   # -------------------------------------------------- #
   # iterate over rules
-  print "DUMPING RULE META :"
+
+  prov_ruleMeta    = []
+  provid           = 0
+  previousGoalName = ""
   for rule in ruleMeta :
 
-    # ......................................... #
-    # check for aggregates in goal attributes
-    containsAgg = False
-    goalAtts = rule.getGoalAttList()
+    logging.debug( "  REWRITE PROVENANCE : ruleData = " + str( rule.ruleData ) )
 
-    for att in goalAtts :
-      for agg in aggOps :
-        if agg in att :
-          containsAgg = True
+    # -------------------------------------------------- #
+    # make all provenance name append numbers start from
+    # 0 for each new rule name
 
-    # ......................................... #
-    # branch on presence of aggregates in goal
-    if containsAgg :
-      tools.bp( __name__, inspect.stack()[0][3], "shit came back to haunt you." )
-      aggProv( rule, "_bindings", cursor )
+    goalName = rule.ruleData[ "relationName" ]
+    if goalName == previousGoalName :
+      pass
+    else :
+      provid = 0
+
+    # -------------------------------------------------- #
+    # CASE : rule contains aggregate calls in the head
+
+    if containsAggInHead( rule ) :
+      provRules = aggProv( rule, provid, cursor )
+      prov_ruleMeta.extend( provRules )
+
+    # -------------------------------------------------- #
+    # CASE : rule contains no aggregate calls 
+    #        in the head
 
     else :
-      regProv( rule, "_prov", cursor )
+      provRule = regProv( rule, "_prov" + str( provid ), cursor )
+      prov_ruleMeta.append( provRule )
 
-    # ----------------------------------------------------------- #
-    # set goal attribute types for all rules
-    rule.setAttTypes()
+    # -------------------------------------------------- #
+    # update iteration info
+    previousGoalName = goalName
+    provid += 1
 
-  if PROVENANCEREWRITE_DEBUG :
-    print " ... done rewriteProvenance ... "
+  logging.debug( " REWRITE PROVENANCE : returning prov_ruleMeta = " + str( prov_ruleMeta ) )
+  return prov_ruleMeta
+
+
+#####################
+#  IS FIXED STRING  #
+#####################
+# determine if the input string is a fixed string of input data
+def isFixedString( gattName ) :
+  if gattName.startswith( "'" ) and gattName.endswith( "'" ) :
+    return True
+  elif gattName.startswith( '"' ) and gattName.endswith( '"' ) :
+    return True
+  else :
+    return False
+
+
+##########################
+#  CONTAINS AGG IN HEAD  #
+##########################
+# check if the rule head contains an aggregate function call
+def containsAggInHead( metarule ) :
+
+  for att in metarule.goalAttList :
+    for op in aggOps :
+      if att.startswith( op+"<" ) and att.endswith( ">" ) :
+        return True
+
+  return False
+
+
+#############
+#  HAS AGG  #
+#############
+# determine if the given input string contains an aggregate call
+def hasAgg( gattName ) :
+
+  # check for aggregate operators
+  for op in aggOps :
+    if gattName.startswith( op+"<" ) and gattName.endswith( ">" ) :
+      return True
+
+  return False
+
 
 #########
 #  EOF  #

@@ -1,5 +1,12 @@
 // someone has a log, but not me.
 
+log( "blah", "blee" )@1 ;
+node( "blah", "blee" )@1 ;
+bcast( "blah", "blee" )@1 ;
+crash( "blah", "blee" )@1 ;
+b( "laa", "dee", "doo" )@1 ;
+c( "laa", "dee" )@1 ;
+
 missing_log(A, Pl) :- log(X, Pl), 
                       node(X, A), 
 			notin log(A, Pl);//, notin crash(_, A, _);
@@ -7,4 +14,4 @@ missing_log(A, Pl) :- log(X, Pl),
 pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1, notin crash(X, X, _);
 post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
 
-a(X)@async :- X<Y1, b(X,X2,Y1), X2==Y, notin c(X2,Y3), X>Y3 ;
+a(X)@async :- X<Y1, b(X,X2,Y1), X2==Y, notin c(X,Y3), X>Y3 ;

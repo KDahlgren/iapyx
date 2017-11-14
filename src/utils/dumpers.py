@@ -28,6 +28,113 @@ def programDump( cursor ) :
   ruleDump(  cursor )
 
 
+###################
+#  RULE ATT DUMP  #
+###################
+# dump a dictionary of goal attribute and subgoal 
+# attribute data for all rules mapping attributes to data types
+def ruleAttDump( cursor ) :
+
+  ruleAttData = {}
+
+  # ================================================= #
+  # grab all rule ids
+
+  cursor.execute( "SELECT rid FROM Rule" )
+  ridList = cursor.fetchall()
+  ridList = tools.toAscii_list( ridList )
+
+  for rid in ridList :
+
+    # ================================================= #
+    # collect rule att data
+
+    currRuleAttData = singleRuleAttDump( rid, cursor )
+
+    # ================================================= #
+    # save attribute data per rule
+
+    ruleAttData[ rid ] = currRuleAttData
+
+  return ruleAttData
+
+
+##########################
+#  SINGLE RULE ATT DUMP  #
+##########################
+# dump the goal and subgoal attribute info
+# for the given rule
+def singleRuleAttDump( rid, cursor ) :
+
+  currRuleAttData = {}
+
+  # ================================================= #
+  # grab rule name for clarity of explanation
+
+  cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + rid + "'" )
+  goalName = cursor.fetchone()
+  goalName = tools.toAscii_str( goalName )
+
+  currRuleAttData[ "goalName" ] = goalName
+
+  # ================================================= #
+  # grab all goal atts and att types
+
+  cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
+  goalAttData = cursor.fetchall()
+  goalAttData = tools.toAscii_multiList( goalAttData )
+
+  goalAttTypeMappingArrays = []
+  for i in range( 0, len( goalAttData ) ) :
+    attID   = goalAttData[i][0]
+    attName = goalAttData[i][1]
+    attType = goalAttData[i][2]
+    goalAttTypeMappingArrays.append( [ attID, attName, attType ] )
+
+  currRuleAttData[ "goalAttData" ] = goalAttTypeMappingArrays
+
+  # ================================================= #
+  # grab all subgoal atts and att types
+  # [ [ subgoal1, [ [ data1, type1 ], ..., [ dataM, typeM ] ] ], 
+  #    ..., 
+  #   [ subgoalK, [ [ data1, type1 ], ..., [ dataN, typeN ] ] ] ]
+
+  # grab all subgoal ids
+  cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
+  sidList = cursor.fetchall()
+  sidList = tools.toAscii_list( sidList )
+
+  subgoalAttDataMaps = []
+  for sid in sidList :
+
+    # grab the subgoal name for clarity of explanation
+    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+    subgoalName = cursor.fetchone()
+    subgoalName = tools.toAscii_str( subgoalName )
+
+    # grab subgoal att list and types
+    cursor.execute( "SELECT attID,attName,attType FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+    subgoalAttData = cursor.fetchall()
+    subgoalAttData = tools.toAscii_multiList( subgoalAttData )
+
+    # grab attribute maps per subgoal and store in arrays
+    subgoalAttTypeMappingArrays = []
+    for i in range( 0, len( subgoalAttData ) ) :
+      attID   = subgoalAttData[i][0]
+      attName = subgoalAttData[i][1]
+      attType = subgoalAttData[i][2]
+      subgoalAttTypeMappingArrays.append( [ attID, attName, attType ] )
+
+    # save to subgoalAttData
+    subgoalAttDataMaps.append( [ sid, subgoalName, subgoalAttTypeMappingArrays ] )
+
+  currRuleAttData[ "subgoalAttData" ] = subgoalAttDataMaps
+
+  # ================================================= #
+
+  return currRuleAttData
+
+
 ###############
 #  RULE DUMP  #
 ###############
@@ -214,12 +321,12 @@ def factDump( cursor ) :
     facts.append( newFact )
     newFact = []
 
-  logging.debug( "  FACT DUMP : facts = " + str( facts ) )
 
   returnFacts = []
   for f in facts :
     returnFacts.append( ''.join(f) )
 
+  logging.debug( "  FACT DUMP : returning returnFacts = " + str( returnFacts ) )
   return returnFacts
 
 
@@ -391,6 +498,48 @@ def reconstructRule( rid, cursor ) :
   rule += " ;" # end all rules with a semicolon
 
   return rule
+
+
+#####################
+#  RULE TABLE DUMP  #
+#####################
+# dump the entire rule table to stdout
+def ruleTableDump( cursor ) :
+
+  cursor.execute( "SELECT * FROM Rule" )
+  allRecords = cursor.fetchall()
+  allRecords = tools.toAscii_multiList( allRecords )
+
+  for rec in allRecords :
+    print rec
+
+
+#########################
+#  GOAL ATT TABLE DUMP  #
+#########################
+# dump the entire GoalAtt table to stdout
+def goalAttTableDump( cursor ) :
+
+  cursor.execute( "SELECT * FROM GoalAtt" )
+  allRecords = cursor.fetchall()
+  allRecords = tools.toAscii_multiList( allRecords )
+
+  for rec in allRecords :
+    print rec
+
+
+##################
+#  GET ALL RIDS  #
+##################
+# extract all rule ids from the IR database
+def getAllRIDs( cursor ) :
+
+  cursor.execute( "SELECT rid FROM Rule" )
+  ridList = cursor.fetchall()
+  ridList = tools.toAscii_list( ridList )
+
+  return ridList
+
 
 #########
 #  EOF  #

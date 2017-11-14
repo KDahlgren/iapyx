@@ -52,7 +52,7 @@ def rewriteNegativeSubgoalsWithWildcards( cursor ) :
     # examine all subgoals per rule
     for sid in sids :
 
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
       sign = cursor.fetchone()
       if sign :
         sign = tools.toAscii_str( sign )

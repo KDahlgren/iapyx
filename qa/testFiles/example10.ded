@@ -1,0 +1,4 @@
+
+role_x(N, max<I>) :- role_change(N, R), rank(N, R, I);
+new_term(N, T+1) :- term(N, T), stall(N, T);
+lclock_register(N, "Localtime", T) :- new_term(N, T);

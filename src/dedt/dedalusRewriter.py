@@ -5,7 +5,7 @@ dedalusRewriter.py
    Define the functionality for rewriting Dedalus into datalog.
 '''
 
-import inspect, os, sys
+import inspect, logging, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -13,7 +13,9 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 from utils import clockTools, tools, dumpers
+import Fact, Rule
 # ------------------------------------------------------ #
+
 
 #############
 #  GLOBALS  #
@@ -23,512 +25,410 @@ DEDALUSREWRITER_DUMPS_DEBUG = tools.getConfig( "DEDT", "DEDALUSREWRITER_DUMPS_DE
 
 timeAtt_snd    = "SndTime"
 timeAtt_deliv  = "DelivTime"
-rewrittenFlag  = "True"
-
-
-############################
-#  GET DEDUCTIVE RULE IDS  #
-############################
-def getDeductiveRuleIDs( cursor ) :
-  # deductive rules are not next or async
-  cursor.execute( "SELECT rid FROM Rule WHERE (NOT goalTimeArg == 'next') AND (NOT goalTimeArg == 'async') AND (NOT goalTimeArg == 'rewritten')" )
-  ridList = cursor.fetchall()
-  ridList = tools.toAscii_list( ridList )
-  return ridList
-
-
-############################
-#  GET INDUCTIVE RULE IDS  #
-############################
-def getInductiveRuleIDs( cursor ) :
-  cursor.execute( "SELECT rid FROM Rule WHERE goalTimeArg == 'next'" )
-  ridList = cursor.fetchall()
-  ridList = tools.toAscii_list( ridList )
-  return ridList
-
-
-###############################
-#  GET ASYNCHRONOUS RULE IDS  #
-###############################
-def getAsynchronousRuleIDs( cursor ) :
-  cursor.execute( "SELECT rid FROM Rule WHERE goalTimeArg == 'async'" )
-  ridList = cursor.fetchall()
-  ridList = tools.toAscii_list( ridList )
-  return ridList
-
-
-############################
-#  GET REWRITTEN RULE IDS  #
-############################
-def getRewrittenRuleIDs( cursor ) :
-  cursor.execute( "SELECT rid FROM Rule WHERE goalTimeArg == 'rewritten'" )
-  ridList = cursor.fetchall()
-  ridList = tools.toAscii_list( ridList )
-  return ridList
-
-
-#####################
-#  GET SUBGOAL IDS  #
-#####################
-def getSubgoalIDs( cursor, rid ) :
-  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + str(rid) + "'" )
-  return cursor.fetchall()
-
-
-######################
-#  GET SUBGOAL ATTS  #
-######################
-def getSubgoalAtts( cursor, rid, sid ) :
-  cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + str(rid) + "' AND sid == '" + sid + "'" )
-  return cursor.fetchall()
 
 
 #######################
 #  REWRITE DEDUCTIVE  #
 #######################
-def rewriteDeductive( cursor ) :
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+def rewriteDeductive( metarule, cursor ) :
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... running deductive rewrite ..."
+  logging.debug( "  REWRITE DEDUCTIVE : running process..." )
+  logging.debug( "  REWRITE DEDUCTIVE : metarule.ruleData = " + str( metarule.ruleData ) )
 
-  # grab all existing non-next and non-async rule ids
-  deductiveRuleIDs = getDeductiveRuleIDs( cursor )
+  # ------------------------------------------------------ #
+  # dedalus rewrites overwrite the original rules
+  # so, grab the original rid
 
-  # add attribute 'SndTime' to head as the new rightmost attribute
-  for rid in deductiveRuleIDs :
+  rid = metarule.rid
 
-    # ......................................... #
-    cursor.execute( "SELECT goalName FROM Rule WHERE rid =='" + rid + "'" )
-    goalName = cursor.fetchone()
-    goalName = tools.toAscii_str( goalName )
-    # ......................................... #
+  # ------------------------------------------------------ #
+  # initialize new version of meta rule to old version of
+  # meta rule
 
-    #print "*******************************"
-    #print "old rule : " + str( dumpers.reconstructRule(rid, cursor) )
+  new_metarule_ruleData = metarule.ruleData
 
-    if not tools.checkIfRewrittenAlready( rid, cursor ) :
-      # set rule as rewritten 
-      cursor.execute( "UPDATE Rule SET rewritten='" + rewrittenFlag + "' WHERE rid=='" + rid + "'" )
+  # ------------------------------------------------------ #
+  # add SndTime to goal attribute list
 
-      # grab maximum attribute id
-      cursor.execute( "SELECT MAX(attID) FROM GoalAtt WHERE rid == '" + rid + "'" )
-      rawMaxID = cursor.fetchone()
-      rawMaxID = rawMaxID[0] # extract from tuple
+  new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd )
 
-      if rawMaxID or (rawMaxID == 0) :
-        newAttID = int(rawMaxID + 1) # the att id for SndTime
+  # ------------------------------------------------------ #
+  # add SndTime (or given numeric time argument) 
+  # to all subgoal attribute lists
 
-        # check if add arg is a specific time
-        cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + rid + "'" )
-        timeArg = cursor.fetchone()
-        timeArg = tools.toAscii_str( timeArg )
+  for subgoal in new_metarule_ruleData[ "subgoalListOfDicts" ] :
 
-        if timeArg.isdigit() :
-          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeArg + "','int')")
-        else :
-          cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "','int')")
+    # ------------------------------------------------------ #
+    # CASE : subgoal time argument in an integer
+    if subgoal[ "subgoalTimeArg" ].isdigit() :
+      subgoal[ "subgoalAttList" ].append( subgoal[ "subgoalTimeArg" ] )
+      subgoal[ "subgoalTimeArg" ] = "" # erase time arg after assignment
 
-      else :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : current rule goal has no attributes:\n" + dumpers.reconstructRule( rid, cursor ) )
+    # ------------------------------------------------------ #
+    # CASE : subgoal has no time argument
+    else :
+      subgoal[ "subgoalAttList" ].append( timeAtt_snd )
 
-      # add attribute 'Time' to all subgoals
-      sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-      sids = tools.toAscii_list(sids)
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
 
-      firstSubgoalAtts = []
-      # iterate over rule subgoals
-      for s in sids :
+  new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
 
-        # ......................................... #
-        cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + s + "'" )
-        subgoalName = cursor.fetchone()
-        subgoalName = tools.toAscii_str( subgoalName )
-        # ......................................... #
-
-        addArg = None
-
-        # get time arg for subgoal
-        cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid = '" + rid + "' AND sid = '" + s + "'" )
-        timeArg = cursor.fetchone()
-        timeArg = tools.toAscii_str( timeArg )
-
-        # add Time as a subgoal attribute
-        cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
-        rawMaxID = cursor.fetchone() # int type
-        newAttID = int(rawMaxID[0] + 1)
-        cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
-
-        # replace subgoal time attribute with numeric time arg
-        if timeArg.isdigit() :
-          cursor.execute( "SELECT attName FROM SubgoalAtt WHERE sid = '" + s + "'" )
-          satts = cursor.fetchall()
-          satts = tools.toAscii_list( satts )
-
-          # ......................................... #
-          #if goalName == "pre" :
-          #  if subgoalName == "bcast" :
-          #    print " timeArg = " + str(timeArg)
-          #    print " satts   = " + str(satts)
-          #    tools.bp( __name__, inspect.stack()[0][3], "___ASDFASLKDHFWER" )
-          # ......................................... #
-
-          for i in range(0,len(satts)) :
-            if satts[i] == timeAtt_snd :
-              cursor.execute( "UPDATE SubgoalAtt SET attName='" + timeArg + "' WHERE rid = '" + rid + "' AND sid = '" + s + "' AND attID = '" + str(i) + "'")
-
-        # collect the additional argument (aka notin for c4)
-        cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid == '" + rid + "' AND SubgoalAddArgs.sid == '" + s + "'"  )
-        addArg = cursor.fetchone()
-        if addArg :
-          addArg = tools.toAscii_str( addArg )
-
-        # while we're here, collect the first attribute of this subgoal
-        cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
-        firstAtt = cursor.fetchone()
-        if (not firstAtt == None) and (not addArg == "notin") : # need branch on notin for safety
-          firstAtt = tools.toAscii_str( firstAtt )
-          firstSubgoalAtts.append( firstAtt )
-        else :
-          if DEDALUSREWRITER_DEBUG :
-            print "firstAtt = " + str(firstAtt)
-
-      # sanity checking branch
-      if len( firstSubgoalAtts ) > 0 :
-        pass
-        # add clock subgoal
-        #clockTools.addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor )
-      else :
-        print dumpers.reconstructRule( rid, cursor )
-        tools.bp( __name__, inspect.stack()[0][3], "We've got major probs, mate. The subgoals of this rule have no attributes.\nfirstSubgoalAtts = " + str(firstSubgoalAtts) + "\nMake sure the rule is safe." )
-
-    #tools.bp( __name__, inspect.stack()[0][3], "new rule : " + str(dumpers.reconstructRule(rid, cursor)) )
-
-  # check for bugs
-  if DEDALUSREWRITER_DEBUG :
-    print "Rule :"
-    cursor.execute('''SELECT * FROM Rule''')
-    for i in cursor.fetchall() :
-      print i
-    
-    print "GoalAtt"
-    cursor.execute("SELECT * FROM GoalAtt")
-    for s in cursor.fetchall():
-      print s
-
-    print "Subgoals"
-    cursor.execute("SELECT * FROM Subgoals")
-    for s in cursor.fetchall():
-      print s
-
-    print "SubgoalAtt"
-    cursor.execute("SELECT * FROM SubgoalAtt")
-    for s in cursor.fetchall():
-      print s
+  logging.debug( "  REWRITE DEDUCTIVE : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
+  return new_metarule
 
 
 #######################
 #  REWRITE INDUCTIVE  #
 #######################
-def rewriteInductive( cursor ) :
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+def rewriteInductive( metarule, cursor ) :
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... running inductive rewrite ... "
+  logging.debug( "  REWRITE INDUCTIVE : running process..." )
+  logging.debug( "  REWRITE INDUCTIVE : metarule.ruleData = " + str( metarule.ruleData ) )
 
-  # grab all existing next rule ids
-  inductiveRuleIDs = getInductiveRuleIDs( cursor )
+  # ------------------------------------------------------ #
+  # dedalus rewrites overwrite the original rules
+  # so, grab the original rid
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "inductiveRuleIDs = " + str(inductiveRuleIDs)
-    print "<><><><><><><><><><><><><><><>"
-    print "    DUMPING INDUCTIVE RULES   "
-    for r in inductiveRuleIDs :
-      print dumpers.reconstructRule( r, cursor )
-    print "<><><><><><><><><><><><><><><>"
+  rid = metarule.rid
 
-  # add attribute 'SndTime+1' to head
-  for rid in inductiveRuleIDs :
+  # ------------------------------------------------------ #
+  # initialize new version of meta rule to old version of
+  # meta rule
 
-    if not tools.checkIfRewrittenAlready( rid, cursor ) :
-      # set rule as rewritten 
-      cursor.execute( "UPDATE Rule SET rewritten='" + rewrittenFlag + "' WHERE rid=='" + rid + "'" )
+  new_metarule_ruleData = metarule.ruleData
 
-      # grab maximum attribute id
-      cursor.execute( "SELECT MAX(attID) FROM GoalAtt WHERE rid == '" + rid + "'" )
-      rawMaxID = cursor.fetchone()
-      rawMaxID = rawMaxID[0] # extract from tuple
+  # ------------------------------------------------------ #
+  # add SndTime+1/DelivTime to goal attribute list
 
-      # .................................. #
-      #cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + rid + "'" )
-      #goalName = cursor.fetchone()
-      #goalName = tools.toAscii_str( goalName )
-      #print "___ goalName = " + str(goalName)
-      #if goalName == "clients" :
-      #  print "rawMaxID = " + str( rawMaxID )
-      #  sys.exit()
-      # .................................. #
+  new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
 
-      if rawMaxID or (rawMaxID == 0) :
-        newAttID = int(rawMaxID + 1) # the att id for SndTime
+  # ------------------------------------------------------ #
+  # remove goal time arg
 
-        # check if add arg is a specific time
-        cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + rid + "'" )
-        timeArg = cursor.fetchone()
-        timeArg = tools.toAscii_str( timeArg )
+  new_metarule_ruleData[ "goalTimeArg"] = ""
 
-        # add attribute 'SndTime+1' to head
-        cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_snd + "+1" + "','int')")
-      else :
-        tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : current rule goal has no attributes:\n" + dumpers.reconstructRule( rid, cursor ) )
+  # ------------------------------------------------------ #
+  # add SndTime (or given numeric time argument) 
+  # to all subgoal attribute lists
 
-      if DEDALUSREWRITER_DEBUG :
-        print "inductive: rawMaxID    = " + str(rawMaxID)
-        print "inductive: rawMaxID[0] = " + str(rawMaxID[0])
+  for subgoal in new_metarule_ruleData[ "subgoalListOfDicts" ] :
 
-  #   add attribute 'SndTime' to all subgoals
-  for rid in inductiveRuleIDs :
-    sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-    sids = tools.toAscii_list(sids)
+    # ------------------------------------------------------ #
+    # CASE : subgoal time argument in an integer
+    if subgoal[ "subgoalTimeArg" ].isdigit() :
+      subgoal[ "subgoalAttList" ].append( subgoal[ "subgoalTimeArg" ] )
+      subgoal[ "subgoalTimeArg" ] = "" # erase time arg after assignment
 
-    firstSubgoalAtts = [] 
-    for s in sids :
-      cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
-      rawMaxID = cursor.fetchone()
-      newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
+    # ------------------------------------------------------ #
+    # CASE : subgoal has no time argument
+    else :
+      subgoal[ "subgoalAttList" ].append( timeAtt_snd )
 
-      # while we're here, collect the first attribute of this subgoal
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE SubgoalAddArgs.rid == '" + rid + "' AND SubgoalAddArgs.sid == '" + s + "'"  )
-      addArg = cursor.fetchone()
-      if not addArg == None :
-        addArg = tools.toAscii_str( addArg )
+  # ------------------------------------------------------ #
+  # add clock subgoal
 
-      cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
-      firstAtt = cursor.fetchone()
-      if (not firstAtt == None) and (not addArg == "notin") :
-        firstAtt = tools.toAscii_str( firstAtt )
-        firstSubgoalAtts.append( firstAtt )
-      else :
-        if DEDALUSREWRITER_DEBUG :
-          print "firstAtt = " + str(firstAtt)
+  # grab the first attribute in a subgoal
+  # observe the parser ensures the first attributes 
+  # in all inductive rule subgoals
 
-    # add clock subgoal
-    clockTools.addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor )
+  firstAtt = new_metarule_ruleData[ "subgoalListOfDicts" ][0][ "subgoalAttList" ][0]
 
+  # build the new clock subgoal dict
+  # format :
+  #   { subgoalName : 'subgoalNameStr', 
+  #     subgoalAttList : [ data1, ... , dataN ], 
+  #     polarity : 'notin' OR '', 
+  #     subgoalTimeArg : <anInteger> }
 
-  # remove time arg from rule goals
-  for rid in inductiveRuleIDs :
-    cursor.execute( "UPDATE Rule SET goalTimeArg='' WHERE rid='" + rid + "'"  )
+  clock_subgoalName    = "clock"
+  clock_subgoalAttList = [ firstAtt, firstAtt, timeAtt_snd, timeAtt_deliv ]
+  clock_polarity       = "" # clocks are positive until proven negative.
+  clock_subgoalTimeArg = ""
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "Dump all rules from inductive : "
-    dumpers.ruleDump( cursor )
+  clock_subgoalDict                      = {}
+  clock_subgoalDict[ "subgoalName" ]     = clock_subgoalName
+  clock_subgoalDict[ "subgoalAttList" ]  = clock_subgoalAttList
+  clock_subgoalDict[ "polarity" ] = clock_polarity
+  clock_subgoalDict[ "subgoalTimeArg" ]  = clock_subgoalTimeArg
 
+  # ------------------------------------------------------ #
+  # add the clock subgoal to the subgoal list for this rule
 
-  if DEDALUSREWRITER_DEBUG :
-    print "... done rewriteInductive ..."
+  new_metarule_ruleData[ "subgoalListOfDicts" ].append( clock_subgoalDict )
 
-  return None
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
+
+  new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+  logging.debug( "  REWRITE INDUCTIVE : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
+  return new_metarule
+
 
 ##########################
 #  REWRITE ASYNCHRONOUS  #
 ##########################
-def rewriteAsynchronous( cursor ) :
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+def rewriteAsynchronous( metarule, cursor ) :
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... running asynchronous rewrite ... "
+  logging.debug( "  REWRITE ASYNCHRONOUS  : running process..." )
+  logging.debug( "  REWRITE ASYNCHRONOUS : metarule.ruleData = " + str( metarule.ruleData ) )
 
-  # grab all existing next rule ids
-  asynchronousRuleIDs = getAsynchronousRuleIDs( cursor )
+  # ------------------------------------------------------ #
+  # dedalus rewrites overwrite the original rules
+  # so, grab the original rid
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "asynchronousRuleIDs = " + str(asynchronousRuleIDs)
-    for r in asynchronousRuleIDs :
-      print "<><><><><><><><><><><><><><><>"
-      print "    DUMPING ASYNC RULES   "
-      print dumpers.reconstructRule( r, cursor )
-      print "<><><><><><><><><><><><><><><>"
+  rid = metarule.rid
 
-  # add attribute 'DelivTime' to head
-  for rid in asynchronousRuleIDs :
+  # ------------------------------------------------------ #
+  # initialize new version of meta rule to old version of
+  # meta rule
 
-    #print "*******************************"
-    #print "old rule : " + str( dumpers.reconstructRule(rid, cursor) )
+  new_metarule_ruleData = metarule.ruleData
 
-    if not tools.checkIfRewrittenAlready( rid, cursor ) :
-      # set rule as rewritten 
-      cursor.execute( "UPDATE Rule SET rewritten='" + rewrittenFlag + "' WHERE rid=='" + rid + "'" )
+  # ------------------------------------------------------ #
+  # add DelivTime to goal attribute list
 
-      cursor.execute('''SELECT MAX(attID) FROM GoalAtt WHERE GoalAtt.rid == "''' + rid + '''"''')
-      rawMaxID = cursor.fetchone()
-      newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO GoalAtt VALUES ('" + rid + "','" + str(newAttID) + "','" + timeAtt_deliv + "','int')")
-  
-  # add attribute 'SndTime' to all subgoals and add clock subgoal
-  for rid in asynchronousRuleIDs :
-    sids = getSubgoalIDs( cursor, rid ) # get all subgoal ids
-    sids = tools.toAscii_list(sids)
-  
-    firstSubgoalAtts = []
-    for s in sids :
-      cursor.execute('''SELECT MAX(attID) FROM SubgoalAtt WHERE SubgoalAtt.sid == "''' + s + '''"''')
-      rawMaxID = cursor.fetchone()
-      newAttID = int(rawMaxID[0] + 1)
-      cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + s + "'," + str(newAttID) + ",'" + timeAtt_snd + "','int')")
+  new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
 
-      # while we're here, collect the first attribute of this subgoal
-      cursor.execute("SELECT attName FROM SubgoalAtt WHERE SubgoalAtt.sid == '" + s + "' AND SubgoalAtt.attID == '" + str(0) + "'")
-      firstAtt = cursor.fetchone()
-      if firstAtt :
-        firstAtt = tools.toAscii_str( firstAtt )
-        firstSubgoalAtts.append( firstAtt )
+  # ------------------------------------------------------ #
+  # remove goal time arg
 
-    # add clock subgoal
-    cursor.execute( "SELECT attName FROM GoalAtt WHERE GoalAtt.rid == '" + rid + "' AND GoalAtt.attID == '" + str(0) + "'")
-    secondAtt = cursor.fetchone()
-    secondAtt = tools.toAscii_str( secondAtt )
-    clockTools.addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAtt_deliv, cursor )
+  new_metarule_ruleData[ "goalTimeArg"] = ""
 
-  # remove time arg from rule goals
-  for rid in asynchronousRuleIDs :
-    cursor.execute( "UPDATE Rule SET goalTimeArg='' WHERE rid='" + rid + "'"  )
+  # ------------------------------------------------------ #
+  # add SndTime (or given numeric time argument) 
+  # to all subgoal attribute lists
 
-    #print "new rule : " + str( dumpers.reconstructRule(rid, cursor) )
-    #print "-------------------------------"
-    #tools.bp( __name__, inspect.stack()[0][3], "breakhere" )
+  for subgoal in new_metarule_ruleData[ "subgoalListOfDicts" ] :
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "Dump all rules from async : "
-    dumpers.ruleDump( cursor )
-    #dumpers.factDump( cursor )
+    # ------------------------------------------------------ #
+    # CASE : subgoal time argument in an integer
+    if subgoal[ "subgoalTimeArg" ].isdigit() :
+      subgoal[ "subgoalAttList" ].append( subgoal[ "subgoalTimeArg" ] )
+      subgoal[ "subgoalTimeArg" ] = "" # erase time arg after assignment
 
+    # ------------------------------------------------------ #
+    # CASE : subgoal has no time argument
+    else :
+      subgoal[ "subgoalAttList" ].append( timeAtt_snd )
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... done asynchronous rewrite ... "
+  # ------------------------------------------------------ #
+  # add clock subgoal
 
-  return None
+  # assum the first att in all subgoals of
+  # next rules is the source.
+  # grab the first attribute in a subgoal
+  # observe the parser ensures the first attributes 
+  # in all inductive rule subgoals
 
+  firstAtt  = new_metarule_ruleData[ "subgoalListOfDicts" ][0][ "subgoalAttList" ][0]
 
-#######################
-#  REWRITE REWRITTEN  #
-#######################
-def rewriteRewritten( cursor ) :
+  # assume the first att in the goal list of 
+  # async rules is the destingation.
+  # grab the first attribute in the goal att list
+  # observe the parser ensures the first attributes 
+  # in all async rule subgoals
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... running rewritten rewrite ... "
+  secondAtt = new_metarule_ruleData[ "goalAttList" ][0]
 
-  # grab all existing next rule ids
-  rewrittenRuleIDs = getRewrittenRuleIDs( cursor )
+  # build the new clock subgoal dict
+  # format :
+  #   { subgoalName : 'subgoalNameStr', 
+  #     subgoalAttList : [ data1, ... , dataN ], 
+  #     polarity : 'notin' OR '', 
+  #     subgoalTimeArg : <anInteger> }
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "rewrittenRuleIDs = " + str(rewrittenRuleIDs)
-    for r in rewrittenRuleIDs :
-      print "<><><><><><><><><><><><><><><>"
-      print "    DUMPING ASYNC RULES   "
-      print dumpers.reconstructRule( r, cursor )
-      print "<><><><><><><><><><><><><><><>"
+  clock_subgoalName    = "clock"
+  clock_subgoalAttList = [ firstAtt, secondAtt, timeAtt_snd, timeAtt_deliv ]
+  clock_polarity       = "" # clocks are positive until proven negative.
+  clock_subgoalTimeArg = ""
 
-  # remove time arg from rule goals
-  for rid in rewrittenRuleIDs :
-    cursor.execute( "UPDATE Rule SET goalTimeArg='' WHERE rid='" + rid + "'"  )
+  clock_subgoalDict                      = {}
+  clock_subgoalDict[ "subgoalName" ]     = clock_subgoalName
+  clock_subgoalDict[ "subgoalAttList" ]  = clock_subgoalAttList
+  clock_subgoalDict[ "polarity" ] = clock_polarity
+  clock_subgoalDict[ "subgoalTimeArg" ]  = clock_subgoalTimeArg
 
-  # check for bugs
-  if DEDALUSREWRITER_DUMPS_DEBUG :
-    print "Dump all rules from async : "
-    dumpers.ruleDump( cursor )
-    #dumpers.factDump( cursor )
+  # ------------------------------------------------------ #
+  # add the clock subgoal to the subgoal list for this rule
 
+  new_metarule_ruleData[ "subgoalListOfDicts" ].append( clock_subgoalDict )
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... done asynchronous rewrite ... "
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
+
+  logging.debug( "  REWRITE RULES : overwriting old rule with new ruleData = " + str( new_metarule_ruleData ) )
+  new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+  logging.debug( "  REWRITE ASYNCHRONOUS : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
+  return new_metarule
 
 
 ###################
 #  REWRITE FACTS  #
 ###################
 # update fact schemas with time arguments.
-def rewriteFacts( cursor ) :
+# { relationName:'relationNameStr', dataList:[ data1, ... , dataN ] }
+def rewriteFacts( factMeta, cursor ) :
 
-  # get all fact ids
-  fids = getAllFactIDs( cursor )
+  logging.debug( "  REWRITE FACTS : running process..." )
+  logging.debug( "  REWRITE FACTS : factMeta = " + str( factMeta ) )
 
-  # augment fact schemas with time args
-  updateFactSchemas( fids, cursor )
+  new_factMeta = []
+  for fact in factMeta :
 
+    logging.debug( "  REWRITE FACTS : fact.factData = " + str( fact.factData ) )
 
-#########################
-#  UPDATE FACT SCHEMAS  #
-#########################
-def updateFactSchemas( fids, cursor ) :
+    # ------------------------------------------ #
+    # rewritten facts overwrite old facts
+    # so, use the old fid
 
-  for fid in fids :
+    fid = fact.fid
 
-    # get time arg
-    cursor.execute( "SELECT timeArg FROM Fact WHERE fid=='" + fid + "'" )
-    timeArg = cursor.fetchone()
-    timeArg = tools.toAscii_str( timeArg )
+    # ------------------------------------------ #
+    # initialize new fact meta data to old fact
+    # meta data
 
-    # get max attID
-    cursor.execute( "SELECT max(attID) FROM FactData WHERE fid=='" + fid + "'" )
-    maxID = cursor.fetchone()
-    maxID = maxID[0]
+    new_fact_factData = fact.factData
 
-    # update fact schema
-    attID    = maxID + 1
-    thisType = "int"
+    # ------------------------------------------ #
+    # grab time arg and reset to ""
+    factTimeArg = new_fact_factData[ "factTimeArg" ]
+    new_fact_factData[ "factTimeArg" ] = ""
 
-    #DEBUGGING
-    cursor.execute( "SELECT name FROM Fact WHERE fid=='" + fid + "'" ) 
-    name = cursor.fetchone()
-    name = tools.toAscii_str( name )
-    #if name == "bcast" :
-    #  print "1CHECK THIS BCAST INSERT!!!"
-    #  print "INSERT INTO FactData VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')"
+    # ------------------------------------------ #
+    # add time arg to the end of the fact data
+    # list
+    new_fact_factData[ "dataList" ].append( factTimeArg )
 
-    cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str(attID) + "','" + timeArg + "','" + thisType + "')" )
+    # ------------------------------------------ #
+    # preserve the new fact by instantiating 
+    # a new Fact
 
+    logging.debug( "  REWRITE FACTS : overwriting old fact with new factData = " + str( new_fact_factData ) )
+    new_factMeta.append( Fact.Fact( fid, new_fact_factData, cursor ) )
 
-######################
-#  GET ALL FACT IDS  #
-######################
-def getAllFactIDs( cursor ) :
-  cursor.execute( "SELECT fid FROM Fact" )
-  fids = cursor.fetchall()
-  fids = tools.toAscii_list( fids )
-  return fids
+  logging.debug( "  REWRITE FACTS : returning new_factMeta = " + str( new_factMeta ) )
+  return new_factMeta
 
 
 #####################
 #  DEDALUS REWRITE  #
 #####################
-def rewriteDedalus( cursor ) :
+# 'rewrite' the rule manifestations in the IR db
+# into a format more amenable to datalog translations
+def rewriteDedalus( factMeta, ruleMeta, cursor ) :
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... running rewriteDedalus ... "
+  logging.debug( "  REWRITE DEDALUS : running rewriteDedalus..." )
 
-  # rewrite deductive rules (aka rules with no time arg)
-  rewriteDeductive( cursor )
+  # ------------------------------------ #
+  # rewrite rules
 
-  # rewrite inductive rules (aka 'next' rules)
-  rewriteInductive( cursor )
+  new_ruleMeta = []
+  for rule in ruleMeta :
 
-  # rewrite asynchronous rules (aka 'async' rules)
-  rewriteAsynchronous( cursor )
+    # ------------------------------------ #
+    # rewrite deductive rules
+    # (aka rules with no time arg)
 
-  # rewrite rewritten rules ( aka 'rewritten' rules )
-  rewriteRewritten( cursor )
+    if isDeductive( rule ) :
+      new_ruleMeta.append( rewriteDeductive( rule, cursor ) )
+  
+    # ------------------------------------ #
+    # rewrite inductive rules
+    # (aka 'next' rules)
 
+    elif isInductive( rule ) :
+      new_ruleMeta.append( rewriteInductive( rule, cursor ) )
+  
+    # ------------------------------------ #
+    # rewrite asynchronous rules
+    # (aka 'async' rules)
+
+    elif isAsync( rule ) :
+      new_ruleMeta.append( rewriteAsynchronous( rule, cursor ) )
+
+    # ------------------------------------ #
+    # wtf???
+
+    else :
+      sys.exit( "  REWRITE DEDALUS : rule with meta '" + str( rule.ruleData ) + "' is not deductive, inductive, or asynchronous. congratulations. aborting..." )
+
+  # ------------------------------------ #
   # rewrite facts
-  rewriteFacts( cursor )
 
-  if DEDALUSREWRITER_DEBUG :
-    print " ... done rewriteDedalus ... "
+  new_factMeta = rewriteFacts( factMeta, cursor )
 
-  return None
+  logging.debug( "  REWRITE DEDALUS : returning meta = " + str( [ new_factMeta, new_ruleMeta ] ) ) 
+  return [ new_factMeta, new_ruleMeta ]
+
+
+##################
+#  IS DEDUCTIVE  #
+##################
+# check if the given rule is deductive
+def isDeductive( rule ) :
+  if rule.ruleData[ "goalTimeArg" ] == "" :
+    return True
+  else :
+    return False
+
+
+##################
+#  IS INDUCTIVE  #
+##################
+# check if the given rule is inductive
+def isInductive( rule ) :
+  if rule.ruleData[ "goalTimeArg" ] == "next" :
+    return True
+  else :
+    return False
+
+
+##############
+#  IS ASYNC  #
+##############
+# check if the given rule is async
+def isAsync( rule ) :
+  if rule.ruleData[ "goalTimeArg" ] == "async" :
+    return True
+  else :
+    return False
+
 
 #########
 #  EOF  #

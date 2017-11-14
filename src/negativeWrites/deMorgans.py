@@ -74,7 +74,7 @@ def doDeMorgans( parentRID, ruleRIDs, cursor ) :
     # map sids to sign for this rule
     signMap = {}
     for sid in sidList :
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid='" + rid + "' AND sid='" + sid + "'" )
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid='" + rid + "' AND sid='" + sid + "'" )
       sign = cursor.fetchone()
       if sign :
         sign = tools.toAscii_str( sign )
@@ -84,7 +84,8 @@ def doDeMorgans( parentRID, ruleRIDs, cursor ) :
       sign = signMap[ sid ]
 
       # get a random identifier string
-      predID = tools.getID()
+      #predID = tools.getID()
+      predID = tools.getIDFromCounters( "sid" )
 
       # map predIDs to rids and sids
       predicateToID_map[ predID ] = [ rid, [ sign, sid ] ]
@@ -295,7 +296,8 @@ def setNewRules( parentName, ruleName, simplified_negFmla, predicateToID_map, cu
   for c in clauses :
 
     # get an id for the new rule
-    newRID = tools.getID()
+    #newRID = tools.getID()
+    newRID = tools.getIDFromCounters( "rid" )
     newRIDs.append( newRID )
 
     # grab the list of literals in this clause
@@ -312,7 +314,7 @@ def setNewRules( parentName, ruleName, simplified_negFmla, predicateToID_map, cu
       # no negation means do nothing.
       else :
         predicate = literal
-        addArg    = None
+        addArg    = ""
 
       # grab the parent rid, sign, and sid for this subgoal
       # represented by this literal in the Boolean formula.
@@ -351,10 +353,11 @@ def setNewRules( parentName, ruleName, simplified_negFmla, predicateToID_map, cu
       # save subgoal with the rid of the new rule    #
       # -------------------------------------------- #
       # create new sid
-      newSID = tools.getID()
+      #newSID = tools.getID()
+      newSID = tools.getIDFromCounters( "sid" )
 
       # save subgoal name and time arg
-      cursor.execute( "INSERT INTO Subgoals VALUES ('" + newRID + "','" + newSID + "','" + subgoalName.lower() + "','" + subgoalTimeArg + "')" )
+      cursor.execute( "INSERT INTO Subgoals VALUES ('" + newRID + "','" + newSID + "','" + subgoalName.lower() + "','" + addArg + "','" + subgoalTimeArg + "')" )
 
       # save subgoal attributes
       for att in subgoalAtts :
@@ -394,23 +397,6 @@ def setNewRules( parentName, ruleName, simplified_negFmla, predicateToID_map, cu
 
         # insert
         cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + newRID + "','" + newSID + "','" + str( attID ) + "','" + attName + "','" + attType + "')" )
-        #print "completed insert"
-        #print "--------------------"
-        #print "c = " + str( c )
-        #print "origRule : " + dumpers.reconstructRule( rid, cursor )
-        #print "subgoalName = " + subgoalName
-        #print "subgoalTimeArg = " + subgoalTimeArg
-        #print "subgoalAtts = " + str( subgoalAtts )
-        #print "origRule_goalAttList = " + str( origRule_goalAttList )
-        #print "att = " + str( att )
-        #print "goalAttID = " + str( goalAttID )
-        #tools.bp( __name__, inspect.stack()[0][3], "breakhere." )
-
-      # save subgoal additional args
-      if addArg :
-        cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + newRID + "','" + newSID + "','" + str( addArg ) + "')")
-      else :
-        cursor.execute("INSERT INTO SubgoalAddArgs VALUES ('" + newRID + "','" + newSID + "','')")
 
 
   # -------------------------------------------- #

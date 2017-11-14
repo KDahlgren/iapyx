@@ -46,11 +46,11 @@ def cleanResult( result ) :
 ###########
 # input a ded line
 # output parsed line
-# fact returns : [ 'fact', { relationName:'relationNameStr', dataList:[ data1, ... , dataN ] } ]
+# fact returns : [ 'fact', { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> } ]
 # rule returns : [ 'rule', 
 #                   { relationName : 'relationNameStr', 
 #                   goalAttList:[ data1, ... , dataN ], 
-#                   goalTimeArg : <anInteger>, 
+#                   goalTimeArg : ""/next/async,
 #                   subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
 #                                            subgoalAttList : [ data1, ... , dataN ], 
 #                                            polarity : 'notin' OR '', 
@@ -125,7 +125,7 @@ def parse( dedLine ) :
   # rule returns : [ 'rule', 
   #                  { relationName : 'relationNameStr', 
   #                    goalAttList:[ data1, ... , dataN ], 
-  #                    goalTimeArg : <anInteger>, 
+  #                    goalTimeArg : ""/next/async,
   #                    subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
   #                                             subgoalAttList : [ data1, ... , dataN ], 
   #                                             polarity : 'notin' OR '', 
@@ -196,6 +196,37 @@ def parse( dedLine ) :
     sys.exit( "  PARSE : ERROR : this line is not an empty, a fact, or a rule : '" + dedLine + "'. aborting..." )
 
 
+##########################
+#  CONTAINS NO SUBGOALS  #
+##########################
+# make cursory checks to determine if the input rule line contains subgoals
+def containsNoSubgoals( dedLine ) :
+
+  body = getBody( dedLine )
+
+  # ------------------------------------- #
+  # CASE : no open parenthesis to demark
+  #        attribute list start
+  if "(" in body :
+    return False
+
+  # ------------------------------------- #
+  # CASE : no closed parenthesis to demark
+  #        attribute list end
+  elif ")" in body :
+    return False
+
+  # ------------------------------------- #
+  # CASE : no commas to delimit subgoals
+  elif "," in body :
+    return False
+
+  # ------------------------------------- #
+  # otherwise, probably incorrect
+  else :
+    return True
+
+
 #############
 #  HAS AGG  #
 #############
@@ -245,10 +276,18 @@ def isFixedInt( att ) :
 def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
 
   # ------------------------------------------ #
-  # make sure all subgoals in next rules have
-  # identical first attributes
+  # make sure at least one positive subgoal
+  # has no numeric time argument
 
-  if ruleData[ "goalTimeArg" ] == "next" :
+  if not hasPosSubgoalWithoutIntegerTimeArg( ruleData ) :
+      sys.exit( "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line '" + ruleLine + "'\n    line contains no negative subgoal NOT annotated with a numeric time argument." )
+
+
+  # ------------------------------------------ #
+  # make sure all subgoals in next and async 
+  # rules have identical first attributes
+
+  if ruleData[ "goalTimeArg" ] == "next" or ruleData[ "goalTimeArg" ] == "async" :
     subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
     firstAtts          = []
     for sub in subgoalListOfDicts :
@@ -257,7 +296,7 @@ def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
 
     firstAtts = set( firstAtts )
     if not len( firstAtts ) < 2 :
-      sys.exit( "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + ruleLine + "'\n    all subgoals in next rules must have identical first attributes.\n" )
+      sys.exit( "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + ruleLine + "'\n    all subgoals in next and async rules must have identical first attributes.\n" )
 
   # ------------------------------------------ #
   # make sure all goal and subgoal attribute 
@@ -304,11 +343,46 @@ def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
   return True
 
 
+##############################################
+#  HAS POS SUBGOAL WITHOUT INTEGER TIME ARG  #
+##############################################
+# check make sure the line contains at least
+# one positive subgoal NOT annotated with an
+# integer time argument
+def hasPosSubgoalWithoutIntegerTimeArg( ruleData ) :
+
+  goalTimeArg        = ruleData[ "goalTimeArg" ]
+  subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
+
+  # ------------------------------------------ #
+  # CASE : rule is either next or async
+  # the clock goal is always initially positive
+  if not goalTimeArg == "" :
+    return True
+
+  # ------------------------------------------ #
+  # CASE : rule is deductive
+  # need to check more closely for deductive rules
+  else :
+
+    for subgoal in subgoalListOfDicts :
+
+      if subgoal[ "polarity"] == "" : # positive
+        if not subgoal[ "subgoalTimeArg" ].isdigit() :
+          return True
+
+    return False
+
+
 #########################################
 #  SANITY CHECK SYNTAX RULE PRE CHECKS  #
 #########################################
 # make an initial pass on the rule syntax
 def sanityCheckSyntax_rule_preChecks( ruleLine ) :
+
+  # make sure the line likely has subgoal(s)
+  if containsNoSubgoals( ruleLine ) :
+    sys.exit( "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + ruleLine + "'\n    rule contains no detected subgoals." )
 
   # make sure parentheses make sense
   if not ruleLine.count( "(" ) == ruleLine.count( ")" ) :

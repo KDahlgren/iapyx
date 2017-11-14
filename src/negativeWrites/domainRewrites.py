@@ -701,10 +701,10 @@ def collectExistentialBoundSubgoals( universalBoundSubgoals, posNameRIDs, cursor
 
         exisSubgoalAttMap[ attID ] = [ attID, attName, attType ]
 
-      # ------------------- #
-      # get subgoal add arg #
-      # ------------------- #
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + posrid + "' AND sid=='" + possid + "'" )
+      # -------------------- #
+      # get subgoal polarity #
+      # -------------------- #
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid=='" + posrid + "' AND sid=='" + possid + "'" )
       exisAddArg = cursor.fetchone()
       if exisAddArg :
         exisAddArg = tools.toAscii_str( exisAddArg )
@@ -744,17 +744,17 @@ def saveAllSubgoals( rid, univSubgoals, exisSubgoals, cursor ) :
   # save universal subgoals #
   # ----------------------- #
   for sub in univSubgoals :
-    sid            = sub[ "sid" ]
-    subgoalName    = sub[ "subgoalName" ] 
-    subgoalTimeArg = sub[ "subgoalTimeArg" ]
-    subgoalAttDict = sub[ "subgoalAttDict" ]
-    argName        = sub[ "argName" ]
+    sid             = sub[ "sid" ]
+    subgoalName     = sub[ "subgoalName" ] 
+    subgoalTimeArg  = sub[ "subgoalTimeArg" ]
+    subgoalAttDict  = sub[ "subgoalAttDict" ]
+    subgoalPolarity = sub[ "argName" ]
 
     # ---------------- #
     # save to Subgoals #
     # ---------------- #
-    print "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')"
-    cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')" )
+    print "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity + "','" + subgoalTimeArg + "')"
+    cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity + "','" + subgoalTimeArg + "')" )
 
     # ------------------ #
     # save to SubgoalAtt #
@@ -767,12 +767,6 @@ def saveAllSubgoals( rid, univSubgoals, exisSubgoals, cursor ) :
       print "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "','" + attType + "')"
       cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "','" + attType + "')" )
 
-    # ---------------------- #
-    # save to SubgoalAddArgs #
-    # ---------------------- #
-    print "INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + argName + "')"
-    cursor.execute( "INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + argName + "')" )
-
   # ========================================================== #
   # ========================================================== #
 
@@ -780,11 +774,11 @@ def saveAllSubgoals( rid, univSubgoals, exisSubgoals, cursor ) :
   # save existential subgoals #
   # ------------------------- #
   for sub in exisSubgoals :
-    sid            = sub[ "sid" ]
-    subgoalName    = sub[ "subgoalName" ]
-    subgoalTimeArg = sub[ "subgoalTimeArg" ]
-    subgoalAttDict = sub[ "subgoalAttDict" ]
-    argName        = sub[ "argName" ]
+    sid             = sub[ "sid" ]
+    subgoalName     = sub[ "subgoalName" ]
+    subgoalTimeArg  = sub[ "subgoalTimeArg" ]
+    subgoalAttDict  = sub[ "subgoalAttDict" ]
+    subgoalPolarity = sub[ "argName" ]
 
     tmp = []
     for s in subgoalAttDict :
@@ -804,8 +798,8 @@ def saveAllSubgoals( rid, univSubgoals, exisSubgoals, cursor ) :
       # ---------------- #
       # save to Subgoals #
       # ---------------- #
-      print "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')"
-      cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')")
+      print "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity + "','" + subgoalTimeArg + "')"
+      cursor.execute("INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalPolarity + "','" + subgoalTimeArg + "')")
 
       # ------------------ #
       # save to SubgoalAtt #
@@ -817,16 +811,6 @@ def saveAllSubgoals( rid, univSubgoals, exisSubgoals, cursor ) :
         attType = subgoalAttDict[ subatt ][2]
         print "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "','" + attType + "')"
         cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(attID) + "','" + attName + "','" + attType + "')" )
-
-      # ---------------------- #
-      # save to SubgoalAddArgs #
-      # ---------------------- #
-      print "INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + argName + "')"
-      cursor.execute( "INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + argName + "')" )
-
-
-  #print dumpers.reconstructRule( rid, cursor )
-  #tools.bp( __name__, inspect.stack()[0][3], "blee" )
 
 
 ###########################

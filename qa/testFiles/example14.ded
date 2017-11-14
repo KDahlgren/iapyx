@@ -1,0 +1,8 @@
+
+a("a",1)@1 ;
+b(1,"b")@1 ;
+
+c(X,Y) :- a(X,_),d(_,Y);
+d(X,Y) :- a(X,Z),b(Z,Y) ;
+e(X,Y) :- c(X,Z), notin d(Z,Y) ;
+f(X,Y) :- h(X,Y) ;

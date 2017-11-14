@@ -1,0 +1,10 @@
+b(1)@1 ;
+c(1,2)@1 ;
+d(1,2)@1 ;
+a(X) :- b(X),  // a deductive rule example
+        notin c(X,_),
+        d(X,_) ;
+e(X)@next :- b(X), notin c(X,Z), d(X,Z)@1 ; // an inductive rule example
+f(X)@async:- b(X), notin c(X,Z), d(X,Z)@1 ; // an async rule example
+f(X)@next :- e(X)@1 ; // idb predicated on a subgoal with no SndTime att in the body
+f(X) :- a(X) ; // idb predicated on an idb example

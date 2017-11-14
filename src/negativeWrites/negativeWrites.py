@@ -298,7 +298,7 @@ def resolveDoubleNegatives( rid, fromName, cursor ) :
     if "not_" in name[0:4] and "_from_" in name :
 
       # check if negated
-      cursor.execute( "SELECT argName FROM SubgoalAddArgs WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
       sign = cursor.fetchone()
       sign = tools.toAscii_str( sign )
 
@@ -316,7 +316,7 @@ def resolveDoubleNegatives( rid, fromName, cursor ) :
         cursor.execute( "UPDATE Subgoals SET subgoalName=='" + posName + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
 
         # remove negation
-        cursor.execute( "UPDATE SubgoalAddArgs SET argName=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+        cursor.execute( "UPDATE Subgoals SET subgoalPolarity=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
 
         print "UPDATED DOUBLE NEGATIVE!"
         print dumpers.reconstructRule( rid, cursor )
@@ -343,7 +343,7 @@ def replaceRewrittenSubgoals( rid, origName, cursor ) :
 
   # .............................................. #
   # get sids for all negated subgoals in this rule
-  cursor.execute( "SELECT sid From SubgoalAddArgs WHERE rid=='" + rid + "'" )
+  cursor.execute( "SELECT sid From Subgoals WHERE rid=='" + rid + "' AND subgoalPolarity=='notin'" )
   sids = cursor.fetchall()
   sids = tools.toAscii_list( sids )
 
@@ -378,7 +378,7 @@ def replaceRewrittenSubgoals( rid, origName, cursor ) :
       cursor.execute( "UPDATE Subgoals SET subgoalName=='" + fullName + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
 
       # replace negation argument
-      cursor.execute( "UPDATE SubgoalAddArgs SET argName=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      cursor.execute( "UPDATE Subgoals SET polarity=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
 
       print "REPLACED REWRITTEN SUBGOAL!"
 
@@ -551,18 +551,13 @@ def addAdditionalTimeDom( EOT, att, rid, cursor ) :
 
   # ------------------------------------- #
   # add info to Subgoals relation
-  cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + subgoalTimeArg + "')" )
+  cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + argName + "','" + subgoalTimeArg + "')" )
 
   # ------------------------------------- #
   # add info to SubgoalAtt relation
   cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str( attID ) + "','" + attName + "','" + attType + "')" )
 
   # ------------------------------------- #
-  # add info to SubgoalAddArgs relation
-  cursor.execute( "INSERT INTO SubgoalAddArgs VALUES ('" + rid + "','" + sid + "','" + argName + "')" )
-
-  # ------------------------------------- #
-  # add info to SubgoalAddArgs relation
   # add relevant new facts.
   # dom ranges over all ints between 1 and EOT.
   name    = subgoalName
@@ -1596,7 +1591,7 @@ def getAllRuleRIDs( cursor ) :
 # check if the given rule contains a negated IDB
 def ruleContainsNegatedIDB( rid, cursor ) :
 
-  cursor.execute( "SELECT Subgoals.subgoalName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid='" + rid + "' AND Subgoals.rid==SubgoalAddArgs.rid AND Subgoals.sid==SubgoalAddArgs.sid AND argName=='notin'" )
+  cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + rid + "' AND subgoalPolarity=='notin'" )
   negatedSubgoals = cursor.fetchall()
   negatedSubgoals = tools.toAscii_list( negatedSubgoals )
 
@@ -1653,7 +1648,7 @@ def rewriteParentRule( rid, cursor ) :
 
   # .................................................... #
   # get list of negated IDB subgoals
-  cursor.execute( "SELECT Subgoals.sid,Subgoals.subgoalName FROM Subgoals,SubgoalAddArgs WHERE Subgoals.rid='" + rid + "' AND Subgoals.rid==SubgoalAddArgs.rid AND Subgoals.sid==SubgoalAddArgs.sid AND argName=='notin'" )
+  cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid='" + rid + "' AND argName=='notin'" )
   negatedSubgoals = cursor.fetchall()
   negatedSubgoals = tools.toAscii_multiList( negatedSubgoals )
 
@@ -1680,7 +1675,7 @@ def rewriteParentRule( rid, cursor ) :
   
       # .................................................... #
       # erase negation on this subgoal
-      cursor.execute( "UPDATE SubgoalAddArgs SET argName=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      cursor.execute( "UPDATE Subgoals SET subgoalPolarity=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
   
       # .................................................... #
       # save for return data

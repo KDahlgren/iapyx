@@ -17,7 +17,7 @@ if not os.path.abspath( __file__ + "/../../src" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../src" ) )
 
 from dedt  import dedt, dedalusParser, clockRelation, dedalusRewriter
-from utils import dumpers, tools
+from utils import dumpers, globalCounters, tools
 
 # ------------------------------------------------------ #
 
@@ -27,16 +27,67 @@ from utils import dumpers, tools
 ###############
 class Test_dedt( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
 
 
   ################
-  #  EXAMPLE 12  
+  #  EXAMPLE 16  #
   ################
-  # test rule saves to IR db
-  # tests subgoal negation, subgoal time args, equations, goal time arg
-  def test_example12( self ) :
+  # example 16 details a correct program.
+  # tests ded to c4 datalog translation with an aggregate function.
+  # make sure this test produces the expected olg program.
+  #@unittest.skip( "working on different example" )
+  def test_example16( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/example16.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/example16.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ################
+  #  EXAMPLE 15  #
+  ################
+  # test setting data types to rule attributes
+  # tests type assignments for aggregated attributes and 
+  # attributes with fixed data.
+  #@unittest.skip( "working on different example" )
+  def test_example15( self ) :
 
     # --------------------------------------------------------------- #
     # build empty IR db
@@ -45,18 +96,175 @@ class Test_dedt( unittest.TestCase ) :
     IRDB   = sqlite3.connect( testDB )
     cursor = IRDB.cursor()
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     # test rule saves
 
-    inputfile = "./testFiles/example12.ded"
+    inputfile = "./testFiles/example15.ded"
+    dedt.dedToIR( inputfile, cursor )
+
+    # dump rules
+    actual_ruleData = dumpers.ruleAttDump( cursor )
+
+    # expected rules
+    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int']], 'subgoalAttData': [['2', 'term', [[0, 'N', 'string'], [1, 'T', 'int']]], ['3', 'stall', [[0, 'N', 'string'], [1, 'T', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int']], 'subgoalAttData': [['0', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string']]], ['1', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int']], 'subgoalAttData': [['4', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int']]]]}}
+
+    self.assertEqual( actual_ruleData, expected_ruleData )
+
+    # --------------------------------------------------------------- #
+    # clean up testing
+
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ################
+  #  EXAMPLE 14  #
+  ################
+  # test setting data types to rule attributes
+  # bad run => non-terminating
+  #@unittest.skip( "working on different example" )
+  def test_example14( self ) :
+
+    # --------------------------------------------------------------- #
+    # build empty IR db
+
+    testDB = "./IR.db"
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
+    dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    # test rule saves
+
+    # run program and catch error
+    try :
+      inputfile = "./testFiles/example14.ded"
+      dedt.dedToIR( inputfile, cursor )
+    except :
+      actual_results = self.getError( sys.exc_info() )
+
+    # grab expected parse
+    expected_error = "  SET TYPES : ERROR : number of fully typed rules not increasing. program is non-terminating. aborting execution..."
+
+    self.assertEqual( actual_results, expected_error )
+
+    # --------------------------------------------------------------- #
+    # clean up testing
+
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ################
+  #  EXAMPLE 13  #
+  ################
+  # test setting data types to rule attributes
+  # good run
+  #@unittest.skip( "working on different example" )
+  def test_example13( self ) :
+
+    # --------------------------------------------------------------- #
+    # build empty IR db
+
+    testDB = "./IR.db"
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
+    dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    # test rule saves
+
+    inputfile = "./testFiles/example13.ded"
+    dedt.dedToIR( inputfile, cursor )
+
+    # dump rules
+    actual_ruleData = dumpers.ruleAttDump( cursor )
+
+    print actual_ruleData
+
+    # expected rules
+    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['2', 'a', [[0, 'X', 'string'], [1, 'Z', 'int']]], ['3', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['0', 'a', [[0, 'X', 'string'], [1, '_', 'int']]], ['1', 'd', [[0, '_', 'string'], [1, 'Y', 'string']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['4', 'c', [[0, 'X', 'string'], [1, 'Z', 'string']]], ['5', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string']]]]}}
+
+    self.assertEqual( actual_ruleData, expected_ruleData )
+
+    # --------------------------------------------------------------- #
+    # clean up testing
+
+    IRDB.close()
+    os.remove( testDB )
+
+
+  #################
+  #  EXAMPLE 12B  #
+  #################
+  # test rule saves to IR db
+  # bad subgoal definition in rule with arity error
+  #@unittest.skip( "working on different example" )
+  def test_example12b( self ) :
+
+    # --------------------------------------------------------------- #
+    # build empty IR db
+
+    testDB = "./IR.db"
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
+    dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    # test rule saves
+
+    # run program and catch error
+    try :
+      inputfile = "./testFiles/example12b.ded"
+      dedt.dedToIR( inputfile, cursor )
+    except :
+      actual_results = self.getError( sys.exc_info() )
+
+    # grab expected parse
+    expected_error = "  SET TYPES : arity error in rule 'pre(X,Pl) <=  log(X,Pl),notin bcast(X,Pl),notin crash(X,X,_) ;' in subgoal 'crash'"
+
+    self.assertEqual( actual_results, expected_error )
+
+    # --------------------------------------------------------------- #
+    # clean up testing
+
+    IRDB.close()
+    os.remove( testDB )
+
+
+  #################
+  #  EXAMPLE 12A  #
+  #################
+  # test rule saves to IR db
+  # tests subgoal negation, subgoal time args, equations, goal time arg
+  #@unittest.skip( "working on different example" )
+  def test_example12a( self ) :
+
+    # --------------------------------------------------------------- #
+    # build empty IR db
+
+    testDB = "./IR.db"
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
+    dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    # test rule saves
+
+    inputfile = "./testFiles/example12a.ded"
     dedt.dedToIR( inputfile, cursor )
 
     # dump rules
     actual_rules = dumpers.ruleDump( cursor )
 
     # expected rules
-    expected_rules = ['missing_log(A,Pl):-log(X,Pl),node(X,A), notin log(A,Pl);', 'pre(X,Pl):-log(X,Pl), notin bcast(X,Pl)@1, notin crash(X,X,_);', 'post(X,Pl):-log(X,Pl), notin missing_log(_,Pl);', 'a(X)@async:-b(X,X2,Y1), notin c(X2,Y3),X2==Y,X<Y1,X>Y3;']
+    expected_rules = ['missing_log(A,Pl):-log(X,Pl),node(X,A), notin log(A,Pl);', 'pre(X,Pl):-log(X,Pl), notin bcast(X,Pl)@1, notin crash(X,X,_);', 'post(X,Pl):-log(X,Pl), notin missing_log(_,Pl);', 'a(X)@async:-b(X,X2,Y1), notin c(X,Y3),X2==Y,X<Y1,X>Y3;']
 
     self.assertEqual( actual_rules, expected_rules )
 
@@ -82,6 +290,7 @@ class Test_dedt( unittest.TestCase ) :
   #  EXAMPLE 11  #
   ################
   # test fact saves to IR db
+  #@unittest.skip( "working on different example" )
   def test_example11( self ) :
 
     # --------------------------------------------------------------- #
@@ -91,6 +300,7 @@ class Test_dedt( unittest.TestCase ) :
     IRDB   = sqlite3.connect( testDB )
     cursor = IRDB.cursor()
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
 
@@ -117,116 +327,19 @@ class Test_dedt( unittest.TestCase ) :
   ################
   # test election parse to test acceptance of aggregates in head
   # and fixed strings in the body 
+  #@unittest.skip( "working on different example" )
   def test_example10( self ) :
 
     # --------------------------------------------------------------- #
 
     # specify input file path
-    inputfile = "./testFiles/election.ded"
+    inputfile = "./testFiles/example10.ded"
 
     # run translator
     actual_parsedLines = dedalusParser.parseDedalus( inputfile )
 
     # expected parsed lines
-    expected_parsedLines = [['rule', {'relationName': 'role', 'subgoalListOfDicts': \
-                            [{'polarity': '', 'subgoalName': 'role', 'subgoalAttList': ['N', 'R'], \
-                            'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'role_change', \
-                            'subgoalAttList': ['N', '_'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': \
-                            ['N', 'R'], 'goalTimeArg': 'next'}], \
-                            ['rule', {'relationName': 'role_x',  \
-                             'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'role_change', \
-                             'subgoalAttList': ['N', 'R'], 'subgoalTimeArg': ''}, \
-                            {'polarity': '', 'subgoalName': 'rank', 'subgoalAttList': ['N', 'R', 'I'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'max<I>'], 'goalTimeArg': ''}], \
-                            ['rule', {'relationName': 'role', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'role_x', 'subgoalAttList': ['N', 'I'], 'subgoalTimeArg': ''}, 
-                            {'polarity': '', 'subgoalName': 'rank', 'subgoalAttList': ['N', 'R', 'I'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['N', 'R'], 'goalTimeArg': 'next'}], \
-                            ['rule', {'relationName': 'term', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'term', \
-                             'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'stall', \
-                             'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'T'], \
-                             'goalTimeArg': 'next'}], ['rule', {'relationName': 'term', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'new_term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['N', 'T'], 'goalTimeArg': 'next'}], \
-                             ['rule', {'relationName': 'new_term', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'stall', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['N', 'T+1'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'lclock_register', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'new_term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, \
-                             'goalAttList': ['N', '"Localtime"', 'T'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'current_term', 'subgoalListOfDicts': \
-                             [{'polarity': '', 'subgoalName': 'term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['N', 'T'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'leader', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': \
-                             'current_term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'append_log', 'subgoalAttList': ['N', 'T', 'L', '_', '_', '_', '_', '_'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'T', 'L'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'last_append', 'subgoalListOfDicts': \
-                             [{'polarity': '', 'subgoalName': 'append_log', 'subgoalAttList': \
-                             ['Node', 'Term', '_', '_', '_', '_', '_', 'Rcv'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['Node', 'Term', 'max<Rcv>'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'stall', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'lclock', 'subgoalAttList': ['Node', '"Localtime"', 'Term', 'Time'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'last_append', 'subgoalAttList': ['Node', 'Term', 'Last'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'current_term', 'subgoalAttList': ['Node', 'Term'], 'subgoalTimeArg': ''}, \
-                             {'polarity': 'notin', 'subgoalName': 'role', 'subgoalAttList': ['Node', '"L"'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {'Time-Last>1': ['Time', 'Last', '1']}, \
-                             'goalAttList': ['Node', 'Term'], 'goalTimeArg': 'next'}], \
-                             ['rule', {'relationName': 'stall', 'subgoalListOfDicts': \
-                             [{'polarity': '', 'subgoalName': 'role', 'subgoalAttList': ['Node', '_'], 'subgoalTimeArg': ''}, \
-                             {'polarity': 'notin', 'subgoalName': 'append_log', 'subgoalAttList': ['Node', '_', '_', '_', '_', '_', '_', '_'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['Node', '0'], 'goalTimeArg': 'next'}], \
-                             ['rule', {'relationName': 'role_change', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'stall', 'subgoalAttList': ['N', '_'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['N', '"C"'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'role_change', 'subgoalListOfDicts': \
-                             [{'polarity': '', 'subgoalName': 'append_entries', 'subgoalAttList': ['N', 'T', 'L', '_', '_', '_', '_'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {'L!=N': ['L', 'N']}, \
-                             'goalAttList': ['N', '"F"'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'request_vote', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'stall', 'subgoalAttList': ['Candidate', 'Lastlogterm'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'member', 'subgoalAttList': ['Candidate', 'Node', '_'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'log_indx', 'subgoalAttList': ['Candidate', 'Lastlogindx'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['Node', 'Lastlogterm+1', 'Candidate', \
-                             'Lastlogindx', 'Lastlogterm'], 'goalTimeArg': 'async'}], \
-                             ['rule', {'relationName': 'accept_vote', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'winner', \
-                             'subgoalAttList': ['Node', 'Term', 'Id'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'member', 'subgoalAttList': ['Node', 'Candidate', 'Id'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'log_term', 'subgoalAttList': ['Node', 'Lterm'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {'Lterm<Term': ['Lterm', 'Term']}, 'goalAttList': ['Node', 'Candidate', 'Term'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'winner', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'request_vote', \
-                             'subgoalAttList': ['Node', 'Term', 'Candidate', '_', '_'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'member', 'subgoalAttList': ['Node', 'Candidate', 'Id'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['Node', 'Term', 'min<Id>'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'vote', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'request_vote', 'subgoalAttList': ['Node', 'Term', 'Candidate', '_', '_'], \
-                             'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'log_term', 'subgoalAttList': ['Node', 'Lterm'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {'Lterm>Term': ['Lterm', 'Term']}, \
-                             'goalAttList': ['Candidate', 'Node', 'Term', '"F"'], 'goalTimeArg': 'async'}], \
-                             ['rule', {'relationName': 'vote', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'accept_vote', \
-                             'subgoalAttList': ['Node', 'Candidate', 'Term'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['Candidate', 'Node', 'Term', '"T"'], 'goalTimeArg': 'async'}], \
-                             ['rule', {'relationName': 'vote_log', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'vote', \
-                             'subgoalAttList': ['C', 'N', 'T', 'V'], 'subgoalTimeArg': ''}], 'eqnDict': {}, \
-                             'goalAttList': ['C', 'N', 'T', 'V'], 'goalTimeArg': ''}], ['rule', {'relationName': 'vote_log', \
-                             'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'vote_log', 'subgoalAttList': ['C', 'N', 'T', 'V'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['C', 'N', 'T', 'V'], 'goalTimeArg': 'next'}], \
-                             ['rule', {'relationName': 'member_cnt', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'member', \
-                             'subgoalAttList': ['N', '_', 'M'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'count<M>'], \
-                             'goalTimeArg': ''}], ['rule', {'relationName': 'yes_vote_cnt', 'subgoalListOfDicts': [{'polarity': '', \
-                             'subgoalName': 'vote_log', 'subgoalAttList': ['Node', 'Member', 'Term', '"T"'], 'subgoalTimeArg': ''}, \
-                             {'polarity': '', 'subgoalName': 'member', 'subgoalAttList': ['Node', 'Member', 'Id'], 'subgoalTimeArg': ''}], \
-                             'eqnDict': {}, 'goalAttList': ['Node', 'Term', 'count<Id>'], 'goalTimeArg': ''}], ['rule', {'relationName': \
-                             'role_change', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'yes_vote_cnt', 'subgoalAttList': \
-                             ['N', '_', 'Cnt1'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'member_cnt', 'subgoalAttList': \
-                             ['N', 'Cnt2'], 'subgoalTimeArg': ''}], 'eqnDict': {'Cnt1>Cnt2/2': ['Cnt1', 'Cnt2', '2']}, 'goalAttList': ['N', '"L"'], \
-                             'goalTimeArg': ''}], ['rule', {'relationName': 'commit_indx', \
-                             'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log_term', 'subgoalAttList': ['Node', 'Idx'], \
-                             'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['Node', 'Idx'], 'goalTimeArg': ''}], \
-                             ['rule', {'relationName': 'member', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'member', \
-                             'subgoalAttList': ['N', 'M', 'I'], 'subgoalTimeArg': ''}], 'eqnDict': {}, \
-                             'goalAttList': ['N', 'M', 'I'], 'goalTimeArg': 'next'}]]
+    expected_parsedLines = [['rule', {'relationName': 'role_x', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'role_change', 'subgoalAttList': ['N', 'R'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'rank', 'subgoalAttList': ['N', 'R', 'I'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'max<I>'], 'goalTimeArg': ''}], ['rule', {'relationName': 'new_term', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'stall', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'T+1'], 'goalTimeArg': ''}], ['rule', {'relationName': 'lclock_register', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'new_term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', '"Localtime"', 'T'], 'goalTimeArg': ''}]]
 
     self.assertEqual( actual_parsedLines, expected_parsedLines )
 
@@ -235,6 +348,7 @@ class Test_dedt( unittest.TestCase ) :
   #  EXAMPLE 9  #
   ###############
   # test deliv_assert parse
+  #@unittest.skip( "working on different example" )
   def test_example9( self ) :
 
     # --------------------------------------------------------------- #
@@ -255,6 +369,7 @@ class Test_dedt( unittest.TestCase ) :
   #  EXAMPLE 8  #
   ###############
   # test the dedalus parser
+  #@unittest.skip( "working on different example" )
   def test_example8( self ) :
 
     # ====================================================== #
@@ -494,13 +609,13 @@ class Test_dedt( unittest.TestCase ) :
     # test 10 : good rule line with equations, goal time arg, subgoal time arg, negation
     # specify input file path
     
-    dedLine = "a(X,Y)@async:-X>Y,b(X,Y)@2,X==Y, notin c(Y)@1,X>=Y;"
+    dedLine = "a(X,Y)@async:-X>Y,b(X,Y)@2,X==Y, notin c(X,Y)@1,X>=Y;"
     
     # run program
     actualParse = dedalusParser.parse( dedLine )
   
     # grab expected parse
-    expectedParse = ['rule', {'relationName': 'a', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'b', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '2'}, {'polarity': 'notin', 'subgoalName': 'c', 'subgoalAttList': ['Y'], 'subgoalTimeArg': '1'}], 'eqnDict': {'X>Y': ['X', 'Y'], 'X>=Y': ['X', 'Y'], 'X==Y': ['X', 'Y']}, 'goalAttList': ['X', 'Y'], 'goalTimeArg': 'async'}]
+    expectedParse = ['rule', {'relationName': 'a', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'b', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '2'}, {'polarity': 'notin', 'subgoalName': 'c', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '1'}], 'eqnDict': {'X>Y': ['X', 'Y'], 'X>=Y': ['X', 'Y'], 'X==Y': ['X', 'Y']}, 'goalAttList': ['X', 'Y'], 'goalTimeArg': 'async'}]
 
     self.assertEqual( actualParse, expectedParse )
 
@@ -576,7 +691,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 15 : bad rule line. fails goal attribute capitalization post check
     # specify input file path
 
-    dedLine = 'a(x,Y)@async:-X>Y,b(X,Y)@2,X=="thing", notin c(Y)@1,X>=Y;'
+    dedLine = 'a(x,Y)@async:-X>Y,b(X,Y)@2,X=="thing", notin c(X,Y)@1,X>=Y;'
 
     # run program and catch error
     try :
@@ -593,7 +708,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 16 : bad rule line. fails subgoal attribute capitalization post check
     # specify input file path
     
-    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
+    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,blah)@2,Xadsf=="thing", notin c(Xasdf)@1,Xasdf>=Yasd;'
     
     # run program and catch error
     try :
@@ -610,7 +725,7 @@ class Test_dedt( unittest.TestCase ) :
     # test 17 : bad rule line. fails goal name lower case requirement post check
     # specify input file path
     
-    dedLine = 'A(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin c(Yasdf)@1,Xasdf>=Yasd;'
+    dedLine = 'A(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin c(Xasdf)@1,Xasdf>=Yasd;'
     
     # run program and catch error
     try :
@@ -626,7 +741,7 @@ class Test_dedt( unittest.TestCase ) :
     # ====================================================== #
     # test 18 : bad rule line. fails subgoal name lower case requirement post check
    
-    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin Cat(Yasdf)@1,Xasdf>=Yasd;'
+    dedLine = 'a(Xasdf,Yasdf)@async:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin Cat(Xasdf)@1,Xasdf>=Yasd;'
    
     # run program and catch error
     try :
@@ -652,23 +767,21 @@ class Test_dedt( unittest.TestCase ) :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    all subgoals in next rules must have identical first attributes.\n"
+    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    all subgoals in next and async rules must have identical first attributes.\n"
 
     self.assertEqual( actual_results, expected_error )
 
 
 
-  @unittest.skip( "working on different example" )
   ###############
   #  EXAMPLE 7  #
   ###############
   # test use of file includes
+  #@unittest.skip( "working on different example" )
   def test_example7( self ) :
 
     # --------------------------------------------------------------- #
-    # testing set up. dedToIR has dependency
-    # on createDedalusIRTables so that's
-    # tested first above.
+    # testing set up.
     testDB = "./IR.db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
@@ -677,12 +790,19 @@ class Test_dedt( unittest.TestCase ) :
     # runs through function to make sure it finishes with expected error
 
     # specify input file path
-    inputfile = "./testFiles/simplog_driver.ded"
+    inputfile = os.getcwd() + "/testFiles/simplog_driver.ded"
 
     actualFileList = tools.get_all_include_file_paths( inputfile )
-    expectedFileList = ['/Users/KsComp/projects/iapyx/qa/testFiles/bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
 
-    self.assertEqual( actualFileList, expectedFileList )
+    expectedFileList_bulk = ['/Users/KsComp/projects/iapyx/qa/testFiles/bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
+
+    expectedFileList_individual = ['/Users/KsComp/projects/iapyx/qa/testFiles/././bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/././deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/./simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
+
+    # need to branch on whether tests are run in bulk or individually???
+    if actualFileList == expectedFileList_bulk :
+      self.assertEqual( actualFileList, expectedFileList_bulk )
+    else :
+      self.assertEqual( actualFileList, expectedFileList_individual )
 
     # --------------------------------------------------------------- #
     # clean up testing
@@ -690,47 +810,90 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  ###############
-  #  EXAMPLE 6  #
-  ###############
-  # example 6 details a correct program.
+  #################
+  #  EXAMPLE 6 D  #
+  #################
+  # example 6 details an incorrect program.
+  # tests ded to c4 datalog translation using f(X) :- e(X)@1 ;
   # make sure this test produces the expected olg program.
-  @unittest.skip( "working on different example" )
-  def test_example6( self ) :
+  #@unittest.skip( "working on different example" )
+  def test_example6d( self ) :
 
     # --------------------------------------------------------------- #
-    #testing set up. dedToIR has dependency
-    #on createDedalusIRTables so that's
-    #tested first above.
+    # testing set up.
     testDB = "./IR.db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
     # --------------------------------------------------------------- #
     #dependency
-    dedt.createDedalusIRTables(cursor)
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes with expected error
 
     # specify input file path
-    inputfile = "./testFiles/example6.ded"
+    inputfile = "./testFiles/example6d.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # run program and catch error
+    try :
+      # run translator
+      programData = dedt.translateDedalus( argDict, cursor )
+    except :
+      actual_results = self.getError( sys.exc_info() )
+
+    # grab expected parse
+    expected_error = "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line 'f(X):-e(X)@1;'\n    line contains no negative subgoal NOT annotated with a numeric time argument."
+
+    self.assertEqual( actual_results, expected_error )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  #################
+  #  EXAMPLE 6 C  #
+  #################
+  # example 6 details a correct program.
+  # tests ded to c4 datalog translation using f(X)@async :- e(X)@1 ;
+  # make sure this test produces the expected olg program.
+  #@unittest.skip( "working on different example" )
+  def test_example6c( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/example6c.ded"
 
     # get argDict
     argDict = self.getArgDict( inputfile )
 
     # run translator
-    try :
-      programData = dedt.translateDedalus( argDict, cursor )
-      # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0][0] )
+    programData = dedt.translateDedalus( argDict, cursor )
 
-    # something broke. save output as a single string
-    except :
-      actual_results = self.getError( sys.exc_info() )
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/example6.olg"
+    expected_results_path = "./testFiles/example6c.olg"
     expected_results      = None
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()
@@ -743,12 +906,110 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
+  #################
+  #  EXAMPLE 6 B  #
+  #################
+  # example 6 details a correct program.
+  # tests ded to c4 datalog translation using f(X)@next :- e(X)@1 ;
+  # make sure this test produces the expected olg program.
+  #@unittest.skip( "working on different example" )
+  def test_example6b( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/example6b.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/example6b.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  #################
+  #  EXAMPLE 6 A  #
+  #################
+  # example 6 details a correct program.
+  # tests ded to c4 datalog translation.
+  # make sure this test produces the expected olg program.
+  #@unittest.skip( "working on different example" )
+  def test_example6a( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/example6a.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/example6a.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
   ###############
   #  EXAMPLE 5  #
   ###############
   # example 5 details an erroneous program.
   # make sure this test produces the expected error message.
+  #@unittest.skip( "working on different example" )
   def test_example5( self ) :
 
     # --------------------------------------------------------------- #
@@ -762,6 +1023,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes with expected error
@@ -775,20 +1037,18 @@ class Test_dedt( unittest.TestCase ) :
     # run translator
     try :
       programData = dedt.translateDedalus( argDict, cursor )
+
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0][0] )
+      actual_results = self.getActualResults( programData[0] )
 
     # something broke. save output as a single string
     except :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/example5_error.txt"
-    expected_results      = None
-    with open( expected_results_path, 'r' ) as expectedFile :
-      expected_results = expectedFile.read()
+    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line 'a(X):-;'\n    rule contains no detected subgoals."
 
-    self.assertEqual( actual_results, expected_results )
+    self.assertEqual( actual_results, expected_error )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -796,12 +1056,12 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
   ###############
   #  EXAMPLE 4  #
   ###############
   # example 4 details an erroneous program.
   # make sure this test produces the expected error message.
+  #@unittest.skip( "working on different example" )
   def test_example4( self ) :
 
     # --------------------------------------------------------------- #
@@ -815,6 +1075,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes with expected error
@@ -828,20 +1089,18 @@ class Test_dedt( unittest.TestCase ) :
     # run translator
     try :
       programData = dedt.translateDedalus( argDict, cursor )
+
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0][0] )
+      actual_results = self.getActualResults( programData[0] )
 
     # something broke. save output as a single string
     except :
       actual_results = self.getError( sys.exc_info() )
 
-    # grab expected output results as a string
-    expected_results_path = "./testFiles/example4_error.txt"
-    expected_results      = None
-    with open( expected_results_path, 'r' ) as expectedFile :
-      expected_results = expectedFile.read()
+    # grab expected error
+    expected_error = "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in line 'b(A)c(A);'\n    line does not contain a time argument.\n"
 
-    self.assertEqual( actual_results, expected_results )
+    self.assertEqual( actual_results, expected_error )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -849,12 +1108,12 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
   ###############
   #  EXAMPLE 3  #
   ###############
   # example 3 details an erroneous program.
   # make sure this test produces the expected error message.
+  #@unittest.skip( "working on different example" )
   def test_example3( self ) :
  
     # --------------------------------------------------------------- #
@@ -868,6 +1127,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes with expected error
@@ -882,31 +1142,28 @@ class Test_dedt( unittest.TestCase ) :
     try :
       programData = dedt.translateDedalus( argDict, cursor )
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0][0] )
+      actual_results = self.getActualResults( programData[0] )
 
     # something broke. save output as a single string
     except :
       actual_results = self.getError( sys.exc_info() )
 
-    # grab expected output results as a string
-    expected_results_path = "./testFiles/example3_error.txt"
-    expected_results      = None
-    with open( expected_results_path, 'r' ) as expectedFile :
-      expected_results = expectedFile.read()
+    # grab expected error
+    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line 'b(a):-!@$#@$;'\n    rule contains no detected subgoals."
    
-    self.assertEqual( actual_results, expected_results )
+    self.assertEqual( actual_results, expected_error )
     
     # --------------------------------------------------------------- #
     #clean up testing
     IRDB.close()
     os.remove( testDB )
 
-  @unittest.skip( "working on different example" )
   ###############
   #  EXAMPLE 2  #
   ###############
   # example 2 details an erroneous program.
   # make sure this test produces the expected error message.
+  #@unittest.skip( "working on different example" )
   def test_example2( self ) :
  
     # --------------------------------------------------------------- #
@@ -920,6 +1177,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes with expected error
@@ -934,19 +1192,16 @@ class Test_dedt( unittest.TestCase ) :
     try :
       programData = dedt.translateDedalus( argDict, cursor )
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0][0] )
+      actual_results = self.getActualResults( programData[0] )
 
     # something broke. save output as a single string
     except :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/example2_error.txt"
-    expected_results      = None
-    with open( expected_results_path, 'r' ) as expectedFile :
-      expected_results = expectedFile.read()
+    expected_error = '  PARSE : ERROR : missing semicolon in line \'b("a","a")\''
 
-    self.assertEqual( actual_results, expected_results )
+    self.assertEqual( actual_results, expected_error )
     
     # --------------------------------------------------------------- #
     #clean up testing
@@ -954,10 +1209,11 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
   ###############
   #  EXAMPLE 1  #
   ###############
+  # test input of one good fact
+  #@unittest.skip( "working on different example" )
   def test_example1( self ) :
   
     # --------------------------------------------------------------- #
@@ -971,6 +1227,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes without error
@@ -985,7 +1242,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0][0] )
+    actual_results = self.getActualResults( programData[0] )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example1.olg"
@@ -1001,11 +1258,11 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
   ###################
   #  EXAMPLE EMPTY  #
   ###################
   # input empty
+  #@unittest.skip( "working on different example" )
   def test_example_empty( self ) :
 
     # --------------------------------------------------------------- #
@@ -1019,6 +1276,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes without error
@@ -1033,7 +1291,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0][0] )
+    actual_results = self.getActualResults( programData[0] )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example_empty.olg"
@@ -1050,11 +1308,11 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
-  @unittest.skip( "working on different example" )
   #################################
   #  EXAMPLE EMPTY WITH COMMENTS  #
   #################################
   # input empty file with comments
+  #@unittest.skip( "working on different example" )
   def test_example_empty_with_comments( self ) :
 
     # --------------------------------------------------------------- #
@@ -1068,6 +1326,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #dependency
     dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
     #runs through function to make sure it finishes without error
@@ -1082,7 +1341,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0][0] )
+    actual_results = self.getActualResults( programData[0] )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example_empty_with_comments.olg"

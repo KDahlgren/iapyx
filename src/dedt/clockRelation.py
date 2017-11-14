@@ -5,7 +5,7 @@ clockRelation.py
    Define the functionality for creating clock relations.
 '''
 
-import inspect, os, sys
+import inspect, logging, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -51,7 +51,7 @@ def initClockRelation( cursor, argDict ) :
           for n2 in nodeSet :
             delivTime = str(i + 1)
             #cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
-            print "INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')"
+            logging.debug( "INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')" )
             cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')")
 
     # asynchronous communication model

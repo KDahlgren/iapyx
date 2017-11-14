@@ -1,7 +1,7 @@
 // simple broadcast.  make an attempt to send a message to all neighbors
 
-include "./testFiles/bcast_edb.ded";
-include "./testFiles/deliv_assert.ded";
+include "./bcast_edb.ded";
+include "./deliv_assert.ded";
 
 node(Node, Neighbor)@next :- node(Node, Neighbor);
 log(Node, Pload)@next :- log(Node, Pload);
