@@ -28,9 +28,9 @@ from evaluators     import c4_evaluator
 DEBUG = True
 
 
-####################
-#  CLASS LDFICORE  #
-####################
+################
+#  CLASS CORE  #
+################
 class Core :
 
   # --------------------------------- #

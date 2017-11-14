@@ -52,19 +52,13 @@ def run_workflow( ) :
   starterFile = sys.argv[1]
 
   # ---------------------------------------------------------------- #
-  # 1. build c4 datalog program                                      #
-  # ---------------------------------------------------------------- #
 
+  # allProgramData := [ allProgramLines, table_list ]
   allProgramData = dedalus_to_datalog( starterFile, cursor )
 
-  print allProgramData
-
-  # ----------------------------------------------- #
-  # 2. evaluate                                     #
-  # ----------------------------------------------- #
-
-  # use c4 wrapper 
-  #parsedResults = evaluate( allProgramData )
+  # output c4 program to stdout
+  for line in allProgramData[0] :
+    print line
 
 
 ########################
@@ -73,26 +67,26 @@ def run_workflow( ) :
 # translate all input dedalus files into a single datalog program
 def dedalus_to_datalog( starterFile, cursor ) :
 
-  logging.debug( "  : running process..." )
+  logging.debug( "  DEDALUS TO DATALOG : running process..." )
 
   # ----------------------------------------------------------------- #
   # create tables
   dedt.createDedalusIRTables( cursor )
-  logging.debug( "  TRANSLATE DEDALUS : created IR tables" )
+  logging.debug( "  DEDALUS TO DATALOG : created IR tables" )
 
   # ----------------------------------------------------------------- #
   # get all input files
 
   fileList    = tools.get_all_include_file_paths( starterFile )
 
-  logging.debug( "  TRANSLATE DEDALUS : fileList = " + str( fileList ) )
+  logging.debug( "  DEDALUS TO DATALOG : fileList = " + str( fileList ) )
 
   allProgramData = []
 
   # TO DO : concat all lines into a single file, then translate
   for fileName in fileList :
-    logging.debug( "  RUN TRANSLATOR : running process..." )
-    logging.warning( "  RUN TRANSLATOR : WARNING : need to fix file includes to run translator once. need to know all program lines to derive data types for program." )
+    logging.debug( "  DEDALUS TO DATALOG : running process..." )
+    #logging.warning( "  RUN TRANSLATOR : WARNING : need to fix file includes to run translator once. need to know all program lines to derive data types for program." )
   
     # ----------------------------------------------------------------- #
     #                            PARSE
@@ -102,16 +96,16 @@ def dedalus_to_datalog( starterFile, cursor ) :
     factMeta = meta[0]
     ruleMeta = meta[1]
   
-    logging.debug( "  RUN TRANSLATOR : len( ruleMeta ) = " + str( len( ruleMeta ) ) )
+    logging.debug( "  DEDALUS TO DATALOG: len( ruleMeta ) = " + str( len( ruleMeta ) ) )
   
     # ------------------------------------------------------------- #
     # generate the first clock
   
-#    logging.debug( "  RUN TRANSLATOR : building starter clock..." )
-#  
-#    dedt.starterClock( cursor, argDict )
-#  
-#    logging.debug( "  RUN TRANSLATOR : ...done building starter clock." )
+    logging.debug( "  RUN TRANSLATOR : building starter clock..." )
+  
+    dedt.starterClock( cursor, { "EOT":4, "nodes":["a","b","c","d"]} )
+  
+    logging.debug( "  RUN TRANSLATOR : ...done building starter clock." )
   
     # ----------------------------------------------------------------- #
     #                            REWRITE
@@ -171,76 +165,22 @@ def dedalus_to_datalog( starterFile, cursor ) :
     # ------------------------------------------------------------- #
     # translate IR into datalog
   
-    logging.debug( "  RUN TRANSLATOR : launching c4 evaluation..." )
+    logging.debug( "  DEDALUS TO DATALOG : launching c4 translation ..." )
   
     allProgramData.extend( c4_translator.c4datalog( cursor ) )
   
-    logging.debug( "  RUN TRANSLATOR : ...done with c4 evaluation." )
+    logging.debug( "  DEDALUS TO DATALOG : ...done with c4 translation." )
   
     # ------------------------------------------------------------- #
   
   return allProgramData
 
 
-##############
-#  EVALUATE  #
-##############
-# evaluate the datalog program using some datalog evaluator
-# return some data structure or storage location encompassing the evaluation results.
-def evaluate( self, allProgramData ) :
-
-  # make table list here?
-  sys.exit( "need table list" )
-  results_array = c4_evaluator.runC4_wrapper( allProgramData )
-
-  # ----------------------------------------------------------------- #
-  # dump evaluation results locally
-  eval_results_dump_dir = os.path.abspath( os.getcwd() ) + "/data/"
-
-  # make sure data dump directory exists
-  if not os.path.isdir( eval_results_dump_dir ) :
-    print "WARNING : evalulation results file dump destination does not exist at " + eval_results_dump_dir
-    print "> creating data directory at : " + eval_results_dump_dir
-    os.system( "mkdir " + eval_results_dump_dir )
-    if not os.path.isdir( eval_results_dump_dir ) :
-      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unable to create evaluation results dump directory at " + eval_results_dump_dir )
-    print "...done."
-
-  # data dump directory exists
-  self.eval_results_dump_to_file( results_array, eval_results_dump_dir )
-
-  # ----------------------------------------------------------------- #
-  # parse results into a dictionary
-  parsedResults = tools.getEvalResults_dict_c4( results_array )
-
-  # ----------------------------------------------------------------- #
-
-  return parsedResults
-
-
-###############################
-#  EVAL RESULTS DUMP TO FILE  #
-###############################
-def eval_results_dump_to_file( self, results_array, eval_results_dump_dir ) :
-
-  eval_results_dump_file_path = eval_results_dump_dir + "eval_dump_0.txt"
-
-  # save new contents
-  f = open( eval_results_dump_file_path, "w" )
-
-  for line in results_array :
-    
-    # output to stdout
-    if DEBUG :
-      print line
-
-    # output to file
-    f.write( line + "\n" )
-
-  f.close()
- 
-
+#########################
+#  THREAD OF EXECUTION  #
+#########################
 run_workflow()
+
 
 #########
 #  EOF  #
