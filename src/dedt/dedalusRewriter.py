@@ -23,8 +23,8 @@ import Fact, Rule
 DEDALUSREWRITER_DEBUG       = tools.getConfig( "DEDT", "DEDALUSREWRITER_DEBUG", bool )
 DEDALUSREWRITER_DUMPS_DEBUG = tools.getConfig( "DEDT", "DEDALUSREWRITER_DUMPS_DEBUG", bool )
 
-timeAtt_snd    = "SndTime"
-timeAtt_deliv  = "DelivTime"
+timeAtt_snd    = "NRESERVED"
+timeAtt_deliv  = "MRESERVED"
 
 
 #######################
@@ -80,6 +80,44 @@ def rewriteDeductive( metarule, cursor ) :
       subgoal[ "subgoalAttList" ].append( timeAtt_snd )
 
   # ------------------------------------------------------ #
+  # add clock subgoal
+  #
+  # NOTE!!!! 
+  #  Deductive rules do NOT need clock subgoals. I'm adding this b/c
+  #  molly adds clock subgoals to deductive rules.
+  #  Semantically, the clock subgoals only contribute self-comms,
+  #  which are ignored later in the LDFI workflow.
+
+  # grab the first attribute in a subgoal
+  # observe the parser ensures the first attributes 
+  # in all inductive rule subgoals
+
+  firstAtt = new_metarule_ruleData[ "subgoalListOfDicts" ][0][ "subgoalAttList" ][0]
+
+  # build the new clock subgoal dict
+  # format :
+  #   { subgoalName : 'subgoalNameStr', 
+  #     subgoalAttList : [ data1, ... , dataN ], 
+  #     polarity : 'notin' OR '', 
+  #     subgoalTimeArg : <anInteger> }
+
+  clock_subgoalName    = "clock"
+  clock_subgoalAttList = [ firstAtt, firstAtt, timeAtt_snd, "_" ]
+  clock_polarity       = "" # clocks are positive until proven negative.
+  clock_subgoalTimeArg = ""
+
+  clock_subgoalDict                      = {}
+  clock_subgoalDict[ "subgoalName" ]     = clock_subgoalName
+  clock_subgoalDict[ "subgoalAttList" ]  = clock_subgoalAttList
+  clock_subgoalDict[ "polarity" ] = clock_polarity
+  clock_subgoalDict[ "subgoalTimeArg" ]  = clock_subgoalTimeArg
+
+  # ------------------------------------------------------ #
+  # add the clock subgoal to the subgoal list for this rule
+
+  new_metarule_ruleData[ "subgoalListOfDicts" ].append( clock_subgoalDict )
+
+  # ------------------------------------------------------ #
   # preserve adjustments by instantiating the new meta rule
   # as a Rule
 
@@ -122,7 +160,7 @@ def rewriteInductive( metarule, cursor ) :
   # ------------------------------------------------------ #
   # add SndTime+1/DelivTime to goal attribute list
 
-  new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
+  new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
 
   # ------------------------------------------------------ #
   # remove goal time arg
@@ -163,7 +201,7 @@ def rewriteInductive( metarule, cursor ) :
   #     subgoalTimeArg : <anInteger> }
 
   clock_subgoalName    = "clock"
-  clock_subgoalAttList = [ firstAtt, firstAtt, timeAtt_snd, timeAtt_deliv ]
+  clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
   clock_polarity       = "" # clocks are positive until proven negative.
   clock_subgoalTimeArg = ""
 

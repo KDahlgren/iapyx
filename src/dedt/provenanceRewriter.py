@@ -81,6 +81,10 @@ def aggProv( aggRule, provid, cursor ) :
   old_bindings_goalAttList = bindingsmeta_ruleData[ "goalAttList" ]
   bindings_goalAttList     = getAllGoalAtts_noAggs( old_bindings_goalAttList )
 
+  # extract and save the time argument as the last element in the attribute list
+  bindings_goalAttList_last = bindings_goalAttList[-1]
+  bindings_goalAttList = bindings_goalAttList[:-1]
+
   # grab all subgoal atts
   subgoalListOfDicts = bindingsmeta_ruleData[ "subgoalListOfDicts" ]
 
@@ -100,7 +104,12 @@ def aggProv( aggRule, provid, cursor ) :
           if not isFixedString( att ) :
             bindings_goalAttList.append( att )
 
-  bindingsmeta_ruleData[ "goalAttList" ] = bindings_goalAttList
+  # add the time argument last
+  if not bindings_goalAttList_last in bindings_goalAttList :
+    bindings_goalAttList.append( bindings_goalAttList_last )
+
+  # save to rule data
+  bindingsmeta_ruleData[ "goal$iAttList" ] = bindings_goalAttList
 
   # ------------------------------------------------------ #
   # preserve adjustments by instantiating the new meta rule
@@ -249,6 +258,10 @@ def regProv( regRule, nameAppend, cursor ) :
   # save to provenance rule goal attribute list
   provGoalAttList.extend( goalAttList )
 
+  # extract and save the time argument as the last element in the attribute list
+  provGoalAttList_last = provGoalAttList[-1]
+  provGoalAttList      = provGoalAttList[:-1]
+
   # grab all subgoal atts
   subgoalListOfDicts = new_provmeta_ruleData[ "subgoalListOfDicts" ]
   for subgoal in subgoalListOfDicts :
@@ -265,6 +278,11 @@ def regProv( regRule, nameAppend, cursor ) :
           if not isFixedString( att ) :
             provGoalAttList.append( att )
 
+  # add the time argument last
+  if not provGoalAttList_last in provGoalAttList :
+    provGoalAttList.append( provGoalAttList_last )
+
+  # save to rule data
   new_provmeta_ruleData[ "goalAttList" ] = provGoalAttList
 
   # ------------------------------------------------------ #
@@ -301,10 +319,12 @@ def rewriteProvenance( ruleMeta, cursor ) :
     # 0 for each new rule name
 
     goalName = rule.ruleData[ "relationName" ]
-    if goalName == previousGoalName :
-      pass
-    else :
-      provid = 0
+
+    # don't need to be this smart when comparing output w/ molly
+    #if goalName == previousGoalName :
+    #  pass
+    #else :
+    #  provid = 0
 
     # -------------------------------------------------- #
     # CASE : rule contains aggregate calls in the head

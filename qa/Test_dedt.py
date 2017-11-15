@@ -28,7 +28,8 @@ from utils import dumpers, globalCounters, tools
 class Test_dedt( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
 
   ################
@@ -360,7 +361,7 @@ class Test_dedt( unittest.TestCase ) :
     actual_parsedLines = dedalusParser.parseDedalus( inputfile )
 
     # expected parsed lines
-    expected_parsedLines = [['rule', {'relationName': 'missing_log', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'node', 'subgoalAttList': ['X', 'A'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'log', 'subgoalAttList': ['A', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['A', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'pre', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'bcast', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': '1'}, {'polarity': 'notin', 'subgoalName': 'crash', 'subgoalAttList': ['X', 'X', '_'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'post', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'missing_log', 'subgoalAttList': ['_', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}]]
+    expected_parsedLines = [['rule', {'relationName': 'missing_log', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'node', 'subgoalAttList': ['X', 'A'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'log', 'subgoalAttList': ['A', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['A', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'pre', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'bcast', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': '1'}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'post', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'missing_log', 'subgoalAttList': ['_', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}]]
 
     self.assertEqual( actual_parsedLines, expected_parsedLines )
 

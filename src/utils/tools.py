@@ -59,7 +59,7 @@ def compile_full_program_and_save( fileList ) :
 
   fw.close()
 
-  logging.info( "  COMPILE FULL PROGRAM AND SAVE : saving compled dedalus program to " + save_file_path )
+  logging.info( "  COMPILE FULL PROGRAM AND SAVE : saving compiled dedalus program to " + save_file_path )
   return save_file_path
 
 
