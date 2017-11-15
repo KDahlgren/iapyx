@@ -1,0 +1,4 @@
+foo(X, Y) :- bar(X, Z), baz(Z, Y);
+
+bar(1, 2)@1;
+baz(2, 3)@1;
