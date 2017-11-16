@@ -1,2 +1,2 @@
-include "./examples_ft/delivery/simplog.ded" ;
+include "./examples_ft/delivery/replog.ded" ;
 include "./examples_ft/delivery/deliv_assert.ded" ;

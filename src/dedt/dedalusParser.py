@@ -479,6 +479,13 @@ def getSubgoalList( dedLine, eqnList ) :
   # character sequence
   subgoals = body.split( "___SPLIT___HERE___" )
 
+  # remove empties
+  tmp_subgoals = []
+  for sub in subgoals :
+    if not sub == "" :
+      tmp_subgoals.append( sub )
+  subgoals = tmp_subgoals
+
   # ========================================= #
   # parse all subgoals in the list
   for sub in subgoals :
@@ -745,8 +752,10 @@ def sanitizeFile( dedFile ) :
     # combine all lines into one big line
     for line in f :
 
+      #print "old_line = " +str( line )
       line = line.replace( "//", "___THISISACOMMENT___" )
       line = line.split( "___THISISACOMMENT___", 1 )[0]
+      #print "new_line = " +str( line )
 
       line = line.replace( "notin", "___notin___" )    # preserve notins
       line = line.replace( ";", ";___NEWLINE___" )     # preserve semicolons
@@ -758,7 +767,13 @@ def sanitizeFile( dedFile ) :
     bigLine  = bigLine.replace( "___notin___", " notin " ) # restore notins
     lineList = bigLine.split( "___NEWLINE___" )            # split big line into a list of lines
 
-    return lineList
+    # remove duplicates
+    final_lineList = []
+    for line in lineList :
+      if not line in final_lineList :
+        final_lineList.append( line )
+
+    return final_lineList
 
   else :
     sys.exit( "ERROR: File at " + dedFile + " does not exist.\nAborting..." )

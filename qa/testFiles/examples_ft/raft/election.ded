@@ -58,9 +58,31 @@ yes_vote_cnt(Node, Term, count<Id>) :- vote_log(Node, Member, Term, "T"), member
 
 role_change(N, "L") :- yes_vote_cnt(N, _, Cnt1), member_cnt(N, Cnt2), Cnt1 > Cnt2 / 2;
 
+
+
+
+
+
 //append_entries("z", 0, "z", 0, 0, "FOO", 0)@100;
+
 
 // a stub till I figure out commit indexes
 commit_indx(Node, Idx) :- log_term(Node, Idx);
 
+
+
 member(N, M, I)@next :- member(N, M, I);
+
+
+
+
+
+
+
+
+
+
+
+
+
+

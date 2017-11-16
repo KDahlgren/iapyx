@@ -54,7 +54,8 @@ def compile_full_program_and_save( fileList ) :
     logging.debug( "  COMPILE FULL PROGRAM AND SAVE : filepath = " + filepath )
     fr = open( filepath, "r" )
     for line in fr :
-      fw.write( line )
+      if not line.translate( None, string.whitespace ).startswith( "//" ) :
+        fw.write( line )
     fr.close()
 
   fw.close()
@@ -455,7 +456,7 @@ def get_all_include_file_paths( currPath ) :
 
       raw_fileNameList = []
       for line in currFile :
-        if "include" in line :
+        if line.startswith( "include" ) :
           raw_fileNameList.extend( re.findall( '"([^"]*)"', line ) )
 
       currFile.close()

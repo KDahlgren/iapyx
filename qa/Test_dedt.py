@@ -185,7 +185,7 @@ class Test_dedt( unittest.TestCase ) :
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
 
-    print actual_ruleData
+    #print actual_ruleData
 
     # expected rules
     expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['2', 'a', [[0, 'X', 'string'], [1, 'Z', 'int']]], ['3', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['0', 'a', [[0, 'X', 'string'], [1, '_', 'int']]], ['1', 'd', [[0, '_', 'string'], [1, 'Y', 'string']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['4', 'c', [[0, 'X', 'string'], [1, 'Z', 'string']]], ['5', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string']]]]}}
@@ -305,7 +305,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # --------------------------------------------------------------- #
 
-    inputfile = "./testFiles/bcast_edb.ded"
+    inputfile = "./testFiles/examples_ft/delivery/bcast_edb.ded"
     dedt.dedToIR( inputfile, cursor )
 
     # dump facts
@@ -355,7 +355,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     # specify input file path
-    inputfile = "./testFiles/deliv_assert.ded"
+    inputfile = "./testFiles/examples_ft/delivery/deliv_assert.ded"
 
     # run translator
     actual_parsedLines = dedalusParser.parseDedalus( inputfile )
@@ -795,9 +795,9 @@ class Test_dedt( unittest.TestCase ) :
 
     actualFileList = tools.get_all_include_file_paths( inputfile )
 
-    expectedFileList_bulk = ['/Users/KsComp/projects/iapyx/qa/testFiles/bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
+    expectedFileList_bulk = ['/Users/KsComp/projects/iapyx/qa/testFiles/examples_ft/delivery/bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/examples_ft/delivery/deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/examples_ft/delivery/simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/examples_ft/delivery/simplog_driver.ded']
 
-    expectedFileList_individual = ['/Users/KsComp/projects/iapyx/qa/testFiles/././bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/././deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/./simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
+    expectedFileList_individual = ['/Users/KsComp/projects/iapyx/qa/testFiles/./examples_ft/delivery/./bcast_edb.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/./examples_ft/delivery/simplog.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/./examples_ft/delivery/deliv_assert.ded', '/Users/KsComp/projects/iapyx/qa/testFiles/simplog_driver.ded']
 
     # need to branch on whether tests are run in bulk or individually???
     if actualFileList == expectedFileList_bulk :
@@ -1300,7 +1300,7 @@ class Test_dedt( unittest.TestCase ) :
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()
 
-    print "expected_results:" + str( expected_results )
+    #print "expected_results:" + str( expected_results )
     self.assertEqual( actual_results, expected_results )
 
     # --------------------------------------------------------------- #
@@ -1350,7 +1350,7 @@ class Test_dedt( unittest.TestCase ) :
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()
 
-    print "expected_results:" + str( expected_results )
+    #print "expected_results:" + str( expected_results )
     self.assertEqual( actual_results, expected_results )
 
     # --------------------------------------------------------------- #
