@@ -20,7 +20,7 @@ IR SCHEMA:
 
 '''
 
-import inspect, logging, os, string, sqlite3, sys
+import inspect, logging, os, pydot, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -52,6 +52,8 @@ import ConfigParser
 #############
 DEDT_DEBUG  = tools.getConfig( "DEDT", "DEDT_DEBUG", bool )
 DEDT_DEBUG1 = tools.getConfig( "DEDT", "DEDT_DEBUG1", bool )
+
+RELAX_SUBGOAL_TYPE_REQ = True
 
 aggOps   = [ "min", "max", "sum", "count", "avg" ]
 arithOps = [ "+", "-", "/", "*" ]
@@ -203,6 +205,15 @@ def setTypes( cursor ) :
           attType = attTypeList[i]
           cursor.execute( "UPDATE SubgoalAtt SET attType=='" + attType + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
 
+      # if subgoal is crash, then schema is trivial
+      elif subgoalName == "crash" :
+        attIDList   = [ 0, 1, 2 ]
+        attTypeList = [ "string", "string", "int" ]
+        for i in range( 0, len( attIDList ) ) :
+          attID   = attIDList[i]
+          attType = attTypeList[i]
+          cursor.execute( "UPDATE SubgoalAtt SET attType=='" + attType + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
+
       # if subgoal is edb, grab the types
       elif isEDB( subgoalName, cursor ) :
 
@@ -259,16 +270,16 @@ def setTypes( cursor ) :
 
 
   # ---------------------------------------------------- #
-  # PASS 2 : populate data types for idb goals in rules
-  #          predicated on edbs
-
-  setGoalTypes( cursor )
-
-  # ---------------------------------------------------- #
   # PASS 3 : populate data types for idb subgoals 
   #          (and a subset of idb goals in the process)
 
   setSubgoalTypes( ridList, cursor )
+
+  # ---------------------------------------------------- #
+  # PASS 2 : populate data types for idb goals in rules
+  #          predicated on edbs
+
+  setGoalTypes( cursor )
 
   # ---------------------------------------------------- #
   # continue pattern until no untyped goal or
@@ -288,22 +299,21 @@ def setTypes( cursor ) :
     iterationCount += 1
 
     # ---------------------------------------------------- #
-    # type as many goal atts as possible
-
-    setGoalTypes( cursor )
-
-    # ---------------------------------------------------- #
     # type as many subgoal atts as possible
 
     setSubgoalTypes( ridList, cursor )
 
     # ---------------------------------------------------- #
+    # type as many goal atts as possible
+
+    setGoalTypes( cursor )
+
+    # ---------------------------------------------------- #
     # check liveness
 
     new_number_of_fully_typed_rules = len( getFullyTypedRIDList( ridList, cursor ) )
-    logging.debug( "  SET TYPES : new_number_of_fully_typed_rules = " + str( new_number_of_fully_typed_rules ) )
-
-    logging.debug( "  SET TYPES : preprev_number_of_fully_typed_rules v_number_of_fully_typed_rules = " + str( prev_number_of_fully_typed_rules ) )
+    logging.debug( "  SET TYPES : new_number_of_fully_typed_rules  = " + str( new_number_of_fully_typed_rules ) )
+    logging.debug( "  SET TYPES : prev_number_of_fully_typed_rules = " + str( prev_number_of_fully_typed_rules ) )
 
     # define emergency termination condition
     if not new_number_of_fully_typed_rules > prev_number_of_fully_typed_rules :
@@ -311,15 +321,382 @@ def setTypes( cursor ) :
       # terminate after two loop iterations with the same number of fully typed rules
       if terminationFlag :
         #print dumpers.ruleAttDump
+        logging.debug( "ERROR : program is non-terminating. generating datalog dependency graph..." )
+        logging.debug( generateDatalogDependencyGraph( cursor ) )
+        logging.debug( printIRWithTypes( cursor ) )
         sys.exit( "  SET TYPES : ERROR : number of fully typed rules not increasing. program is non-terminating. aborting execution..." )
 
       else :
         terminationFlag = True
 
     # update emergency termination condition data
-    prev_number_of_fully_typed_rules = len( getFullyTypedRIDList( ridList, cursor ) )
+    prev_number_of_fully_typed_rules = new_number_of_fully_typed_rules
 
+  logging.debug( generateDatalogDependencyGraph( cursor ) )
   logging.debug( "  SET TYPES : ...done." )
+
+
+#######################################
+#  GENERATE DATALOG DEPENDENCY GRAPH  #
+#######################################
+# build a visualization of the datalog rule dependencies
+# in the form of a graph.
+def generateDatalogDependencyGraph( cursor ) :
+
+  nodes = []
+  edges = []
+
+  # ----------------------------------------- #
+  # get all rids
+
+  cursor.execute( "SELECT rid FROM Rule" )
+  ridList = cursor.fetchall()
+  ridList = tools.toAscii_list( ridList )
+
+  # ----------------------------------------- #
+  # iterate over rules
+
+  for rid in ridList :
+
+    # ----------------------------------------- #
+    # get relation name
+
+    cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + rid + "'" )
+    goalName = cursor.fetchone()
+    goalName =  tools.toAscii_str( goalName )
+
+    # ----------------------------------------- #
+    # get goal atts
+
+    cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
+    gattData = cursor.fetchall()
+    gattData = tools.toAscii_multiList( gattData )
+
+    # ----------------------------------------- #
+    # build goal string
+
+    goalStr = ""
+    goalStr += goalName + "("
+    for gatt in gattData :
+      gattName = gatt[1]
+      gattType = gatt[2]
+      goalStr += "[" + gattName + "," + gattType + "],"
+    goalStr = goalStr[:-1]
+    goalStr += ")"
+
+    # add goal node and edge
+    goalName_node      = pydot.Node( "GOAL=" + goalName, shape='oval' )
+    goalStr_node       = pydot.Node( goalStr, shape='box' )
+    goal_name_str_edge = pydot.Edge( goalName_node, goalStr_node )
+
+    logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding node " + goalName_node.get_name() )
+    logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding node " + goalStr_node.get_name() )
+    logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding edge " + goal_name_str_edge.get_source() + " -> " + goal_name_str_edge.get_destination() )
+
+    nodes.append( goalName_node )
+    nodes.append( goalStr_node )
+    edges.append( goal_name_str_edge )
+
+    # ----------------------------------------- #
+    # get all subgoal ids
+
+    cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
+    sidList = cursor.fetchall()
+    sidList = tools.toAscii_list( sidList )
+
+    # ----------------------------------------- #
+    # iterate over subgoals
+
+    for sid in sidList :
+
+      # ----------------------------------------- #
+      # get subgoal name
+
+      cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'"  )
+      subgoalName = cursor.fetchone()
+      subgoalName = tools.toAscii_str( subgoalName )
+
+      # ----------------------------------------- #
+      # get subgoal atts
+
+      cursor.execute( "SELECT attID,attName,attType FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'"  )
+      sattData = cursor.fetchall()
+      sattData = tools.toAscii_multiList( sattData )
+
+      # ----------------------------------------- #
+      # build subgoal str
+
+      subgoalStr = ""
+      subgoalStr += subgoalName + "("
+      for satt in sattData :
+        sattName = satt[1]
+        sattType = satt[2]
+        subgoalStr += "[" + sattName + "," + sattType + "],"
+      subgoalStr  = subgoalStr[:-1]
+      subgoalStr += ")"
+
+      # add subgoal node and edges
+      subgoalStr_node               = pydot.Node( subgoalStr, shape='diamond' )
+      subgoalName_node              = pydot.Node( "SUBGOAL=" + subgoalName, shape='oval' )
+      goal_str_subgoal_str_edge     = pydot.Edge( goalStr_node, subgoalStr_node )
+      subgoal_str_subgoal_name_edge = pydot.Edge( subgoalStr_node, subgoalName_node )
+
+      logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding node " + subgoalStr_node.get_name() )
+      logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding node " + subgoalName_node.get_name() )
+      logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding edge " + goal_str_subgoal_str_edge.get_source() + " -> " + goal_str_subgoal_str_edge.get_destination() )
+      logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding edge " + subgoal_str_subgoal_name_edge.get_source() + " -> " + subgoal_str_subgoal_name_edge.get_destination() )
+
+      nodes.append( subgoalStr_node )
+      nodes.append( subgoalName_node )
+      edges.append( goal_str_subgoal_str_edge )
+      edges.append( subgoal_str_subgoal_name_edge )
+
+      # ----------------------------------------- #
+      # ----------------------------------------- #
+      # add special nodes for fact connections
+
+      if isFact( subgoalName, cursor ) :
+
+        # ----------------------------------------- #
+        # get an fid for a fact with the subgoal name
+
+        cursor.execute( "SELECT fid FROM Fact WHERE name=='" + subgoalName + "'" )
+        fidList = cursor.fetchall()
+        fidList = tools.toAscii_list( fidList )
+        anFID = fidList[0]
+
+        # ----------------------------------------- #
+        # get the att type schema for the fact
+
+        cursor.execute( "SELECT dataID,data,dataType FROM FactData WHERE fid=='" + anFID + "'" )
+        fattData = cursor.fetchall()
+        fattData = tools.toAscii_multiList( fattData )
+
+        fschema  = ""
+        fschema += subgoalName + "("
+        for fatt in fattData :
+          fattType = fatt[2]
+          fschema += fattType + ","
+        fschema = fschema[:-1]
+        fschema += ")"
+
+        # save fact node and edge
+        fschema_node = pydot.Node( "FACT=" + fschema, shape='cylinder' )
+        subgoal_str_fschema_edge = pydot.Edge( subgoalStr_node, fschema_node )
+
+        logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding node " + fschema_node.get_name() )
+        logging.debug( "  GENERATE DATALOG DEPENDENCY GRAPH : adding edge " + subgoal_str_fschema_edge.get_source() + " -> " + subgoal_str_fschema_edge.get_destination() )
+
+        nodes.append( fschema_node )
+        edges.append( subgoal_str_fschema_edge )
+
+  # ----------------------------------------- #
+  # generate goal to subgoal node edges
+
+  for node1 in nodes :
+    for node2 in nodes :
+      if "SUBGOAL=" in node1.get_name() and "GOAL=" in node2.get_name() :
+        subgoalName = node1.get_name().replace( "SUBGOAL=", "" )
+        goalName    = node2.get_name().replace( "GOAL=", "" )
+        if subgoalName == goalName :
+          newEdge = pydot.Edge( node1, node2 )
+          edges.append( newEdge )
+
+  # ----------------------------------------- #
+  # create graph
+  graph = pydot.Dot( graph_type = 'digraph', strict = True ) # strict => ignore duplicate edges
+  path  = os.getcwd() + "/datalogDependencyGraph.png"
+
+  # add nodes :
+  for n in nodes :
+    graph.add_node( n )
+
+  # add edges
+  for e in edges :
+    graph.add_edge( e )
+
+  print "Saving prov tree render to " + str(path)
+  graph.write_png( path )
+
+
+#############
+#  IS FACT  #
+#############
+# check if the given relation name maps to a fact
+def isFact( relationName, cursor ) :
+
+  cursor.execute( "SELECT fid FROM Fact WHERE name=='" + relationName + "'" )
+  fidList = cursor.fetchall()
+  fidList = tools.toAscii_list( fidList )
+
+  if len( fidList ) > 0 :
+    return True
+  else :
+    return False
+
+
+###########################
+#  PRINT RULE WITH TYPES  #
+###########################
+# output all rule goals with attnames and associated types.
+def printRuleWithTypes( rid, cursor ) :
+
+  logging.debug( "  PRINT RULE WITH TYPES : running process..." )
+
+  printLine = ""
+
+  # ----------------------------------------- #
+  # get relation name
+
+  cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + rid + "'" )
+  goalName = cursor.fetchone()
+  goalName = tools.toAscii_str( goalName )
+
+  # ----------------------------------------- #
+  # get goal att names and types
+
+  cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
+  gattData = cursor.fetchall()
+  gattData = tools.toAscii_multiList( gattData )
+
+  # build head for printing
+  goal = goalName + "("
+  for gatt in gattData :
+    gattName = gatt[1]
+    gattType = gatt[2]
+    goal += "[" + gattName + "," + gattType + "]"
+  goal += ")"
+
+  printLine += goal + " :- "
+
+  # ----------------------------------------- #
+  # get all subgoal ids
+
+  cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
+  sidList = cursor.fetchall()
+  sidList = tools.toAscii_list( sidList )
+
+  # ----------------------------------------- #
+  # iterate over sids
+
+  for sid in sidList :
+
+    # ----------------------------------------- #
+    # get subgoal name
+
+    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+    subgoalName = cursor.fetchone()
+    subgoalName = tools.toAscii_str( subgoalName )
+
+    # ----------------------------------------- #
+    # get subgoal att names and types
+
+    cursor.execute( "SELECT attID,attName,attType FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+    sattData = cursor.fetchall()
+    sattData = tools.toAscii_multiList( sattData )
+
+    # ----------------------------------------- #
+    # build subgoal for printing
+
+    subgoal = subgoalName + "("
+    for satt in sattData :
+      sattName = satt[1]
+      sattType = satt[2]
+      subgoal += "[" + sattName + "," + sattType + "]"
+    subgoal += ")"
+
+    printLine += subgoal + ","
+
+  return printLine[:-1]
+
+
+#########################
+#  PRINT IR WITH TYPES  #
+#########################
+# output all rule goals with attnames and associated types.
+def printIRWithTypes( cursor ) :
+
+  logging.debug( "  PRINT IR WITH TYPES : running process..." )
+
+  # ----------------------------------------- #
+  # get all rids
+
+  cursor.execute( "SELECT rid FROM Rule" )
+  ridList = cursor.fetchall()
+  ridList = tools.toAscii_list( ridList )
+
+  logging.debug( "  PRINT IR WITH TYPE : number of fully typed rules = " + str( len( getFullyTypedRIDList( ridList, cursor ) ) ) )
+
+  # ----------------------------------------- #
+  # iterate over rids
+  for rid in ridList :
+
+    printLine = ""
+
+    # ----------------------------------------- #
+    # get relation name
+
+    cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + rid + "'" )
+    goalName = cursor.fetchone()
+    goalName = tools.toAscii_str( goalName )
+
+    # ----------------------------------------- #
+    # get goal att names and types
+
+    cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
+    gattData = cursor.fetchall()
+    gattData = tools.toAscii_multiList( gattData )
+
+    # build head for printing
+    goal = goalName + "("
+    for gatt in gattData :
+      gattName = gatt[1]
+      gattType = gatt[2]
+      goal += "[" + gattName + "," + gattType + "]"
+    goal += ")"
+
+    printLine += goal + " :- "
+
+    # ----------------------------------------- #
+    # get all subgoal ids
+
+    cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
+    sidList = cursor.fetchall()
+    sidList = tools.toAscii_list( sidList )
+
+    # ----------------------------------------- #
+    # iterate over sids
+
+    for sid in sidList :
+
+      # ----------------------------------------- #
+      # get subgoal name
+
+      cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      subgoalName = cursor.fetchone()
+      subgoalName = tools.toAscii_str( subgoalName )
+
+      # ----------------------------------------- #
+      # get subgoal att names and types
+
+      cursor.execute( "SELECT attID,attName,attType FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
+      sattData = cursor.fetchall()
+      sattData = tools.toAscii_multiList( sattData )
+
+      # ----------------------------------------- #
+      # build subgoal for printing
+
+      subgoal = subgoalName + "("
+      for satt in sattData :
+        sattName = satt[1]
+        sattType = satt[2]
+        subgoal += "[" + sattName + "," + sattType + "]"
+      subgoal += ")"
+
+      printLine += subgoal + ","
+    print printLine[:-1]
+
+  logging.debug( "  PRINT IR WITH TYPES : ...done." )
 
 
 ######################################
@@ -371,9 +748,12 @@ def rulesStillHaveUndefinedTypes( cursor ) :
 # respective data types.
 def getFullyTypedRIDList( ridList, cursor ) :
 
-  fullyTyped_ridList = []
+  logging.debug( "  GET FULLY TYPED RID LIST : running process..." )
+
+  fullyTyped_list = []
 
   for rid in ridList :
+
     if isFullyTyped( rid, cursor ) :
 
       # grab the rule relation name
@@ -381,9 +761,11 @@ def getFullyTypedRIDList( ridList, cursor ) :
       goalName = cursor.fetchone()
       goalName = tools.toAscii_str( goalName )
 
-      fullyTyped_ridList.append( [ rid, goalName ] )
+      fullyTyped_list.append( [ rid, goalName ] )
 
-  return fullyTyped_ridList
+  logging.debug( "  GET FULLY TYPED RID LIST : returning fullyTyped_list with len = " + str( len( fullyTyped_list ) ) )
+  logging.debug( "  GET FULLY TYPED RID LIST : fullyTyped_list = " + str( fullyTyped_list ) )
+  return fullyTyped_list
 
 
 #######################
@@ -403,8 +785,10 @@ def setSubgoalTypes( ridList, cursor ) :
   # at least one rule must be defined completely 
   # in terms of edbs.
 
-  fullyTyped_ridList = getFullyTypedRIDList( ridList, cursor )
-  logging.debug( "  SET SUBGOAL TYPES : fullyTyped_ridList = " + str( fullyTyped_ridList ) )
+  fullyTyped_list = getFullyTypedRIDList( ridList, cursor )
+  logging.debug( "  SET SUBGOAL TYPES : fullyTyped_list = " + str( fullyTyped_list ) )
+  for ft in fullyTyped_list :
+    logging.debug( "  SET SUBGOAL TYPES : ft = " + printRuleWithTypes( ft[0], cursor ) )
 
   # ===================================================== #
   # use the fully typed rules to type subgoals 
@@ -412,7 +796,9 @@ def setSubgoalTypes( ridList, cursor ) :
 
   for rid in ridList :
 
-    logging.debug( "  SET SUBGOAL TYPES : rid = " + rid )
+    logging.debug( "-------------------------------------------------------" )
+    logging.debug( "  SET SUBGOAL TYPES : rid           = " + rid )
+    logging.debug( "  SET SUBGOAL TYPES : original rule = " + printRuleWithTypes( rid, cursor ) )
 
     # ===================================================== #
     # grab the rule dump
@@ -422,12 +808,15 @@ def setSubgoalTypes( ridList, cursor ) :
     goalAttData    = ruleAttDump[ "goalAttData" ]
     subgoalAttData = ruleAttDump[ "subgoalAttData" ]
 
+    logging.debug( "  SET SUBGOAL TYPES : goalName = " + goalName )
+
     # ===================================================== #
     # iterate over subgoals
 
     for sub in subgoalAttData :
 
-      logging.debug( "  SET SUBGOAL TYPES : sub = " + str( sub ) )
+      logging.debug( "    SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS" )
+      logging.debug( "    SET SUBGOAL TYPES : sub = " + str( sub ) )
 
       subID      = sub[0]
       subName    = sub[1]
@@ -435,24 +824,32 @@ def setSubgoalTypes( ridList, cursor ) :
 
       # ------------------------------------------------ #
       # check if subgoal contains undefined types
-      logging.debug( "  SET SUBGOAL TYPES : containsUndefinedTypes( subAttList ) = " + str( containsUndefinedTypes( subAttList ) ) )
+
+      logging.debug( "    SET SUBGOAL TYPES : containsUndefinedTypes( subAttList ) = " + str( containsUndefinedTypes( subAttList ) ) )
+
       if containsUndefinedTypes( subAttList ) :
 
          # ------------------------------------------------ #
          # check if sub is fully typed
-         for ftrule in fullyTyped_ridList :
 
-           logging.debug( "  SET SUBGOAL TYPES : ftrule = " + str( ftrule ) )
+         for ftrule in fullyTyped_list :
 
            ftrule_rid      = ftrule[0]
            ftrule_goalName = ftrule[1]
+
+           logging.debug( "      FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" )
+           logging.debug( "      SET SUBGOAL TYPES : ftrule      = " + str( ftrule ) )
+           logging.debug( "      SET SUBGOAL TYPES : ftrule rule = " + printRuleWithTypes( ftrule_rid, cursor ) )
+
+           logging.debug( "      SET SUBGOAL TYPES : subName == ftrule_goalName is " + str( subName == ftrule_goalName ) )
 
            if subName == ftrule_goalName :
 
              # ------------------------------------------------ #
              # grab reference rule attribute info
+
              referenceRuleAttDump = dumpers.singleRuleAttDump( ftrule_rid, cursor )
-             logging.debug( "  SET SUBGOAL TYPES : referenceRuleAttDump = " + str( referenceRuleAttDump ) )
+             logging.debug( "    SET SUBGOAL TYPES : referenceRuleAttDump = " + str( referenceRuleAttDump ) )
 
              refGoalName       = referenceRuleAttDump[ "goalName" ]
              refGoalAttData    = referenceRuleAttDump[ "goalAttData" ]
@@ -465,8 +862,12 @@ def setSubgoalTypes( ridList, cursor ) :
 
                # ------------------------------------------------ #
                # perform update in target subgoal
+
+               logging.debug( "    UPDATE SubgoalAtt SET attType='" + refAttType + "' WHERE rid=='" + rid + "' AND sid=='" + subID + "' AND attID=='" + str( refAttID ) + "'" )
+
                cursor.execute( "UPDATE SubgoalAtt SET attType='" + refAttType + "' WHERE rid=='" + rid + "' AND sid=='" + subID + "' AND attID=='" + str( refAttID ) + "'" )
 
+               logging.debug( "    SET SUBGOAL TYPES : new rule  = " + printRuleWithTypes( rid, cursor ) )
 
   logging.debug( "  SET SUBGOAL TYPES : ...done." )
 
@@ -496,13 +897,14 @@ def containsUndefinedTypes( attList ) :
 # attribute types.
 def setGoalTypes( cursor ) :
 
-  logging.debug( "  SET GOAL ATTS : running process..." )
+  logging.debug( "  SET GOAL TYPES : running process..." )
 
   ruleAttDump = dumpers.ruleAttDump( cursor )
 
   for rid in ruleAttDump :
 
-    logging.debug( "  SET GOAL ATTS : rid = " + rid )
+    logging.debug( "  SET GOAL TYPES : rid           = " + rid )
+    logging.debug( "  SET GOAL TYPES : original rule = " + printRuleWithTypes( rid, cursor ) )
 
     # ======================================== #
     # grab the data for this rule
@@ -530,8 +932,8 @@ def setGoalTypes( cursor ) :
       gattName = gatt[1]
       gattType = gatt[2]
 
-      logging.debug( "  SET GOAL ATTS : gattName = " + gattName )
-      logging.debug( "  SET GOAL ATTS : gattType = " + gattType )
+      logging.debug( "  SET GOAL TYPES : gattName = " + gattName )
+      logging.debug( "  SET GOAL TYPES : gattType = " + gattType )
 
       if gattType == "UNDEFINEDTYPE" :
 
@@ -569,16 +971,18 @@ def setGoalTypes( cursor ) :
               if gattName == sattName and not sattType == "UNDEFINEDTYPE" :
                 newGattType = sattType
 
-        logging.debug( "  SET GOAL ATTS : newGattType = " + str( newGattType ) )
+        logging.debug( "  SET GOAL TYPES : newGattType = " + str( newGattType ) )
 
         # save the new attribute types
         if newGattType :
 
-          logging.debug( "  SET GOAL ATTS : UPDATE GoalAtt SET attType=='" + newGattType + "' WHERE rid=='" + rid + "' AND attID=='" + str( gattID ) + "'" )
+          logging.debug( "  SET GOAL TYPES : UPDATE GoalAtt SET attType=='" + newGattType + "' WHERE rid=='" + rid + "' AND attID=='" + str( gattID ) + "'" )
 
           cursor.execute( "UPDATE GoalAtt SET attType=='" + newGattType + "' WHERE rid=='" + rid + "' AND attID=='" + str( gattID ) + "'" )
 
-  logging.debug( "  SET GOAL ATTS : ...done." )
+    logging.debug( "  SET GOAL TYPES : new rule  = " + printRuleWithTypes( rid, cursor ) )
+
+  logging.debug( "  SET GOAL TYPES : ...done." )
 
 
 #############
@@ -628,6 +1032,8 @@ def isFixedInt( gattName ) :
 ####################
 #  IS FULLY TYPED  #
 ####################
+# check if the input rule is fully typed, meaning
+# all goal atts are typed and all subgoal atts are typed.
 def isFullyTyped( rid, cursor ) :
 
   # ================================================= #
@@ -637,7 +1043,7 @@ def isFullyTyped( rid, cursor ) :
   goalName = cursor.fetchone()
   goalName = tools.toAscii_str( goalName )
 
-  logging.debug( "  IS FULLY TYPED : running process on rule " + rid )
+  logging.debug( "  IS FULLY TYPED : running process on rule " + printRuleWithTypes( rid, cursor ) )
 
   # ===================================================== #
   # get the rule att data for the given rid
@@ -651,8 +1057,9 @@ def isFullyTyped( rid, cursor ) :
   # check goal atts
   goalAttData = currRuleAttData[ "goalAttData" ]
   for att in goalAttData :
-    attName = att[0]
-    attType = att[1]
+    attID   = att[0]
+    attName = att[1]
+    attType = att[2]
 
     logging.debug( "  IS FULLY TYPED : att = " + str( att ) )
 
@@ -661,20 +1068,21 @@ def isFullyTyped( rid, cursor ) :
       return False
 
   # check subgoal atts
-  subgoalAttData = currRuleAttData[ "subgoalAttData" ]
-  logging.debug( "  IS FULLY TYPED : subgoalAttData = " + str( subgoalAttData ) )
-  for sub in subgoalAttData :
-    subID   = sub[0]
-    subName = sub[1]
-    attList = sub[2]
+  if not RELAX_SUBGOAL_TYPE_REQ :
+    subgoalAttData = currRuleAttData[ "subgoalAttData" ]
+    logging.debug( "  IS FULLY TYPED : subgoalAttData = " + str( subgoalAttData ) )
+    for sub in subgoalAttData :
+      subID   = sub[0]
+      subName = sub[1]
+      attList = sub[2]
 
-    for att in attList :
-      attID   = att[0]
-      attName = att[1]
-      attType = att[2]
-      if attType == "UNDEFINEDTYPE" :
-        logging.debug( "  IS FULLY TYPED : subgoal atts returning False" )
-        return False
+      for att in attList :
+        attID   = att[0]
+        attName = att[1]
+        attType = att[2]
+        if attType == "UNDEFINEDTYPE" :
+          logging.debug( "  IS FULLY TYPED : subgoal atts returning False" )
+          return False
 
   logging.debug( "  IS FULLY TYPED : returning True" )
   return True

@@ -1,4 +1,5 @@
 .DS_Store
+qa/IR*
 *.swp
 examples/omissionProblem/data/*
 examples/delayProblem/data/*

@@ -395,18 +395,18 @@ def reconstructRule( rid, cursor ) :
   # -------------------------------------------------------------- #
   #
   # get goal name
-  cursor.execute( "SELECT goalName FROM Rule WHERE rid == '" + rid + "'" ) # get goal name
+  cursor.execute( "SELECT goalName FROM Rule WHERE rid == '" + str( rid ) + "'" ) # get goal name
   goalName    = cursor.fetchone()
   goalName    = tools.toAscii_str( goalName )
 
   # get list of attribs in goal
-  goalList    = cursor.execute( "SELECT attName FROM GoalAtt WHERE rid == '" + rid + "'" )# list of goal atts
+  goalList    = cursor.execute( "SELECT attName FROM GoalAtt WHERE rid == '" + str( rid ) + "'" )# list of goal atts
   goalList    = cursor.fetchall()
   goalList    = tools.toAscii_list( goalList )
 
   # get goal time arg
   goalTimeArg = ""
-  cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + rid + "'" )
+  cursor.execute( "SELECT goalTimeArg FROM Rule WHERE rid == '" + str( rid ) + "'" )
   goalTimeArg = cursor.fetchone()
   goalTimeArg = tools.toAscii_str( goalTimeArg )
 
@@ -428,7 +428,7 @@ def reconstructRule( rid, cursor ) :
   #
 
   # get list of sids for the subgoals of this rule
-  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + rid + "'" ) # get list of sids for this rule
+  cursor.execute( "SELECT sid FROM Subgoals WHERE rid == '" + str( rid ) + "'" ) # get list of sids for this rule
   subIDs = cursor.fetchall()
   subIDs = tools.toAscii_list( subIDs )
 
@@ -446,18 +446,18 @@ def reconstructRule( rid, cursor ) :
       subgoalName = tools.toAscii_str( subgoalName )
 
       # get subgoal attribute list
-      subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
+      subAtts = cursor.execute( "SELECT attName FROM SubgoalAtt WHERE rid == '" + str( rid ) + "' AND sid == '" + s + "'" )
       subAtts = cursor.fetchall()
       subAtts = tools.toAscii_list( subAtts )
 
       # get subgoal time arg
-      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      cursor.execute( "SELECT subgoalTimeArg FROM Subgoals WHERE rid == '" + str( rid ) + "' AND sid == '" + s + "'" ) # get list of sids for this rule
       subTimeArg = cursor.fetchone() # assume only one additional arg
       subTimeArg = tools.toAscii_str( subTimeArg )
 
       # get subgoal additional args
       subAddArg = None
-      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" ) # get list of sids for this rule
+      cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + str( rid ) + "' AND sid == '" + s + "'" ) # get list of sids for this rule
       subAddArg = cursor.fetchone() # assume only one additional arg
       if not subAddArg == "" :
         subAddArg = tools.toAscii_str( subAddArg )
@@ -484,7 +484,7 @@ def reconstructRule( rid, cursor ) :
   #                         EQUATIONS                               #
   # --------------------------------------------------------------- #
 
-  cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + rid + "'" ) # get list of eids for this rule
+  cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + str( rid ) + "'" ) # get list of eids for this rule
   eqnList = cursor.fetchall()
   eqnList = tools.toAscii_multiList( eqnList )
 

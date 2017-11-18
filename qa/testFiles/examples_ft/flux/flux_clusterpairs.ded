@@ -73,7 +73,7 @@ good(X, I) :- put_log("e", X, I);
 good(X, I) :- put_log(_, X, I), crash(_, "i", _);
 good(X, I) :- put_log(A, X, I), crash(A, "e", _);
 
-alive(M, X) :- member(_, M), put_log(M, X, _), notin crash(_, M, _);
+alive(M, X) :- member(_, M), put_log(M, X, _),  notin crash(_, M, _);
 both_alive(X) :- alive("i", X), alive("e", X);
 pre(X) :- alive(_, X);
 

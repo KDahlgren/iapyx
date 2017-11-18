@@ -13,7 +13,7 @@ import inspect, logging, os, sys
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
-from utils import extractors, tools
+from utils import dumpers, extractors, tools
 import dedalusParser
 import Rule
 # ------------------------------------------------------ #
@@ -62,7 +62,10 @@ def aggProv( aggRule, provid, cursor ) :
   # initialize the prov rule to old version of
   # meta rule
 
-  bindingsmeta_ruleData = aggRule.ruleData
+  bindingsmeta_ruleData = {}
+  for key in aggRule.ruleData :
+    val = aggRule.ruleData[ key ]
+    bindingsmeta_ruleData[ key ] = val
 
   logging.debug( "  AGG PROV : bindingsmeta_ruleData = " + str( bindingsmeta_ruleData ) )
 
@@ -70,7 +73,10 @@ def aggProv( aggRule, provid, cursor ) :
   # the provenance rule name ends with "_prov" appended 
   # with a unique number
 
-  bindingsmeta_ruleData[ "relationName" ] = bindingsmeta_ruleData[ "relationName" ] + "_bindings" + str( provid )
+  # NOTE!!!! LDFI paper says "_bindings", but molly implementation actually uses "_vars" append. >~<
+
+  #bindingsmeta_ruleData[ "relationName" ] = bindingsmeta_ruleData[ "relationName" ] + "_bindings" + str( provid )
+  bindingsmeta_ruleData[ "relationName" ] = bindingsmeta_ruleData[ "relationName" ] + "_vars"
 
   # ------------------------------------------------------ #
   # the goal att list consists of all subgoal atts
@@ -109,14 +115,13 @@ def aggProv( aggRule, provid, cursor ) :
     bindings_goalAttList.append( bindings_goalAttList_last )
 
   # save to rule data
-  bindingsmeta_ruleData[ "goal$iAttList" ] = bindings_goalAttList
+  bindingsmeta_ruleData[ "goalAttList" ] = bindings_goalAttList
 
   # ------------------------------------------------------ #
   # preserve adjustments by instantiating the new meta rule
   # as a Rule
 
   bindings_rule = Rule.Rule( bindings_rid, bindingsmeta_ruleData, cursor )
-
 
   # ------------------------------------------------------ #
   #              BUILD THE AGG PROVENANCE RULE             #
@@ -186,6 +191,20 @@ def aggProv( aggRule, provid, cursor ) :
 
   aggprovmeta_rule = Rule.Rule( aggprovmeta_rid, aggprovmeta_ruleData, cursor )
 
+  # ------------------------------------------------------ #
+  #               REWRITE ORIGINAL AGG RULE                #
+  # ------------------------------------------------------ #
+
+  # ------------------------------------------------------ #
+  # update rule meta with the new bindings subgoal
+
+  aggRule.ruleData[ "subgoalListOfDicts" ] = aggprovmeta_rule.ruleData[ "subgoalListOfDicts" ]
+  aggRule.subgoalListOfDicts = aggRule.ruleData[ "subgoalListOfDicts" ]
+
+  # ------------------------------------------------------ #
+  # save new subgoal data
+
+  aggRule.saveSubgoals()
 
   return [ bindings_rule, aggprovmeta_rule ]
 

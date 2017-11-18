@@ -41,6 +41,55 @@ class Test_vs_molly( unittest.TestCase ) :
 
   PRINT_STOP = False
 
+
+  ##################################
+  #  EXAMPLE FLUX PARTITION PAIRS  #
+  ##################################
+  # tests ded to c4 datalog for 3pc with optimistic assertions
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  # 	src/test/resources/examples_ft/flux/flux_clusterpairs.ded \
+  # 	--EOT 4 \
+  # 	--EFF 2 \
+  # 	--nodes a,b,c \
+  # 	--crashes 0 \
+  # 	--prov-diagrams"
+  #
+  @unittest.skip( "example from molly is non-terminating." )
+  def test_flux_clusterpairs( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/flux_clusterpairs_driver.ded"
+    expected_iapyx_path = "./testFiles/flux_clusterpairs_iapyx.olg"
+    molly_path          = "./testFiles/flux_clusterpairs_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ################################
+  #  EXAMPLE FLUX CLUSTER PAIRS  #
+  ################################
+  # tests ded to c4 datalog for 3pc with optimistic assertions
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  # 	src/test/resources/examples_ft/flux/flux_clusterpairs.ded \
+  # 	--EOT 4 \
+  # 	--EFF 2 \
+  # 	--nodes a,b,c \
+  # 	--crashes 0 \
+  # 	--prov-diagrams"
+  #
+  #@unittest.skip( "example from molly is non-terminating." )
+  def test_flux_clusterpairs( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/flux_clusterpairs_driver.ded"
+    expected_iapyx_path = "./testFiles/flux_clusterpairs_iapyx.olg"
+    molly_path          = "./testFiles/flux_clusterpairs_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
   ###########################
   #  EXAMPLE 3 PC OPTIMIST  #
   ###########################
@@ -389,6 +438,8 @@ class Test_vs_molly( unittest.TestCase ) :
     match_elements_flag_iapyx = False
     for iapyx_line in iapyx_line_array :
 
+      logging.debug( "  COMPARE IAPYX AND MOLLY : iapyx_line = " + iapyx_line )
+
       # skip all defines since molly's using some weird rule to 
       # order goal atts in prov rules.
       if iapyx_line.startswith( "define(" ) and iapyx_line.endswith( "})" ) :
@@ -398,6 +449,8 @@ class Test_vs_molly( unittest.TestCase ) :
 
         # if line is a rule, need a smarter comparison method
         if self.isRule( iapyx_line ) :
+
+          logging.debug( "  COMPARE IAPYX AND MOLLY : iapyx_line = " + iapyx_line )
 
           if iapyx_line in molly_line_array :
             match_elements_flag_iapyx = True
@@ -431,13 +484,13 @@ class Test_vs_molly( unittest.TestCase ) :
             match_elements_flag_molly = True
 
           elif not self.matchExists( molly_line, iapyx_line_array ) :
-            logging.debug( "  COMPARE IAPYX AND MOLLY (1) : iapyx_line '" + molly_line + "' not found in molly program." )
+            logging.debug( "  COMPARE IAPYX AND MOLLY (1) : molly_line '" + molly_line + "' not found in iapyx program." )
             match_elements_flag = False
 
         # otherwise, line is a fact, so checking existence is sufficient.
         else :
           if not molly_line in iapyx_line_array :
-            logging.debug( "  COMPARE IAPYX AND MOLLY (2) : iapyx_line '" + molly_line+ "' not found in molly program." )
+            logging.debug( "  COMPARE IAPYX AND MOLLY (2) : molly_line '" + molly_line+ "' not found in iapyx program." )
             match_elements_flag_molly = False
 
     if match_elements_flag_iapyx and match_elements_flag_molly :
@@ -455,11 +508,13 @@ class Test_vs_molly( unittest.TestCase ) :
   # check if the iapyx_rule appears in the molly_line_array
   def matchExists( self, iapyx_rule, molly_line_array ) :
 
+    logging.debug( "-------------------------------------------------------------" )
+    logging.debug( "  MATCH EXISTS : iapyx_rule        = " + iapyx_rule )
+
     iapyx_goalName    = self.getGoalName( iapyx_rule )
     iapyx_goalAttList = self.getGoalAttList( iapyx_rule )
     iapyx_body        = self.getBody( iapyx_rule )
 
-    logging.debug( "-------------------------------------------------------------" )
     logging.debug( "  MATCH EXISTS : iapyx_goalName    = " + iapyx_goalName )
     logging.debug( "  MATCH EXISTS : iapyx_goalAttList = " + str( iapyx_goalAttList ) )
     logging.debug( "  MATCH EXISTS : iapyx_body        = " + iapyx_body )
@@ -467,6 +522,7 @@ class Test_vs_molly( unittest.TestCase ) :
     for line in molly_line_array :
 
       if self.isRule( line ) :
+
         molly_goalName    = self.getGoalName( line )
         molly_goalAttList = self.getGoalAttList( line )
         molly_body        = self.getBody( line )
@@ -685,10 +741,14 @@ class Test_vs_molly( unittest.TestCase ) :
   #  SAME NAME  #
   ###############
   # extract the core name, without the '_prov' append, and compare
+  # if rule name is an _vars#_prov, cut off at the end of the _vars append
   def sameName( self, name1, name2 ) :
 
     # extract the core name for the first input name
-    if "_prov" in name1 :
+    if self.isAggsProvRewrite( name1 ) :
+      endingStr = re.search( '(.*)_prov(.*)', name1 )
+      coreName1 = name1.replace( endingStr.group(1), "" )
+    elif self.isProvRewrite( name1 ) :
       coreName1 = name1.split( "_prov" )
       coreName1 = coreName1[:-1]
       coreName1 = "".join( coreName1 )
@@ -696,7 +756,10 @@ class Test_vs_molly( unittest.TestCase ) :
       coreName1 = name1
 
     # extract the core name for the second input name
-    if "_prov" in name2 :
+    if self.isAggsProvRewrite( name2 ) :
+      endingStr = re.search( '(.*)_prov(.*)', name2 )
+      coreName2 = name1.replace( endingStr.group(1), "" )
+    elif self.isProvRewrite( name2 ) :
       coreName2 = name2.split( "_prov" )
       coreName2 = coreName2[:-1]
       coreName2 = "".join( coreName2 )
@@ -714,15 +777,58 @@ class Test_vs_molly( unittest.TestCase ) :
       return False
 
 
+  ##########################
+  #  IS AGGS PROV REWRITE  #
+  ##########################
+  # check if the input relation name is indicative of an aggregate provenance rewrite
+  def isAggsProvRewrite( self, relationName ) :
+
+    middleStr = re.search( '_vars(.*)_prov', relationName )
+
+    if middleStr :
+      if middleStr.group(1).isdigit() :
+        if relationName.endswith( middleStr.group(1) ) :
+          return True
+        else :
+          return False
+      else :
+        return False
+    else :
+      return False
+
+
+  #####################
+  #  IS PROV REWRITE  #
+  #####################
+  # check if the input relation name is indicative of an aggregate provenance rewrite
+  def isProvRewrite( self, relationName ) :
+
+    endingStr = re.search( '_prov(.*)', relationName )
+
+    if endingStr :
+      if endingStr.group(1).isdigit() :
+        if relationName.endswith( endingStr.group(1) ) :
+          return True
+        else :
+          return False
+      else :
+        return False
+    else :
+      return False
+
+
   ###################
   #  GET GOAL NAME  #
   ###################
   # extract the goal name from the input rule.
   def getGoalName( self, rule ) :
 
+    logging.debug( "  GET GOAL NAME : rule     = " + rule )
+
     goalName = rule.split( "(", 1 )
     goalName = goalName[0]
 
+    logging.debug( "  GET GOAL NAME : goalName = " + goalName )
     return goalName
 
 

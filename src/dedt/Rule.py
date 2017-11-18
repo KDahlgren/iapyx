@@ -60,6 +60,7 @@ class Rule :
   goalTimeArg        = None
   subgoalListOfDicts = []
   eqnDict            = {}
+  ruleData           = {}
 
 
   #################
@@ -162,7 +163,13 @@ class Rule :
   def saveSubgoals( self ) :
 
     # delete all data for this id in the table, if applicable
+    logging.debug( "  SAVE SUBGOALS : self.ruleData = = " + str( self.ruleData ) ) 
+
+    logging.debug( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) ) 
+
     self.cursor.execute( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) )
+
+    logging.debug( "self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
 
     for sub in self.subgoalListOfDicts :
 
