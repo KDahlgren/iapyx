@@ -42,26 +42,458 @@ class Test_vs_molly( unittest.TestCase ) :
   PRINT_STOP = False
 
 
+  ####################
+  #  EXAMPLE TOKENS  #
+  ####################
+  # tests ded to c4 datalog for the token example 
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/tokens.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  #@unittest.skip( "working on another example." )
+  def test_tokens( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/tokens_driver.ded"
+    expected_iapyx_path = "./testFiles/tokens_iapyx.olg"
+    molly_path          = "./testFiles/tokens_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ########################
+  #  EXAMPLE TEST DELIV  #
+  ########################
+  # tests ded to c4 datalog for the test deliv example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/test_deliv.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_test_deliv( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/test_deliv_driver.ded"
+    expected_iapyx_path = "./testFiles/test_deliv_iapyx.olg"
+    molly_path          = "./testFiles/test_deliv_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ######################
+  #  EXAMPLE TEST ACK  #
+  ######################
+  # tests ded to c4 datalog for the test ack example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/test_ack.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_test_ack( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/test_ack_driver.ded"
+    expected_iapyx_path = "./testFiles/test_ack_iapyx.olg"
+    molly_path          = "./testFiles/test_ack_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ####################
+  #  EXAMPLE TEST 2  #
+  ####################
+  # tests ded to c4 datalog for the test2 example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/test2.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_test2( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/test2_driver.ded"
+    expected_iapyx_path = "./testFiles/test2_iapyx.olg"
+    molly_path          = "./testFiles/test2_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ########################
+  #  EXAMPLE REGIS(T)ER  #
+  ########################
+  # tests ded to c4 datalog for the regis(t)er example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/register.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "java.lang.Exception: No evidence for type of column 1 of update" )
+  def test_register( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/register_driver.ded"
+    expected_iapyx_path = "./testFiles/register_iapyx.olg"
+    molly_path          = "./testFiles/register__molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ########################
+  #  EXAMPLE REAL KAFKA  #
+  ########################
+  # tests ded to c4 datalog for the second kafka example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/real_kafka.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_real_kafka( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/real_kafka_driver.ded"
+    expected_iapyx_path = "./testFiles/real_kafka_iapyx.olg"
+    molly_path          = "./testFiles/real_kafka_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ########################
+  #  EXAMPLE REAL CHORD  #
+  ########################
+  # tests ded to c4 datalog for the second chord example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/real_chord.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "java.lang.AssertionError: assertion failed: Conflicting evidence for type of column 3 of can_stab_prov15" )
+  def test_real_chord( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/real_chord_driver.ded"
+    expected_iapyx_path = "./testFiles/real_chord_iapyx.olg"
+    molly_path          = "./testFiles/real_chord_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ######################
+  #  EXAMPLE PIPELINE  #
+  ######################
+  # tests ded to c4 datalog for paxos
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/pipeline.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "java.io.FileNotFoundException: src/test/resources/examples_ft/./heartbeat.ded (No such file or directory)" )
+  def test_pipeline( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/pipeline_driver.ded"
+    expected_iapyx_path = "./testFiles/pipeline_iapyx.olg"
+    molly_path          = "./testFiles/pipeline_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  #########################
+  #  EXAMPLE PAXOS SYNOD  #
+  #########################
+  # tests ded to c4 datalog for paxos
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/paxos_synod.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  #@unittest.skip( "working on another example." )
+  def test_paxos_synod( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/paxos_synod_driver.ded"
+    expected_iapyx_path = "./testFiles/paxos_synod_iapyx.olg"
+    molly_path          = "./testFiles/paxos_synod_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ###################
+  #  EXAMPLE ORC 2  #
+  ###################
+  # tests ded to c4 datalog for the second orc spec
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/orc2.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_orc2( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/orc2_driver.ded"
+    expected_iapyx_path = "./testFiles/orc2_iapyx.olg"
+    molly_path          = "./testFiles/orc2_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  #################
+  #  EXAMPLE ORC  #
+  #################
+  # tests ded to c4 datalog for orc
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/orc.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_orc( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/orc_driver.ded"
+    expected_iapyx_path = "./testFiles/orc_iapyx.olg"
+    molly_path          = "./testFiles/orc_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ###################################
+  #  EXAMPLE NEGATIVE SUPPORT TEST  #
+  ###################################
+  # tests ded to c4 datalog for the negative support test
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/negative_support_test.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_negative_support_test( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/negative_support_test_driver.ded"
+    expected_iapyx_path = "./testFiles/negative_support_test_iapyx.olg"
+    molly_path          = "./testFiles/negative_support_test_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ###################
+  #  EXAMPLE KAFKA  #
+  ###################
+  # tests ded to c4 datalog for kafka
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/kafka.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "   SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line 'clients(Z,C)@async:-client(C),zookeeper(M,Z);' all subgoals in next and async rules must have identical first attributes.." )
+  def test_kafka( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/kafka_driver.ded"
+    expected_iapyx_path = "./testFiles/kafka_iapyx.olg"
+    molly_path          = "./testFiles/kafka_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ###############################
+  #  EXAMPLE CHAIN REPLICATION  #
+  ###############################
+  # tests ded to c4 datalog for the chain replication example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/chain_replication.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "java.io.FileNotFoundException: src/test/resources/examples_ft/./heartbeat.ded (No such file or directory)" )
+  def test_chain_replication( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/chain_replication_driver.ded"
+    expected_iapyx_path = "./testFiles/chain_replication_iapyx.olg"
+    molly_path          = "./testFiles/chain_replication_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ##########################
+  #  EXAMPLE BARRIER TEST  #
+  ##########################
+  # tests ded to c4 datalog for the barrier test example
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/barrier_test.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_barrier_test( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/barrier_test_driver.ded"
+    expected_iapyx_path = "./testFiles/barrier_test_iapyx.olg"
+    molly_path          = "./testFiles/barrier_test_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ##################
+  #  EXAMPLE RAMP  #
+  ##################
+  # tests ded to c4 datalog for ramp
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/ramp/ramp.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_ramp( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/ramp_driver.ded"
+    expected_iapyx_path = "./testFiles/ramp_iapyx.olg"
+    molly_path          = "./testFiles/ramp_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ##################
+  #  EXAMPLE RAFT  #
+  ##################
+  # tests ded to c4 datalog for raft
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/raft/raft.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_raft( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/raft_driver.ded"
+    expected_iapyx_path = "./testFiles/raft_iapyx.olg"
+    molly_path          = "./testFiles/raft_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
+  ####################
+  #  EXAMPLE GSTORE  #
+  ####################
+  # tests ded to c4 datalog for gstore
+  #
+  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #     src/test/resources/examples_ft/gstore/gstore.ded \
+  #     --EOT 4 \
+  #     --EFF 2 \
+  #     --nodes a,b,c \
+  #     --crashes 0 \
+  #     --prov-diagrams"
+  #
+  @unittest.skip( "missing asserts?" )
+  def test_gstore( self ) :
+
+    # specify input and output paths
+    inputfile           = os.getcwd() + "/testFiles/gstore_driver.ded"
+    expected_iapyx_path = "./testFiles/gstore_iapyx.olg"
+    molly_path          = "./testFiles/gstore_molly.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+
+
   ##################################
   #  EXAMPLE FLUX PARTITION PAIRS  #
   ##################################
   # tests ded to c4 datalog for 3pc with optimistic assertions
   #
   # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
-  # 	src/test/resources/examples_ft/flux/flux_clusterpairs.ded \
+  # 	src/test/resources/examples_ft/flux/flux_partitionpairs.ded \
   # 	--EOT 4 \
   # 	--EFF 2 \
   # 	--nodes a,b,c \
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  @unittest.skip( "example from molly is non-terminating." )
-  def test_flux_clusterpairs( self ) :
+  @unittest.skip( "SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line 'pre(X):-put(_,X,_,_)@1;' line contains no negative subgoal NOT annotated with a numeric time argument." )
+  def test_flux_partitionpairs( self ) :
 
     # specify input and output paths
-    inputfile           = os.getcwd() + "/testFiles/flux_clusterpairs_driver.ded"
-    expected_iapyx_path = "./testFiles/flux_clusterpairs_iapyx.olg"
-    molly_path          = "./testFiles/flux_clusterpairs_molly.olg"
+    inputfile           = os.getcwd() + "/testFiles/flux_partitionpairs_driver.ded"
+    expected_iapyx_path = "./testFiles/flux_partitionpairs_iapyx.olg"
+    molly_path          = "./testFiles/flux_partitionpairs_molly.olg"
 
     self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
 
@@ -79,7 +511,7 @@ class Test_vs_molly( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  #@unittest.skip( "example from molly is non-terminating." )
+  #@unittest.skip( "working on another example." )
   def test_flux_clusterpairs( self ) :
 
     # specify input and output paths

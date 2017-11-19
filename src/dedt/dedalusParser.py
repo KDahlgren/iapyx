@@ -280,7 +280,7 @@ def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
   # has no numeric time argument
 
   if not hasPosSubgoalWithoutIntegerTimeArg( ruleData ) :
-      sys.exit( "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line '" + ruleLine + "'\n    line contains no negative subgoal NOT annotated with a numeric time argument." )
+    sys.exit( "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line '" + ruleLine + "'\n    line contains no negative subgoal NOT annotated with a numeric time argument." )
 
 
   # ------------------------------------------ #
