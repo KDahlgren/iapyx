@@ -4,7 +4,7 @@ qa/IR*
 examples/omissionProblem/data/*
 examples/delayProblem/data/*
 examples/simplog/data/*
-
+examples/simplog/*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
