@@ -66,6 +66,7 @@ class Rule :
   #################
   #  CONSTRUCTOR  #
   #################
+  #
   # ruleData = { relationName : 'relationNameStr', 
   #              goalAttList:[ data1, ... , dataN ], 
   #              goalTimeArg : ""/next/async,
@@ -76,7 +77,9 @@ class Rule :
   #              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
   #                          ... , 
   #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+  #
   def __init__( self, rid, ruleData, cursor ) :
+
     self.rid      = rid
     self.cursor   = cursor
     self.ruleData = ruleData
@@ -235,8 +238,9 @@ class Rule :
   #             'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] } }
   def saveEquations( self ) :
 
-    # delete all data for this id in the table, if applicable
+    # delete all data for this id in the relevant tables, if applicable
     self.cursor.execute( "DELETE FROM Equation WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM EquationVars WHERE rid='%s'" % str( self.rid ) )
 
     for eqnStr in self.eqnDict :
 
@@ -256,8 +260,6 @@ class Rule :
 
       self.saveToEquation( eid, eqnStr )
       self.saveToEquationVars( eid, variableList )
-
-    return None
 
 
   ######################

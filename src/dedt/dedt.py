@@ -28,14 +28,13 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../translators" ) )
-if not os.path.abspath( __file__ + "/../../negativeWrites" ) in sys.path :
-  sys.path.append( os.path.abspath( __file__ + "/../../negativeWrites" ) )
+if not os.path.abspath( __file__ + "/../../dml" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../dml" ) )
 
 from utils          import dumpers, extractors, globalCounters, tools, parseCommandLineInput
 from translators    import c4_translator, dumpers_c4
-#from negativeWrites import negativeWrites, evaluate
 
-import negativeWrites, rewriteNegativeSubgoalsWithWildcards
+import dml, rewriteNegativeSubgoalsWithWildcards
 
 import clockRelation
 import dedalusParser
@@ -1151,16 +1150,6 @@ def rewrite( EOT, factMeta, ruleMeta, cursor ) :
 #    pass
 
   # ----------------------------------------------------------------------------- #
-  # negative rewrites
-
-#  logging.debug( "  REWRITE : calling negative rewrites..." )
-#
-#  NEGPROV = tools.getConfig( "DEFAULT", "NEGPROV", bool )
-#  if NEGPROV :
-#    newDMRuleMeta = negativeWrites.negativeWrites( EOT, original_prog, cursor )
-#    ruleMeta.extend( newDMRuleMeta )
-
-  # ----------------------------------------------------------------------------- #
   # provenance rewrites
 
   logging.debug( "  REWRITE : calling provenance rewrites..." )
@@ -1238,14 +1227,14 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
 #  CREATE DEDALUS IR TABLES  #
 ##############################
 def createDedalusIRTables( cursor ) :
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Fact       (fid text, name text, timeArg text)''')    # fact names
-  cursor.execute('''CREATE TABLE IF NOT EXISTS FactData   (fid text, dataID int, data text, dataType text)''')   # fact attributes list
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule       (rid text, goalName text, goalTimeArg text, rewritten text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt    (rid text, attID int, attName text, attType text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals   (rid text, sid text, subgoalName text, subgoalPolarity text, subgoalTimeArg text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt (rid text, sid text, attID int, attName text, attType text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Equation  (rid text, eid text, eqn text)''')
-  cursor.execute('''CREATE TABLE IF NOT EXISTS EquationVars  (rid text, eid text, varID int, var text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Fact         (fid text, name text, timeArg text)''')    # fact names
+  cursor.execute('''CREATE TABLE IF NOT EXISTS FactData     (fid text, dataID int, data text, dataType text)''')   # fact data list
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Rule         (rid text, goalName text, goalTimeArg text, rewritten text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS GoalAtt      (rid text, attID int, attName text, attType text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Subgoals     (rid text, sid text, subgoalName text, subgoalPolarity text, subgoalTimeArg text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS SubgoalAtt   (rid text, sid text, attID int, attName text, attType text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Equation     (rid text, eid text, eqn text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS EquationVars (rid text, eid text, varID int, var text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
   cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, delivTime int, simInclude text)''')

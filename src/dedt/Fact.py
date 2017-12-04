@@ -35,7 +35,7 @@ class Fact :
   #################
   #  CONSTRUCTOR  #
   #################
-  # factData = [ 'fact', { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> } ]
+  # factData = { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> }
   def __init__( self, fid, factData, cursor ) :
 
     self.fid      = fid
@@ -50,11 +50,11 @@ class Fact :
 
     # =========================================== #
     # extract time argument
-    self.factTimeArg = factData[ "factTimeArg" ]
+    self.factTimeArg = self.factData[ "factTimeArg" ]
 
     # =========================================== #
     # extract data list and derive types
-    dataList_raw      = factData[ "dataList" ]
+    dataList_raw      = self.factData[ "dataList" ]
     self.dataListWithTypes = self.getDataAndTypes( dataList_raw )
 
     # =========================================== #
@@ -129,26 +129,33 @@ class Fact :
   # test if the input string contains any alphabetic characters.
   # if so, then the data is a string.
   def isString( self, testString ) :
-  
+ 
     logging.debug( "  IS STRING : testString = " + str( testString ) )
+
+    if type( testString ) is int :
+      return False
+
+    elif testString.isdigit() :
+      return False
+
+    else :
+      alphabet = [ 'a', 'b', 'c', \
+                   'd', 'e', 'f', \
+                   'g', 'h', 'i', \
+                   'j', 'k', 'l', \
+                   'm', 'n', 'o', \
+                   'p', 'q', 'r', \
+                   's', 't', 'u', \
+                   'v', 'w', 'x', \
+                   'y', 'z' ]
   
-    alphabet = [ 'a', 'b', 'c', \
-                 'd', 'e', 'f', \
-                 'g', 'h', 'i', \
-                 'j', 'k', 'l', \
-                 'm', 'n', 'o', \
-                 'p', 'q', 'r', \
-                 's', 't', 'u', \
-                 'v', 'w', 'x', \
-                 'y', 'z' ]
+      flag = False
+      for character in testString :
+        if character.lower() in alphabet :
+          flag = True
   
-    flag = False
-    for character in testString :
-      if character.lower() in alphabet :
-        flag = True
-  
-    logging.debug( "  IS STRING : flag = " + str( flag ) )
-    return flag
+      logging.debug( "  IS STRING : flag = " + str( flag ) )
+      return flag
 
 
 #########
