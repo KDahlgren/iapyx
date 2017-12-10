@@ -1,4 +1,12 @@
-foo(X, Y) :- bar(X, Z), baz(Z, Y);
-
-bar(1, 2)@1;
-baz(2, 3)@1;
+foo(X) :- b(X), notin a(X);
+a(X) :- d(X,Y), c(Y);
+a(X) :- h(X);
+d(X,Y) :- e(X), h(Y);
+d(X,Y) :- b(X), c(Y);
+h(X) :- f(X);
+h(X) :- e(X);
+h(X) :- b(X);
+b(2)@1;
+c(1)@1;
+e(1)@1;
+f(2)@1;
