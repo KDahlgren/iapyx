@@ -18,12 +18,6 @@ from dedt  import Rule
 # ------------------------------------------------------ #
 
 
-#############
-#  GLOBALS  #
-#############
-C4_TRANSLATOR_DEBUG   = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG", bool )
-C4_TRANSLATOR_DEBUG_1 = tools.getConfig( "DEDT", "C4_TRANSLATOR_DEBUG1", bool )
-
 #####################
 #  EXISTING DEFINE  #
 #####################
@@ -87,8 +81,7 @@ def c4datalog( cursor ) :
 
     # ////////////////////////////////////////////////////////// #
     # populate defines list for rule goals
-    if C4_TRANSLATOR_DEBUG :
-      print "In c4datalog: definesList = " + str(definesList)
+    logging.debug( "In c4datalog: definesList = " + str(definesList) )
 
     if not existingDefine( goalName, definesNames ) : # prevent duplicates
 
@@ -97,8 +90,7 @@ def c4datalog( cursor ) :
       goalAttList = cursor.fetchall()
       goalAttList = tools.toAscii_multiList( goalAttList )
 
-      if C4_TRANSLATOR_DEBUG_1 :
-        print "* goalName = " + goalName + ", goalAttList " + str( goalAttList )
+      logging.debug( "* goalName = " + goalName + ", goalAttList " + str( goalAttList ) )
 
       # populate type list for rule
       typeList = []
@@ -143,11 +135,10 @@ def c4datalog( cursor ) :
     factName = cursor.fetchone()
     factName = tools.toAscii_str( factName )
 
-    if C4_TRANSLATOR_DEBUG :
-      print "**> factName = " + factName
+    logging.debug( "**> factName = " + factName )
 
-    if C4_TRANSLATOR_DEBUG :
-      print "In c4datalog: definesList = " + str(definesList)
+    logging.debug( "In c4datalog: definesList = " + str(definesList) )
+
     if not existingDefine( factName, definesNames ) : # prevent duplicates
 
       # populate table string
@@ -159,8 +150,7 @@ def c4datalog( cursor ) :
       factAttList = cursor.fetchall()
       factAttList = tools.toAscii_multiList( factAttList )
 
-      if C4_TRANSLATOR_DEBUG_1 :
-        print "* factName = " + factName + ", factAttList " + str( factAttList )
+      logging.debug( "* factName = " + factName + ", factAttList " + str( factAttList ) )
 
       # populate type list for fact
       typeList = []
@@ -237,8 +227,7 @@ def c4datalog( cursor ) :
 
   clockFactList = dumpers_c4.dump_clock( cursor )
 
-  if C4_TRANSLATOR_DEBUG :
-    print "c4_translator: clockFactList = " + str( clockFactList )
+  logging.debug( "c4_translator: clockFactList = " + str( clockFactList ) )
 
   # ----------------------------------------------------------- #
   # add crash facts
@@ -248,8 +237,7 @@ def c4datalog( cursor ) :
   #print crashFactList
   #tools.bp( __name__, inspect.stack()[0][3], "blah" )
 
-  if C4_TRANSLATOR_DEBUG :
-    print "c4_translator: crashFactList = " + str( crashFactList )
+  logging.debug( "c4_translator: crashFactList = " + str( crashFactList ) )
 
   # ----------------------------------------------------------- #
   # add rules
@@ -280,26 +268,19 @@ def c4datalog( cursor ) :
   # ----------------------------------------------------------- #
   # save table list
 
-  if C4_TRANSLATOR_DEBUG :
-    print "*******************************************"
-    print "table list str :"
-    print tableListStr
-    print "table list array :"
-    print tableListArray
+  logging.debug( "*******************************************" )
+  logging.debug( "table list str :\n" + str( tableListStr ) )
+  logging.debug( "table list array :\n" + str( tableListArray ) )
 
   # ----------------------------------------------------------- #
   # collect program statements
 
-  if C4_TRANSLATOR_DEBUG :
-    print "*******************************************"
-    print "definesList :"
-    print definesList
-    print "*******************************************"
-    print "factList :"
-    print factList
-    print "*******************************************"
-    print "ruleList :"
-    print ruleList
+  logging.debug( "*******************************************" )
+  logging.debug( "definesList :\n" + str( definesList ) )
+  logging.debug( "*******************************************" )
+  logging.debug( "factList :\n" + str( factList ) )
+  logging.debug( "*******************************************" )
+  logging.debug( "ruleList :\n" + str( ruleList ) )
 
   #listOfStatementLists = [ definesList, factList, ruleList, clockFactList ]
   listOfStatementLists = [ definesList, factList, ruleList, clockFactList, crashFactList ]

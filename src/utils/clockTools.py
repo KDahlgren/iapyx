@@ -5,7 +5,7 @@ clockTools.py
   methods for adding clock subgoals to different rule types.
 '''
 
-import inspect, os, random, re, string, sys
+import logging, inspect, os, random, re, string, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -14,12 +14,6 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 
 import dumpers, tools
 # ------------------------------------------------------ #
-
-#############
-#  GLOBALS  #
-#############
-CLOCKTOOLS_DEBUG = tools.getConfig( "UTILS", "CLOCKTOOLS_DEBUG", bool )
-
 
 ####################
 #  IS NOT SUBGOAL  #
@@ -103,8 +97,7 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
       baseAtt = att
       break
 
-  if CLOCKTOOLS_DEBUG :
-    print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
+  logging.debug( "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) ) )
 
   # iterate over all first atts
   for c in firstSubgoalAtts :
@@ -147,8 +140,7 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   #newAttID = int(rawMaxID[0]) + 1
   newAttID = 0
   for attName in subgoalAttList :
-    if CLOCKTOOLS_DEBUG :
-      print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
+    logging.debug( rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName )
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     if newAttID < 2 :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")
@@ -169,8 +161,7 @@ def addClockSubgoal_deductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
 def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv, cursor ) :
   baseAtt = firstSubgoalAtts[0]
 
-  if CLOCKTOOLS_DEBUG :
-    print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
+  logging.debug( "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) ) )
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
@@ -212,8 +203,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
   #newAttID = int(rawMaxID[0]) + 1
   newAttID = 0
   for attName in subgoalAttList :
-    if CLOCKTOOLS_DEBUG :
-      print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
+    logging.debug( rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName )
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     if newAttID < 2 :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")
@@ -234,8 +224,7 @@ def addClockSubgoal_inductive( rid, firstSubgoalAtts, timeAtt_snd, timeAtt_deliv
 def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAtt_deliv, cursor ) :
   baseAtt = firstSubgoalAtts[0]
 
-  if CLOCKTOOLS_DEBUG :
-    print "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) )
+  logging.debug( "CLOCKTOOLS_DEBUG: For rule : " + str( dumpers.reconstructRule( rid, cursor ) + "\n    firstSubgoalAtts = " + str(firstSubgoalAtts) ) )
 
   for c in firstSubgoalAtts :
     if not c == baseAtt :
@@ -273,8 +262,7 @@ def addClockSubgoal_async( rid, firstSubgoalAtts, secondAtt, timeAtt_snd, timeAt
   #newAttID = int(rawMaxID[0]) + 1
   newAttID = 0
   for attName in subgoalAttList :
-    if CLOCKTOOLS_DEBUG :
-      print rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName
+    logging.debug( rid, sid, subgoalName, subgoalTimeArg, str(newAttID), attName )
     #cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','UNDEFINEDTYPE')")
     if newAttID < 2 :
       cursor.execute("INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str(newAttID) + "','" + attName + "','string')")

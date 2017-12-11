@@ -5,7 +5,7 @@ dumpers_c4.py
    Methods for dumping specific contents from the database.
 '''
 
-import inspect, os, sys
+import logging, inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -14,11 +14,6 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 
 from utils import tools, dumpers
 # ------------------------------------------------------ #
-
-#############
-#  GLOBALS  #
-#############
-DUMPERS_C4_DEBUG = tools.getConfig( "DEDT", "DUMPERS_C4_DEBUG", bool )
 
 
 #############
@@ -49,11 +44,7 @@ def dumpIR( cursor, db_dump_save_path ) :
   full_clock = dump_clock( cursor )
 
   if db_dump_save_path :
-    if DUMPERS_C4_DEBUG :
-      print "...DUMPING IR..."
-      print full_facts
-      print full_rules
-      print full_clock
+    logging.debug( "...DUMPING IR...\n" + str( full_facts ) + "\n" + str( full_rules ) + "\n" + str( full_clock ) )
 
     # save to file
     fo = open( db_dump_save_path, "w" )
@@ -183,8 +174,7 @@ def dumpSingleRule_c4( rid, cursor ) :
     if not subgoalName == None :
       subgoalName = tools.toAscii_str( subgoalName )
 
-      if DUMPERS_C4_DEBUG :
-        print "subgoalName = " + subgoalName
+      logging.debug( "subgoalName = " + subgoalName )
 
 
       # get subgoal attribute list
@@ -325,8 +315,7 @@ def prioritizeDoms( rid, subIDs, cursor ) :
 # dump and format all clock facts in c4 overlog
 def dump_clock( cursor ) :
 
-  if DUMPERS_C4_DEBUG :
-    print "...running dumpers_c4 dump_clock..."
+  logging.debug( "...running dumpers_c4 dump_clock..." )
 
   formattedClockFactsList = []
 
@@ -335,12 +324,10 @@ def dump_clock( cursor ) :
   clockFacts = cursor.fetchall()
   clockFacts = tools.toAscii_multiList( clockFacts )
 
-  if DUMPERS_C4_DEBUG :
-    print "dump_clock: clockFacts = " + str(clockFacts)
+  logging.debug( "dump_clock: clockFacts = " + str(clockFacts) )
 
   for c in clockFacts :
-    if DUMPERS_C4_DEBUG :
-      print "c = " + str(c)
+    logging.debug( "c = " + str(c) )
 
     clockF = 'clock('
     for i in range(0,len(c)) :
@@ -363,8 +350,7 @@ def dump_clock( cursor ) :
 # dump and format all clock facts in c4 overlog
 def dump_crash( cursor ) :
 
-  if DUMPERS_C4_DEBUG :
-    print "...running dumpers_c4 dump_crash..."
+  logging.debug( "...running dumpers_c4 dump_crash..." )
 
   formattedCrashFactsList = []
 
@@ -378,15 +364,12 @@ def dump_crash( cursor ) :
     cursor.execute( "SELECT src, dest, sndTime FROM Crash" )
     crashFacts = cursor.fetchall()
     crashFacts = tools.toAscii_multiList( crashFacts )
-    if DUMPERS_C4_DEBUG :
-      print "crashFacts = " + str(crashFacts)
+    logging.debug( "crashFacts = " + str(crashFacts) )
 
-  if DUMPERS_C4_DEBUG :
-    print "dump_crash: crashFacts = " + str(crashFacts)
+  logging.debug( "dump_crash: crashFacts = " + str(crashFacts) )
 
   for c in crashFacts :
-    if DUMPERS_C4_DEBUG :
-      print "c = " + str(c)
+    logging.debug( "c = " + str(c) )
 
     crashF = 'crash('
     for i in range(0,len(c)) :

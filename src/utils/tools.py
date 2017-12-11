@@ -87,7 +87,7 @@ def bp( filename, funcname, msg ) :
 ################
 #  GET CONFIG  #
 ################
-def getConfig( section, option, dataType ) :
+def getConfig( settings_path, section, option, dataType ) :
 
   # ---------------------------------------------- #
   # create config parser instance
@@ -107,7 +107,7 @@ def getConfig( section, option, dataType ) :
 
   # ---------------------------------------------- #
   # read user-specified settings, if applicable
-  settings_path = os.path.abspath( os.getcwd() ) + "/settings.ini"
+  #settings_path = os.path.abspath( os.getcwd() ) + "/settings.ini"
   if os.path.isfile( settings_path ) : # check if file exists first.
     configs.read( settings_path )
 

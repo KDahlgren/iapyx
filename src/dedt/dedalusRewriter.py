@@ -20,8 +20,6 @@ import Fact, Rule
 #############
 #  GLOBALS  #
 #############
-DEDALUSREWRITER_DEBUG       = tools.getConfig( "DEDT", "DEDALUSREWRITER_DEBUG", bool )
-DEDALUSREWRITER_DUMPS_DEBUG = tools.getConfig( "DEDT", "DEDALUSREWRITER_DUMPS_DEBUG", bool )
 
 timeAtt_snd    = "NRESERVED"
 timeAtt_deliv  = "MRESERVED"
@@ -346,42 +344,36 @@ def rewriteFacts( factMeta, cursor ) :
   logging.debug( "  REWRITE FACTS : running process..." )
   logging.debug( "  REWRITE FACTS : factMeta = " + str( factMeta ) )
 
-  new_factMeta = []
   for fact in factMeta :
 
     logging.debug( "  REWRITE FACTS : fact.factData = " + str( fact.factData ) )
 
     # ------------------------------------------ #
-    # rewritten facts overwrite old facts
-    # so, use the old fid
-
-    fid = fact.fid
-
-    # ------------------------------------------ #
-    # initialize new fact meta data to old fact
-    # meta data
-
-    new_fact_factData = fact.factData
-
-    # ------------------------------------------ #
     # grab time arg and reset to ""
-    factTimeArg = new_fact_factData[ "factTimeArg" ]
-    new_fact_factData[ "factTimeArg" ] = ""
+
+    factTimeArg                    = fact.factData[ "factTimeArg" ]
+    fact.factData[ "factTimeArg" ] = ""
+    fact.factTimeArg               = ""
 
     # ------------------------------------------ #
     # add time arg to the end of the fact data
     # list
-    new_fact_factData[ "dataList" ].append( factTimeArg )
+
+    fact.factData[ "dataList" ].append( factTimeArg )
 
     # ------------------------------------------ #
-    # preserve the new fact by instantiating 
-    # a new Fact
+    # update data list with types
 
-    logging.debug( "  REWRITE FACTS : overwriting old fact with new factData = " + str( new_fact_factData ) )
-    new_factMeta.append( Fact.Fact( fid, new_fact_factData, cursor ) )
+    fact.dataListWithTypes.append( [ factTimeArg, "int" ] )
 
-  logging.debug( "  REWRITE FACTS : returning new_factMeta = " + str( new_factMeta ) )
-  return new_factMeta
+    # ------------------------------------------ #
+    # perform saves
+
+    fact.saveFactInfo()
+    fact.saveFactDataList()
+
+  logging.debug( "  REWRITE FACTS : returning updated fact meta = " + str( factMeta ) )
+  return factMeta
 
 
 #####################

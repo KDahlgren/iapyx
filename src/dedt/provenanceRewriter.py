@@ -6,7 +6,7 @@ provenanceRewriter.py
    to the datalog program.
 '''
 
-import inspect, logging, os, sys
+import copy, inspect, logging, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -21,9 +21,8 @@ import Rule
 #############
 #  GLOBALS  #
 #############
-PROVENANCEREWRITE_DEBUG = tools.getConfig( "DEDT", "PROVENANCEREWRITE_DEBUG", bool )
-aggOps = [ "min", "max", "sum", "avg", "count" ]
 
+aggOps  = [ "min", "max", "sum", "avg", "count" ]
 timeAtt = "SndTime"
 
 ##############
@@ -258,7 +257,7 @@ def regProv( regRule, nameAppend, cursor ) :
   # initialize the prov rule to old version of
   # meta rule
 
-  new_provmeta_ruleData = regRule.ruleData
+  new_provmeta_ruleData = copy.deepcopy( regRule.ruleData )
 
   # ------------------------------------------------------ #
   # the provenance rule name ends with "_prov" appended 
@@ -309,8 +308,18 @@ def regProv( regRule, nameAppend, cursor ) :
   # as a Rule
 
   provRule = Rule.Rule( rid, new_provmeta_ruleData, cursor )
+  #provRule.relationName       = new_provmeta_ruleData[ "relationName" ]
+  #provRule.goalAttList        = new_provmeta_ruleData[ "goalAttList" ]
+  #provRule.goalTimeArg        = new_provmeta_ruleData[ "goalTimeArg" ]
+  #provRule.subgoalListOfDicts = new_provmeta_ruleData[ "subgoalListOfDicts" ]
+  #provRule.eqnDict            = new_provmeta_ruleData[ "eqnDict" ] 
 
-  logging.debug( "  REG PROV : returning provRule.ruleData = " + str( provRule.ruleData ) )
+  logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
+  logging.debug( "REG PROV : provRule.relationName       = " + provRule.relationName )
+  logging.debug( "REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
+  logging.debug( "REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
+  logging.debug( "REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
+  logging.debug( "REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
 
   return provRule
 

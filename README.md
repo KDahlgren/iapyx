@@ -37,7 +37,6 @@ python -m unittest Test_dedt.Test_dedt.test_example7
 ```
 
 # Examples
-Run examples to test whether c4 installed successfully. COMING SOON : c4-specific unit tests =]
 ```
 cd examples/omissionProblem/
 bash run_0.sh

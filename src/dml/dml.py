@@ -21,7 +21,7 @@ if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
 from dedt        import Rule
 from evaluators  import c4_evaluator
 from translators import c4_translator
-from utils       import clockTools, tools, dumpers
+from utils       import clockTools, tools, dumpers, setTypes
 
 import deMorgans
 import domainRewrites
@@ -46,45 +46,245 @@ def dml( factMeta, ruleMeta, cursor ) :
 
   logging.debug( "  DML : running process..." )
 
-  newRuleMeta = []
+  # ----------------------------------------- #
+  # rewrite rules with aggregate functions
+  # in the head
+
+  ruleMeta = aggRewrites( ruleMeta )
 
   # ----------------------------------------- #
   # enforce a uniform goal attribute lists
+    
+  ruleMeta = setUniformAttList( ruleMeta, cursor )
 
-  ruleMeta = setUniformAttList( ruleMeta )
+  logging.debug( "  DML : len( ruleMeta ) after setUniformAttList = " + str( len( ruleMeta ) ) )
 
+  for rule in ruleMeta :
+    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
+    
   # ----------------------------------------- #
   # enforce unique existential attributes
   # per rule
-
+    
   ruleMeta = setUniqueExistentialVars( ruleMeta )
 
+  logging.debug( "  DML : len( ruleMeta ) after setUniqueExistentialVars = " + str( len( ruleMeta ) ) )
+
+  for rule in ruleMeta :
+    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
+    
   # ----------------------------------------- #
-  # check if any rules include negated idb
-  # subgoals
+  # build all de morgan's rules
 
-  targetRuleMetaSets = getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+  COUNTER = 0
+  while stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
-  # break execution if no rules contain negated IDBs
-  if len( targetRuleMetaSets ) < 1 :
-    return []
+    logging.debug( "  DML : COUNTER = " + str( COUNTER ) )
 
-  # ----------------------------------------- #
-  # create the adom definition and add
-  # to rule meta list
+    #if COUNTER==2 :
+    #  for rule in ruleMeta :
+    #    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
 
-  ruleMeta.extend( buildAdom( factMeta, cursor ) )
+    #  logging.debug( "  DML : still contains negated idbs = " + str( stillContainsNegatedIDBs( ruleMeta, cursor ) ) )
+    #  logging.debug( "  DML : remaining negated idbs : " )
+    #  for r in remainingIDBs( ruleMeta, cursor ) :
+    #    logging.debug( "  DML : contains negated idb : " + r )
+    #  sys.exit( "blah" )
 
-  # ----------------------------------------- #
-  # create the de morgan rewrite rules
-  # incorporates domComp and existential 
-  # domain subgoals
+    # ----------------------------------------- #
+    # create the adom definition and add
+    # to rule meta list
+    # only do this once.
+     
+    if COUNTER < 1 :
 
-  ruleMeta = doDeMorgans( targetRuleMetaSets, cursor )
+      ruleMeta.extend( buildAdom( factMeta, cursor ) )
+    
+    # ----------------------------------------- #
+    # check if any rules include negated idb
+    # subgoals
+  
+    targetRuleMetaSets = getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    
+    # ----------------------------------------- #
+    # break execution if no rules contain negated IDBs
+    # should not hit this b/c of loop condition.
 
-  logging.debug( "  DML : returning newRuleMeta with len( newRuleMeta ) = " + str( newRuleMeta ) )
+    if len( targetRuleMetaSets ) < 1 :
+      return []
+    
+    # ----------------------------------------- #
+    # create the de morgan rewrite rules
+    # incorporates domcomp and existential 
+    # domain subgoals
+    
+    for s in targetRuleMetaSets :
+      for r in s :
+        logging.debug( "  DML : r.ruleData = " + str( r.ruleData ) )
 
+    # ----------------------------------------- #  
+    # build and add the new de morgan's rules
+
+    ruleMeta = doDeMorgans( ruleMeta, targetRuleMetaSets, cursor )
+
+    # ----------------------------------------- #  
+    # increment loop counter
+
+    COUNTER += 1
+
+  logging.debug( "  DML : ...done." )
   return ruleMeta
+
+
+##################
+#  AGG REWRITES  #
+##################
+# perform aggregate rewrites
+def aggRewrites( ruleMeta ) :
+
+  new_ruleMeta = []
+  new_relationNames = []
+
+  for rule in ruleMeta :
+
+    if containsAgg_rule( rule ) :
+
+      orig_name = copy.copy( rule.relationName )
+
+      # ----------------------------------------- #
+      # normalize universal attributes
+
+      # get goal att list
+      goalAttList = copy.deepcopy( rule.goalAttList )
+
+      # build new goal att list
+      new_goalAttList = []
+      index           = 0
+      attMapper       = {}
+      aggIndexes      = []
+      for gatt in goalAttList :
+
+        if extractAtt( gatt ) in attMapper :
+          new_gatt = attMapper[ gatt ]
+        else :
+          new_gatt = "Att" + str( index )
+
+        if containsAgg( gatt ) :
+          rhs            = extractRHS( gatt )
+          final_new_gatt = new_gatt + rhs
+          aggIndexes.append( index )
+
+        else :
+          final_new_gatt = new_gatt
+
+        new_goalAttList.append( final_new_gatt )
+        attMapper[ extractAtt( gatt ) ] = extractAtt( new_gatt )
+        index += 1
+
+      logging.debug( "  AGG REWRITE : new_goalAttList = " + str( new_goalAttList ) )
+      logging.debug( "  AGG REWRITE : attMapper       = " + str( attMapper ) )
+
+      # save new goal attribute list
+      rule.ruleData[ "goalAttList" ] = new_goalAttList
+      rule.goalAttList               = new_goalAttList
+      rule.saveToGoalAtt()
+
+      # replace attribute in body
+      subgoalListOfDicts = rule.subgoalListOfDicts
+
+      new_subgoalListOfDicts = []
+      for sub in subgoalListOfDicts :
+
+        subgoalAttList     = sub[ "subgoalAttList" ]
+        new_subgoalAttList = []
+
+        for satt in subgoalAttList :
+
+          if satt in attMapper :
+            new_subgoalAttList.append( attMapper[ satt ] )
+          else :
+            new_subgoalAttList.append( satt )
+
+        logging.debug( "  AGG REWRITE : new_subgoalAttList = " + str( new_subgoalAttList ) )
+
+        new_sub_dict = {}
+        new_sub_dict[ "subgoalName" ]    = sub[ "subgoalName" ]
+        new_sub_dict[ "subgoalAttList" ] = new_subgoalAttList
+        new_sub_dict[ "polarity" ]       = sub[ "polarity" ]
+        new_sub_dict[ "subgoalTimeArg" ] = sub[ "subgoalTimeArg" ]
+        new_subgoalListOfDicts.append( new_sub_dict )
+
+      logging.debug( "  AGG REWRITES : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+
+      # save new subgoals
+      rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
+      rule.subgoalListOfDicts               = new_subgoalListOfDicts
+      rule.saveSubgoals()
+
+      # ----------------------------------------- #
+      # rename rule with _agg + index number 
+      # convention
+
+      new_relationName                = rule.relationName + "_agg" + "".join( str( x ) for x in aggIndexes )
+      rule.ruleData[ "relationName" ] = new_relationName
+      rule.relationName               = new_relationName
+      rule.saveToRule()
+
+      new_ruleMeta.append( rule )
+
+      # ----------------------------------------- #
+      # add new agg relation rule
+      # for original rule definition
+
+      new_goalAttList = [ "Att" + str( i ) for i in range( 0, len( goalAttList ) ) ]
+
+      newRuleData = {}
+      newRuleData[ "relationName" ]       = orig_name
+      newRuleData[ "goalAttList" ]        = new_goalAttList
+      newRuleData[ "goalTimeArg" ]        = rule.goalTimeArg
+      newRuleData[ "subgoalListOfDicts" ] = [ { "subgoalName": new_relationName, "subgoalAttList": new_goalAttList, "polarity": "", "subgoalTimeArg": "" } ]
+      newRuleData[ "eqnDict" ]            = rule.eqnDict
+  
+      rid = tools.getIDFromCounters( "rid" )
+  
+      newRule        = copy.deepcopy( Rule.Rule( rid, newRuleData, rule.cursor ) )
+      newRule.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
+      new_ruleMeta.append( newRule )
+
+      setTypes.setTypes( rule.cursor )
+
+    else :
+      new_ruleMeta.append( rule )
+
+  logging.debug( "  AGG REWRITES : len( new_ruleMeta ) = " + str( len( new_ruleMeta ) ) )
+  return new_ruleMeta
+
+
+#################
+#  EXTRACT RHS  #
+#################
+# get the rhs of the aggregated attribute
+def extractRHS( att ) :
+
+  for op in arithOps :
+    if op in att :
+      return op + att.split( op )[1]
+
+  return ""
+
+
+
+#######################
+#  CONTAINS AGG RULE  #
+#######################
+# check if the rule contains an aggregate in the head
+def containsAgg_rule( rule ) :
+
+  for gatt in rule.goalAttList :
+    if containsAgg( gatt ) :
+      return True
+
+  return False
 
 
 ##########################
@@ -92,7 +292,7 @@ def dml( factMeta, ruleMeta, cursor ) :
 ##########################
 # rewrites rules to ensure a uniform schema 
 # of universal variables per relation definition
-def setUniformAttList( ruleMeta ) :
+def setUniformAttList( ruleMeta, cursor ) :
 
   for rule in ruleMeta :
     logging.debug( "  SET UNIFORM ATT LIST : " + str( rule.ruleData ) )
@@ -100,7 +300,9 @@ def setUniformAttList( ruleMeta ) :
   # ----------------------------------------- #
   # extract rule sets
 
-  ruleSet_dict = getRuleSets( ruleMeta )
+  ruleSet_data = getRuleSets_uniform( ruleMeta )
+  ruleSet_dict = ruleSet_data[0]
+  other_rules  = ruleSet_data[1]
 
   # ----------------------------------------- #
   # make sure universal att schemas are identical
@@ -114,12 +316,16 @@ def setUniformAttList( ruleMeta ) :
     ruleSet = ruleSet_dict[ relName ]
 
     if differentAttSchemas( ruleSet ) :
-      new_ruleMeta.extend( makeUniform( ruleSet ) )
+      new_ruleMeta.extend( makeUniform( ruleSet, cursor ) )
+
     else :
       new_ruleMeta.extend( ruleSet )
 
   for rule in new_ruleMeta :
-    logging.debug( rule.ruleData )
+    logging.debug( "  SET UNIFORM ATT LIST : " + str( rule.ruleData ) )
+
+  # add the skipped rules
+  new_ruleMeta.extend( other_rules )
 
   return new_ruleMeta
 
@@ -129,8 +335,8 @@ def setUniformAttList( ruleMeta ) :
 ##################
 # input a list of rule objects.
 # replace all goal attributes lists with a 
-# generate a uniform set of universal variables
-def makeUniform( ruleSet  ) :
+# generated uniform set of universal variables
+def makeUniform( ruleSet, cursor ) :
 
   # ----------------------------------------- #
   # generate uniform set of universal 
@@ -146,26 +352,53 @@ def makeUniform( ruleSet  ) :
   for rule in ruleSet :
 
     # ----------------------------------------- #
+    # save cursor or else it breaks
+
+    rule.cursor = cursor
+
+    # ----------------------------------------- #
     # get copy of original att list
-    # and generate a mapping between old and
-    # new att strings
 
     orig_goalAttList = rule.goalAttList
+
+    # ----------------------------------------- #
+    # generate a mapping between old and
+    # new att strings
 
     if not len( uniformAtts ) == len( orig_goalAttList ) :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : inconsistent arity between new uniform att list and original att list in rule definition:\n" + str( uniformAtts ) + "\n" + str( orig_goalAttList ) + "\n" + str( rule.ruleData ) )
 
     attMapper = {}
     for i in range( 0, len( orig_goalAttList ) ) :
-      attMapper[ orig_goalAttList[ i ] ] = uniformAtts[ i ]
+      this_orig_att = orig_goalAttList[ i ]
+
+      ## skip time atts
+      #if not this_orig_att.startswith( "NRESERVED" ) and not this_orig_att.startswith( "MRESERVED" ) :
+      #  attMapper[ this_orig_att ] = uniformAtts[ i ]
+      attMapper[ this_orig_att ] = uniformAtts[ i ]
 
     logging.debug( "  MAKE UNIFORM : attMapper = " + str( attMapper ) )
 
     # ----------------------------------------- #
+    # build new goal attributes list
+
+    logging.debug( "  MAKE UNIFORM : build new goal att list." )
+
+    new_goalAttList = []
+    for gatt in orig_goalAttList :
+      #if not gatt.startswith( "NRESERVED" ) and not gatt.startswith( "MRESERVED" ) :
+      #  new_goalAttList.append( attMapper[ gatt ] )
+      #else :
+      #  new_goalAttList.append( gatt )
+      new_goalAttList.append( attMapper[ gatt ] )
+
+    # ----------------------------------------- #
     # replace goal att list
 
-    rule.goalAttList               = uniformAtts
-    rule.ruleData[ "goalAttList" ] = uniformAtts
+    logging.debug( "  MAKE UNIFORM : replace goal att list." )
+
+    rule.goalAttList               = copy.deepcopy( new_goalAttList )
+    rule.ruleData[ "goalAttList" ] = copy.deepcopy( new_goalAttList )
     rule.saveToGoalAtt()
 
     # ----------------------------------------- #
@@ -271,14 +504,13 @@ def makeUniform( ruleSet  ) :
 
       eqnDict[ new_eqn ] = new_varList
 
-
     # ----------------------------------------- #
     # save new subgoal list
 
     logging.debug( "  MAKE UNIFORM : subgoalListOfDicts = " + str( subgoalListOfDicts ) )
 
-    rule.subgoalListOfDicts = subgoalListOfDicts
-    rule.ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
+    rule.subgoalListOfDicts               = copy.deepcopy( subgoalListOfDicts )
+    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( subgoalListOfDicts )
     rule.saveSubgoals()
 
     # ----------------------------------------- #
@@ -286,8 +518,8 @@ def makeUniform( ruleSet  ) :
 
     logging.debug( " MAKE UNIFORM : eqnDict = " + str( eqnDict ) )
 
-    rule.eqnDict               = eqnDict
-    rule.ruleData[ "eqnDict" ] = eqnDict
+    rule.eqnDict               = copy.deepcopy( eqnDict )
+    rule.ruleData[ "eqnDict" ] = copy.deepcopy( eqnDict )
     rule.saveEquations()
 
   return ruleSet
@@ -347,11 +579,45 @@ def differentAttSchemas( ruleSet ) :
   return False
 
 
-###################
-#  GET RULE SETS  #
-###################
+###########################
+#  GET RULE SETS UNIFORM  #
+###########################
 # return a dict mapping relation names to lists of rule objects
-def getRuleSets( ruleMeta ) :
+def getRuleSets_uniform( ruleMeta ) :
+
+  ruleSet_dict = {}
+  other_rules  = []
+
+  for ruleObj in ruleMeta :
+
+    # ----------------------------------------- #
+    # get relation name
+
+    relName = ruleObj.relationName
+
+    # ----------------------------------------- #
+    # organize rule object in dict
+
+    # skip rules with goal aggs
+    if containsAgg_rule( ruleObj ) :
+      other_rules.append( ruleObj )
+
+    else :
+      if not relName in ruleSet_dict :
+        ruleSet_dict[ relName ] = [ ruleObj ]
+
+      else :
+        ruleSet_dict[ relName ].append( ruleObj )
+
+
+  return [ ruleSet_dict, other_rules ]
+
+
+##########################
+#  GET RULE SETS UNIQUE  #
+##########################
+# return a dict mapping relation names to lists of rule objects
+def getRuleSets_unique( ruleMeta ) :
 
   ruleSet_dict = {}
 
@@ -371,7 +637,6 @@ def getRuleSets( ruleMeta ) :
     else :
       ruleSet_dict[ relName ].append( ruleObj )
 
-
   return ruleSet_dict
 
 
@@ -386,11 +651,12 @@ def setUniqueExistentialVars( ruleMeta ) :
   # ----------------------------------------- #
   # extract rule sets
 
-  ruleSet_dict = getRuleSets( ruleMeta )
+  ruleSet_dict = getRuleSets_unique( ruleMeta )
 
   # ----------------------------------------- #
   # make sure universal att schemas are identical
 
+  tmp = []
   new_ruleMeta = []
 
   for relName in ruleSet_dict :
@@ -405,8 +671,10 @@ def setUniqueExistentialVars( ruleMeta ) :
 
     if uniqueExistentialVars( ruleSet ) :
       new_ruleMeta.extend( ruleSet )
+
     else :
       new_ruleMeta.extend( makeUnique( ruleSet ) )
+      tmp.extend( ruleSet )
 
   for rule in new_ruleMeta :
     logging.debug( "  SET UNIQUE EXISTENTIAL VARS : " + str( rule.ruleData ) )
@@ -473,6 +741,15 @@ def overlapping( existVars1, existVars2 ) :
 # make the existential vars per rule in the given set unique
 # make existential vars unique by just appending the rule id
 def makeUnique( ruleSet ) :
+
+  for rule in ruleSet :
+    if rule.relationName == "log" :
+      logging.debug( "  MAKE UNIQUE : log rule meta = " + str( rule.ruleData ) )
+      rule.cursor.execute( "SELECT attID,attTYpe FROM GoalAtt WHERE rid=='" + str( rule.rid ) + "'" )
+      typeList = rule.cursor.fetchall()
+      typeList = tools.toAscii_multiList( typeList )
+      for t in typeList :
+        logging.debug(  "  MAKE UNIQUE : " + str( t ) )
 
   for rule in ruleSet :
 
@@ -652,11 +929,31 @@ def identicalRules( rule1, rule2 ) :
 # create a new set of rules representing the application of 
 # DeMorgan's Law on the first-order logic representation
 # of the targetted rules
-def doDeMorgans( targetRuleMetaSets, cursor ) :
+def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor ) :
+
+  logging.debug( "  DO DEMORGANS : running process..." )
 
   newDMRules = []
 
+  logging.debug( "  DO DEMORGANS : len( targetRuleMetaSets ) = " + str( len( targetRuleMetaSets ) ) )
+  for s in targetRuleMetaSets :
+    logging.debug( str( s ) )
+    for r in s :
+      logging.debug( "  DO DEMORGANS : r.ruleData = " + str( r.ruleData ) )
+
   for ruleSet in targetRuleMetaSets :
+
+    for rule in ruleSet :
+      logging.debug( "  DO DEMORGANS : rule.ruleData     = " + str( rule.ruleData ) )
+      logging.debug( "  DO DEMORGANS : rule.relationName = " + str( rule.relationName ) )
+      logging.debug( "  DO DEMORGANS : rule.rid          = " + str( rule.rid ) )
+
+    # ----------------------------------------- #
+    # get an original rule id to reference types
+
+    orig_rid = ruleSet[0].rid
+
+    logging.debug( "  DO DEMORGANS : orig_rid = " + str( orig_rid ) )
 
     # ----------------------------------------- #
     # get new rule name
@@ -677,17 +974,17 @@ def doDeMorgans( targetRuleMetaSets, cursor ) :
     goalTimeArg = ""
 
     # ----------------------------------------- #
-    # build domComp subgoal and save to 
+    # build domcomp rule and save to 
     # rule meta list
 
-    domCompRule = buildDomCompRule( orig_name, goalAttList, cursor )
-    ruleMeta.append( domCompRule )
+    domcompRule = buildDomCompRule( orig_name, goalAttList, orig_rid, cursor )
+    ruleMeta.append( domcompRule )
 
     # ----------------------------------------- #
-    # build existential subgoal
+    # build existential attribute domain rules
 
     existentialVarsRules = buildExistentialVarsRules( ruleSet, cursor )
-    ruleMeta.append( existentialVarsRules )
+    ruleMeta.extend( existentialVarsRules )
 
     # ----------------------------------------- #
     # generate sympy boolean formula over
@@ -697,7 +994,7 @@ def doDeMorgans( targetRuleMetaSets, cursor ) :
     # and the index of the subgoal in the subgoal
     # lists of particular rules
 
-    negated_dnf_fmla = generateBooleanFmla( ruleSet )
+    negated_dnf_fmla = generateBooleanFormula( ruleSet )
 
     # ----------------------------------------- #
     # simplify into another dnf fmla
@@ -709,7 +1006,7 @@ def doDeMorgans( targetRuleMetaSets, cursor ) :
     # informs the subgoal list of a new 
     # datalog rule
 
-    newDMRules = dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domCompRule, existentialVarsRules, ruleSet, cursor )
+    newDMRules = dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
 
     # ----------------------------------------- #
     # add new dm rules to the rule meta
@@ -721,9 +1018,72 @@ def doDeMorgans( targetRuleMetaSets, cursor ) :
     # with instances of the positive not_
     # subgoal
 
-    ruleMeta = replaceSubgoalNegations( orig_name, not_name, ruleMeta )
+    ruleMeta = replaceSubgoalNegations( ruleMeta )
+
+    # ----------------------------------------- #
+    # resolve double negations
+
+    ruleMeta = resolveDoubleNegations( ruleMeta )
 
   return ruleMeta
+
+
+##############################
+#  RESOLVE DOUBLE NEGATIONS  #
+##############################
+# a negated not_ rule is th original rule.
+def resolveDoubleNegations( ruleMeta ) :
+
+  for rule in ruleMeta :
+
+    # ----------------------------------------- #
+    # get subgoal info
+
+    subgoalListOfDicts = copy.deepcopy( rule.subgoalListOfDicts )
+
+    new_subgoalListOfDicts = []
+
+    for subgoal in subgoalListOfDicts :
+
+      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalName    = " + subgoal[ "subgoalName" ] )
+      logging.debug( "  RESOLVE DOUBLE NEGATIONS : polarity       = " + subgoal[ "polarity" ] )
+      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalAttList = " + str( subgoal[ "subgoalAttList" ] ) )
+      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalTimeArg = " + subgoal[ "subgoalTimeArg" ] )
+
+      # ----------------------------------------- #
+      # resolve double negatives
+
+      if subgoal[ "subgoalName" ].startswith( "not_" ) and subgoal[ "polarity" ] == "notin" :
+
+        logging.debug( "  RESOLVE DOUBLE NEGATIONS: original subgoal = " + str( subgoal ) )
+
+        new_sub_dict = {}
+        new_sub_dict[ "subgoalName" ]    = subgoal[ "subgoalName" ][4:]
+        new_sub_dict[ "subgoalAttList" ] = subgoal[ "subgoalAttList" ]
+        new_sub_dict[ "polarity" ]       = ""
+        new_sub_dict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+
+        logging.debug( "  RESOLVE DOUBLE NEGATIONS : new_sub_dict = " + str( new_sub_dict ) )
+
+        logging.debug( "  RESOLVE DOUBLE NEGATIONS : adding to new_subgoalListOfDicts : " + str( new_sub_dict ) + "->1")
+        new_subgoalListOfDicts.append( copy.deepcopy( new_sub_dict ) )
+
+      else :
+
+        logging.debug( "  RESOLVE DOUBLE NEGATIONS : adding to new_subgoalListOfDicts : " + str( subgoal ) + " -> 3" )
+
+        new_subgoalListOfDicts.append( copy.deepcopy( subgoal )  )
+
+    # ----------------------------------------- #
+    # save new subgoal list
+
+    logging.debug( "  RESOLVE DOUBLE NEGATIONS : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+
+    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+    rule.saveSubgoals()
+
+  return ruleMeta        
 
 
 ###############################
@@ -732,45 +1092,82 @@ def doDeMorgans( targetRuleMetaSets, cursor ) :
 # rewrite existing rules to replace 
 # instances of negated subgoal instances 
 # with derived not_rules
-def replaceSubgoalNegations( orig_name, not_name, ruleMeta ) :
+def replaceSubgoalNegations( ruleMeta ) :
 
   for rule in ruleMeta :
 
     # ----------------------------------------- #
-    # get subgoal info
+    # skip domcomp rules
 
-    subgoalListOfDicts = rule.subgoalListOfDicts
+    if rule.relationName.startswith( "domcomp_" ) :
+      pass
 
-    new_subgoalListOfDicts = []
-
-    for subgoal in subgoalListOfDicts :
+    else :
 
       # ----------------------------------------- #
-      # check if the subgoal is the original subgoal
+      # get subgoal info
 
-      if subgoal[ "subgoalName" ] == orig_name :
+      subgoalListOfDicts = copy.deepcopy( rule.subgoalListOfDicts )
 
-        new_sub_dict = {}
-        new_sub_dict[ "subgoalName" ]    = not_name
-        new_sub_dict[ "subgoalAttList" ] = subgoal[ "subgoalAttList" ]
-        new_sub_dict[ "polarity" ]       = ""
-        new_sub_dict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+      new_subgoalListOfDicts = []
 
-        new_subgoalListOfDicts.append( new_sub_dict )
+      for subgoal in subgoalListOfDicts :
 
-      else :
-        new_subgoalListOfDicts.append( subgoal )
+        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalName    = " + subgoal[ "subgoalName" ] )
+        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : polarity       = " + subgoal[ "polarity" ] )
+        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalAttList = " + str( subgoal[ "subgoalAttList" ] ) )
+        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalTimeArg = " + subgoal[ "subgoalTimeArg" ] )
 
-    # ----------------------------------------- #
-    # save new subgoal list
+        # ----------------------------------------- #
+        # replace negatives
 
-    logging.debug( " MAKE UNIQUE : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+        if subgoal[ "subgoalName" ] == "missing_log" and subgoal[ "polarity" ] == "notin" :
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : hasDML missing_log = " + str( hasDML( "missing_log", ruleMeta ) ) )
 
-    rule.subgoalListOfDicts               = new_subgoalListOfDicts
-    rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
-    rule.saveSubgoals()
+        if hasDML( subgoal[ "subgoalName" ], ruleMeta ) and subgoal[ "polarity" ] == "notin" :
+
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : original subgoal = " + str( subgoal ) )
+
+          new_sub_dict = {}
+          new_sub_dict[ "subgoalName" ]    = "not_" + subgoal[ "subgoalName" ]
+          new_sub_dict[ "subgoalAttList" ] = subgoal[ "subgoalAttList" ]
+          new_sub_dict[ "polarity" ]       = ""
+          new_sub_dict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_sub_dict = " + str( new_sub_dict ) )
+
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : adding to new_subgoalListOfDicts : " + str( new_sub_dict ) + "->1")
+          new_subgoalListOfDicts.append( new_sub_dict )
+
+        else :
+
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : adding to new_subgoalListOfDicts : " + str( subgoal ) + " -> 2" )
+
+          new_subgoalListOfDicts.append( copy.deepcopy( subgoal )  )
+
+      # ----------------------------------------- #
+      # save new subgoal list
+
+      logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+
+      rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+      rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+      rule.saveSubgoals()
 
   return ruleMeta
+
+
+#############
+#  HAS DML  #
+#############
+# check if the subgoal has a corresponding not_ rule
+def hasDML( subgoalName, ruleMeta ) :
+
+  for rule in ruleMeta :
+    if rule.relationName == "not_" + subgoalName :
+      return True
+
+  return False
 
 
 ##################################
@@ -782,7 +1179,9 @@ def replaceSubgoalNegations( orig_name, not_name, ruleMeta ) :
 def buildExistentialVarsRules( ruleSet, cursor ) :
 
   logging.debug( "--------------------------------------------------------------------------------" )
-  logging.debug( "  BUILD EXISTENTIAL VARS RULES : ruleSet = " + str( [ rule.ruleData for rule in ruleSet ] ) )
+  logging.debug( "  BUILD EXISTENTIAL VARS RULES : ruleSet = \n" )
+  for rule in ruleSet :
+    logging.debug( str( rule.ruleData ) + "\n" )
 
   # ----------------------------------------- #
   # get the original rule name
@@ -876,7 +1275,10 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
 
         if isSafe( ruleData ) :
           rid = tools.getIDFromCounters( "rid" )
-          existentialDomRules.append( copy.deepcopy( Rule.Rule( rid, ruleData, cursor ) ) )
+          #existentialDomRules.append( copy.deepcopy( Rule.Rule( rid, ruleData, None ) ) )
+          newRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
+          newRule.cursor = cursor # need to do this for some reason or else cursor disappears?
+          existentialDomRules.append( newRule )
 
   for rule in existentialDomRules :
     logging.debug( "  BUILD EXISTENTIAL VARS RULES : >>> returning existential rule with ruleData = " + str( rule.ruleData ) )
@@ -998,47 +1400,137 @@ def containsExistentialVars( rule ) :
 #  BUILD DOM COMP RULE  #
 #########################
 # build the dom comp rule
-def buildDomCompRule( orig_name, goalAttList, cursor ) :
+def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor ) :
+
+  logging.debug( "===================================================" )
+  logging.debug( "  BUILD DOM COMP RULE : running process..." )
+  logging.debug( "  BUILD DOM COMP RULE : orig_name   = " + orig_name )
+  logging.debug( "  BUILD DOM COMP RULE : goalAttList = " + str( goalAttList ) )
+  logging.debug( "  BUILD DOM COMP RULE : orig_rid    = " + str( orig_rid ) )
 
   ruleData = {}
 
   # ----------------------------------------- #
-  # build adom subgoals
+  # get ordered list of types for this 
+  # relation schema
+  #
+  # NOTE!!! predicates upon the call to setTypes
+  # performed prior to any rewrite procedure 
+  # in the rewrite() method of dedt.py
 
-  subgoalListOfDicts = []
-  for att in goalAttList :
-    subgoalDict = {}
-    subgoalDict[ "subgoalName" ]    = "adom"
-    subgoalDict[ "subgoalAttList" ] = [ att ]
-    subgoalDict[ "polarity" ]       = ""
-    subgoalDict[ "subgoalTimeArg" ] = ""
-    subgoalListOfDicts.append( subgoalDict )
-
-  # ----------------------------------------- #
-  # build negated original subgoal
-
-  negatedOrig_subgoal = {}
-  negatedOrig_subgoal[ "subgoalName" ]    = orig_name
-  negatedOrig_subgoal[ "subgoalAttList" ] = goalAttList
-  negatedOrig_subgoal[ "polarity" ]       = "notin"
-  negatedOrig_subgoal[ "subgoalTimeArg" ] = ""
-  subgoalListOfDicts.append( negatedOrig_subgoal )
+  # grab att id as well, to keep duplicates
+  cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( orig_rid ) + "'" )
+  goalTypeList_tmp = cursor.fetchall()
+  goalTypeList_tmp = tools.toAscii_multiList( goalTypeList_tmp )
+  goalTypeList     = [ x[1] for x in goalTypeList_tmp ]
 
   # ----------------------------------------- #
-  # save rule data and create the 
-  # dom comp rule
+  # extract all goal atts from agg'd 
+  # expressions
 
-  ruleData[ "relationName" ]       = "domComp_" + orig_name
-  ruleData[ "goalAttList" ]        = goalAttList
-  ruleData[ "goalTimeArg" ]        = ""
-  ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
-  ruleData[ "eqnDict" ]            = {}
+  tmp = []
+  for gatt in goalAttList :
+    if containsAgg( gatt ) :
+      tmp.append( extractAtt( gatt ) )
+    else :
+      tmp.append( gatt )
+  goalAttList = copy.copy( tmp )
 
-  rid = tools.getIDFromCounters( "rid" )
+  logging.debug( "  BULD DOM COMP RULE : new goalAttList = " + str( goalAttList ) )
 
-  domCompRule = Rule.Rule( rid, ruleData, cursor )
+  # ----------------------------------------- #
+  # sanity check break
 
-  return domCompRule
+  if not len( goalAttList ) == len( goalTypeList ) :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : buildDomCompRule : the length of the goal att list '" + str( goalAttList ) + "' does not match the length of the goal type list '" + str( goalTypeList ) + "' for rule:\n" + dumpers.reconstructRule( orig_rid, cursor ) )
+
+  else :
+
+    # ----------------------------------------- #
+    # build adom subgoals
+
+    subgoalListOfDicts = []
+    for i in range( 0, len( goalAttList ) ) :
+
+      att = goalAttList[ i ]
+
+      subgoalDict = {}
+      subgoalDict[ "subgoalName" ]    = "adom_" + goalTypeList[ i ]
+      subgoalDict[ "subgoalAttList" ] = [ att ]
+      subgoalDict[ "polarity" ]       = ""
+      subgoalDict[ "subgoalTimeArg" ] = ""
+      subgoalListOfDicts.append( subgoalDict )
+
+    # ----------------------------------------- #
+    # build negated original subgoal
+
+    negatedOrig_subgoal = {}
+    negatedOrig_subgoal[ "subgoalName" ]    = orig_name
+    negatedOrig_subgoal[ "subgoalAttList" ] = goalAttList
+    negatedOrig_subgoal[ "polarity" ]       = "notin"
+    negatedOrig_subgoal[ "subgoalTimeArg" ] = ""
+    subgoalListOfDicts.append( negatedOrig_subgoal )
+
+    # ----------------------------------------- #
+    # save rule data and create the 
+    # dom comp rule
+
+    ruleData[ "relationName" ]       = "domcomp_" + orig_name
+    ruleData[ "goalAttList" ]        = goalAttList
+    ruleData[ "goalTimeArg" ]        = ""
+    ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
+    ruleData[ "eqnDict" ]            = {}
+
+    rid = tools.getIDFromCounters( "rid" )
+
+    #domcompRule = Rule.Rule( rid, ruleData, cursor )
+    domcompRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
+    domcompRule.cursor = cursor # need to do this for some reason or else cursor disappears?
+
+    return domcompRule
+
+
+##################
+#  CONTAINS AGG  #
+##################
+# check if the given attribute 
+# contains an agg operator
+def containsAgg( att ) :
+  for op in arithOps :
+    if op in att :
+      return True
+  return False
+
+
+#################
+#  EXTRACT ATT  #
+#################
+# extract the attribute from a given agg expression,
+# if applicable.
+def extractAtt( gatt ) :
+
+  # ----------------------------------------- #
+  # check if gatt contains an agg op
+
+  flag    = False
+  firstOp = None
+  for op in arithOps :
+    if op in gatt :
+      flag    = True
+      firstOp = op
+      break
+
+  if not flag :
+    return gatt
+
+  # ----------------------------------------- #
+  # extract agg op
+  # assume the real goal att
+  # is on the lhs of the expression
+
+  else :
+
+    return gatt.split( firstOp )[0]
 
 
 ####################
@@ -1046,19 +1538,31 @@ def buildDomCompRule( orig_name, goalAttList, cursor ) :
 ####################
 # use the positive fmla to generate a new set of
 # formulas for the not_ rules
-def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domCompRule, existentialVarsRules, ruleSet, cursor ) :
+def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor ) :
 
-  logging.debug( "  DNF TO DATALOG : not_name     = " + not_name )
-  logging.debug( "  DNF TO DATALOG : goalAttList  = " + str( goalAttList ) )
-  logging.debug( "  DNF TO DATALOG : goalTimeArg  = " + goalTimeArg )
-  logging.debug( "  DNF TO DATALOG : pos_dnf_fmla = " + pos_dnf_fmla )
-  logging.debug( "  DNF TO DATALOG : ruleSet      = " + str( ruleSet ) )
+  pos_dnf_fmla_str = str( pos_dnf_fmla )
+
+  logging.debug( "  DNF TO DATALOG : not_name         = " + not_name )
+  logging.debug( "  DNF TO DATALOG : goalAttList      = " + str( goalAttList ) )
+  logging.debug( "  DNF TO DATALOG : goalTimeArg      = " + goalTimeArg )
+  logging.debug( "  DNF TO DATALOG : pos_dnf_fmla_str = " + pos_dnf_fmla_str )
+  logging.debug( "  DNF TO DATALOG : ruleSet          = " + str( ruleSet ) )
+
+  # ----------------------------------------- #
+  # generate combined equation list
+  # collect eqns from all rules and append to
+  # all dml rules.
+
+  eqnDict_combined = {}
+  for rule in ruleSet :
+    for eqn in rule.eqnDict :
+      eqnDict_combined[ eqn ] = rule.eqnDict[ eqn ]
 
   # ----------------------------------------- #
   # break positive dnf fmla into a set of 
   # conjuncted clauses
 
-  clauseList = pos_dnf_fmla.replace( "INDX", "" )
+  clauseList = pos_dnf_fmla_str.replace( "INDX", "" )
   clauseList = clauseList.replace( "(", "" )      # valid b/c dnf
   clauseList = clauseList.replace( ")", "" )      # valid b/c dnf
   clauseList = clauseList.split( " | " )
@@ -1068,6 +1572,7 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domCompRule,
   # ----------------------------------------- #
   # iterate over clause list to create
   # the list of new dm rules
+  # create one new dm rule per clause
 
   newDMRules = []
 
@@ -1142,13 +1647,18 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domCompRule,
     # ----------------------------------------- #
     # add dom comp subgoal
 
-    domCompSubgoal_dict = {}
-    domCompSubgoal_dict[ "subgoalName" ]    = domCompRule.ruleData[ "relationName" ]
-    domCompSubgoal_dict[ "subgoalAttList" ] = domCompRule.ruleData[ "goalAttList" ]
-    domCompSubgoal_dict[ "polarity" ]       = ""
-    domCompSubgoal_dict[ "subgoalTimeArg" ] = ""
+    domcompSubgoal_dict = {}
+    domcompSubgoal_dict[ "subgoalName" ]    = domcompRule.ruleData[ "relationName" ]
+    domcompSubgoal_dict[ "subgoalAttList" ] = domcompRule.ruleData[ "goalAttList" ]
+    domcompSubgoal_dict[ "polarity" ]       = ""
+    domcompSubgoal_dict[ "subgoalTimeArg" ] = ""
 
-    subgoalListOfDicts.append( domCompSubgoal_dict )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalName    = " + domcompSubgoal_dict[ "subgoalName" ] )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalAttList = " + str( domcompSubgoal_dict[ "subgoalAttList" ] ) )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict polarity       = " + domcompSubgoal_dict[ "polarity" ] )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalTimeArg = " + domcompSubgoal_dict[ "subgoalTimeArg" ] )
+
+    subgoalListOfDicts.append( domcompSubgoal_dict )
 
     # ----------------------------------------- #
     # add get existential domain subgoal,
@@ -1175,11 +1685,14 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domCompRule,
     ruleData[ "goalAttList" ]        = goalAttList
     ruleData[ "goalTimeArg" ]        = goalTimeArg
     ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
-    ruleData[ "eqnDict" ]            = {}
+    ruleData[ "eqnDict" ]            = eqnDict_combined
 
     rid = tools.getIDFromCounters( "rid" )
 
-    newDMRules.append( Rule.Rule( rid, ruleData, cursor ) )
+    #newDMRules.append( Rule.Rule( rid, ruleData, cursor ) )
+    newRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
+    newRule.cursor = cursor # need to do this for some reason or else cursor disappears?
+    newDMRules.append( newRule )
 
   for newRule in newDMRules :
     logging.debug( "  DNF TO DATALOG : returing newDMRule.ruleData = " + str( newRule.ruleData ) )
@@ -1281,50 +1794,90 @@ def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
 
   logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : ruleMeta with len(ruleMeta) = " + str( len( ruleMeta ) ) )
 
-  targetRuleMetaSets = []
+  set_dict = {}
+
+  # ----------------------------------------- #
+  # get list of negated subgoal names
+
+  negatedSubgoalNames = getNegatedNameList( ruleMeta )
+
+  # ----------------------------------------- #
+  # initialize dictionary
+
+  for name in negatedSubgoalNames :
+    set_dict[ name ] = []
 
   # ----------------------------------------- #
   # iterate over rule meta
 
-  for rule in ruleMeta :
+  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : negatedSubgoalNames = " + str( negatedSubgoalNames ) )
 
-    targetSet = []
+  for name in negatedSubgoalNames :
 
-    # ----------------------------------------- #
-    # grab subgoal dicts
+    for rule in ruleMeta :
+      if rule.relationName == name :
+        set_dict[ name ].append( rule )
 
-    subgoalListOfDicts = rule.ruleData[ "subgoalListOfDicts" ]
+  # ----------------------------------------- #
+  # convert dictionary into a list of lists
 
-    # ----------------------------------------- #
-    # iterate over subgoal data
+  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : set_dict = " + str( set_dict ) )
 
-    for subgoalDict in subgoalListOfDicts :
+  targetRuleMetaSets = []
+  for name in set_dict :
+    targetRuleMetaSets.append( set_dict[ name ] )
 
-      logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : subgoalDict = " + str( subgoalDict ) )
-
-      # save the rule object for the subgoal if the subgoal is negated and is idb
-      if subgoalDict[ "polarity" ] == "notin" and isIDB( subgoalDict[ "subgoalName" ], cursor ) :
-
-        # ----------------------------------------- #
-        # get subgoal name
-
-        relationName = subgoalDict[ "subgoalName" ]
-
-        logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : relationName = " + relationName )
-
-        # ----------------------------------------- #
-        # get rule objects with the same 
-        # relation name
-
-        for r in ruleMeta :
-          if r.relationName == relationName :
-
-            targetSet.append( r )
-        targetRuleMetaSets.append( targetSet )
-
-  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : returning targetRuleMetaSets with len(targetRuleMetaSets) = " + str( len( targetRuleMetaSets ) ) )
+  for s in targetRuleMetaSets :
+    logging.debug( "++++++++" )
+    for r in s :
+      logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : r.ruleData = " + str( r.ruleData ) )
 
   return targetRuleMetaSets
+
+
+###########################
+#  GET NEGATED NAME LIST  #
+###########################
+# get the list of names for negated IDB subgoals
+def getNegatedNameList( ruleMeta ) :
+
+  cursor = ruleMeta[0].cursor # all cursors are the same
+
+  negatedNames = []
+
+  for rule in ruleMeta :
+
+    logging.debug( "  GET NEGATED NAME LIST : rule.ruleData = " + str( rule.ruleData ) )
+
+    # ----------------------------------------- #
+    # ignore domcomp rules
+    if rule.relationName.startswith( "domcomp_" ) :
+      pass
+
+    else :
+
+      # ----------------------------------------- #
+      # grab subgoal dicts
+
+      subgoalListOfDicts = copy.deepcopy( rule.ruleData[ "subgoalListOfDicts" ] )
+
+      # ----------------------------------------- #
+      # iterate over subgoal data
+
+      for subgoalDict in subgoalListOfDicts :
+
+        # save the rule object for the subgoal if the subgoal is negated and is idb
+        if subgoalDict[ "polarity" ] == "notin" and isIDB( subgoalDict[ "subgoalName" ], cursor ) :
+
+          # ----------------------------------------- #
+          # grab subgoal name
+
+          logging.debug( "  GET NEGATED NAME LIST : adding '" + subgoalDict[ "subgoalName" ] + "' to negatedNames list" )
+
+          if not subgoalDict[ "subgoalName" ] in negatedNames : # ignore duplicates created by prov rules
+            negatedNames.append( subgoalDict[ "subgoalName" ] )
+
+  return negatedNames
 
 
 ################
@@ -1339,9 +1892,9 @@ def buildAdom( factMeta, cursor ) :
   newRules = []
 
   # ----------------------------------------- #
-  # define relation name
+  # define the base relation name
 
-  relationName = "adom"
+  base_relationName = "adom"
 
   # ----------------------------------------- #
   # define goalAttList 
@@ -1359,6 +1912,8 @@ def buildAdom( factMeta, cursor ) :
   # iterate over each fact for edb name 
   # and arity
 
+  prev_evald_facts = []
+
   for fact in factMeta :
 
     # ----------------------------------------- #
@@ -1366,293 +1921,105 @@ def buildAdom( factMeta, cursor ) :
 
     subgoalName = fact.relationName
 
-    # ----------------------------------------- #
-    # get length of data list
+    # avoid duplicates
+    if subgoalName in prev_evald_facts :
+      pass
 
-    numAdomRulesForThisFact = len( fact.dataListWithTypes )
+    else :
 
-    # ----------------------------------------- #
-    # need one adom rule per datum in the fact
-
-    for i in range( 0, numAdomRulesForThisFact ) :
-
-      subgoalListOfDicts = []
-      oneSubgoalDict = {}
+      prev_evald_facts.append( subgoalName )
 
       # ----------------------------------------- #
-      # define subgoal attribute list
+      # get length of data list
 
-      subgoalAttList = []
-      for j in range( 0, numAdomRulesForThisFact ) :
+      numAdomRulesForThisFact = len( fact.dataListWithTypes )
 
-        if i == j :
-          subgoalAttList.append( "T" )
-        else :
-          subgoalAttList.append( "_" )
+      logging.debug( "  BUILD ADOM : subgoalName            = " + str( subgoalName ) )
+      logging.debug( "  BUILD ADOM : fact.dataListWithTypes = " + str( fact.dataListWithTypes ) )
 
       # ----------------------------------------- #
-      # define subgoal polarity
+      # need one adom rule per datum in the fact
 
-      polarity = ""
+      for i in range( 0, numAdomRulesForThisFact ) :
 
-      # ----------------------------------------- #
-      # define subgoal time argument
+        subgoalListOfDicts = []
+        oneSubgoalDict = {}
 
-      subgoalTimeArg = ""
+        # ----------------------------------------- #
+        # define subgoal attribute list
 
-      # ----------------------------------------- #
-      # save data to subgoal dict
+        subgoalAttList = []
+        for j in range( 0, numAdomRulesForThisFact ) :
 
-      oneSubgoalDict[ "subgoalName" ]    = subgoalName
-      oneSubgoalDict[ "subgoalAttList" ] = subgoalAttList
-      oneSubgoalDict[ "polarity" ]       = polarity
-      oneSubgoalDict[ "subgoalTimeArg" ] = subgoalTimeArg
+          # set variable and wildcards
+          if i == j :
+            subgoalAttList.append( "T" )
 
-      subgoalListOfDicts.append( oneSubgoalDict )
+            # append type to base relation name
+            dataType     = fact.dataListWithTypes[ i ][ 1 ]
+            relationName = base_relationName + "_" + dataType
+            logging.debug( "  BUILD ADOM : relationName = " + relationName )
 
-      # ----------------------------------------- #
-      # save adom rule
+          else :
+            subgoalAttList.append( "_" )
 
-      newRuleData = {}
-      newRuleData[ "relationName" ]       = relationName
-      newRuleData[ "goalAttList" ]        = goalAttList
-      newRuleData[ "goalTimeArg" ]        = goalTimeArg
-      newRuleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
-      newRuleData[ "eqnDict" ]            = {}
 
-      # ----------------------------------------- #
-      # generate a new rule id
+        # ----------------------------------------- #
+        # define subgoal polarity
 
-      rid = tools.getIDFromCounters( "rid" )
+        polarity = ""
 
-      # ----------------------------------------- #
-      # create new rule object and save meta
+        # ----------------------------------------- #
+        # define subgoal time argument
 
-      newRule = Rule.Rule( rid, newRuleData, cursor )
-      newRules.append( newRule )
+        subgoalTimeArg = ""
+
+        # ----------------------------------------- #
+        # save data to subgoal dict
+
+        oneSubgoalDict[ "subgoalName" ]    = subgoalName
+        oneSubgoalDict[ "subgoalAttList" ] = subgoalAttList
+        oneSubgoalDict[ "polarity" ]       = polarity
+        oneSubgoalDict[ "subgoalTimeArg" ] = subgoalTimeArg
+
+        subgoalListOfDicts.append( oneSubgoalDict )
+
+        # ----------------------------------------- #
+        # save adom rule
+
+        newRuleData = {}
+        newRuleData[ "relationName" ]       = relationName
+        newRuleData[ "goalAttList" ]        = goalAttList
+        newRuleData[ "goalTimeArg" ]        = goalTimeArg
+        newRuleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
+        newRuleData[ "eqnDict" ]            = {}
+
+        logging.debug( "  BUILD ADOM : newRule with relationName       = " + str( newRuleData[ "relationName" ] ) )
+        logging.debug( "  BUILD ADOM : newRule with goalAttList        = " + str( newRuleData[ "goalAttList" ] ) )
+        logging.debug( "  BUILD ADOM : newRule with goalTimeArg        = " + str( newRuleData[ "goalTimeArg" ] ) )
+        logging.debug( "  BUILD ADOM : newRule with subgoalListOfDicts = " + str( newRuleData[ "subgoalListOfDicts" ] ) )
+        logging.debug( "  BUILD ADOM : newRule with eqnDict            = " + str( newRuleData[ "eqnDict" ] ) )
+
+        # ----------------------------------------- #
+        # generate a new rule id
+
+        rid = tools.getIDFromCounters( "rid" )
+
+        # ----------------------------------------- #
+        # create new rule object and save meta
+
+        #newRule = Rule.Rule( rid, newRuleData, cursor )
+        #newRules.append( newRule )
+        newRule        = copy.deepcopy( Rule.Rule( rid, newRuleData, cursor) )
+        newRule.cursor = cursor # need to do this for some reason or else cursor disappears?
+        newRules.append( newRule )
+
+        logging.debug( "  BUILD ADOM : saved new rule with rid=" + str( newRule.rid ) + " and ruleData:\n" + str( newRule.ruleData ) )
+
 
   logging.debug( "  BUILD ADOM : returning newRules = " + str( newRules ) )
 
   return newRules
-
-
-########################
-#  SET NEGATIVE RULES  #
-########################
-# the DB instance accessible via 'cursor' is the input program P
-# translated into the intermediate representation amenable to
-# syntactical anaylsis and/or translation into a particular flavor
-# of Datalog.
-#
-# use the input program to build another program P' incorporating
-# negative writes.
-# 
-# if P' contains negated IDB subgoals, repeat negativeWrites on P'.
-#
-def setNegativeRules( EOT, original_prog, oldRuleMeta, COUNTER, cursor ) :
-
-  domainRewrites.addDomainEDBs( original_prog, cursor )
-
-  print "COUNTER = " + str( COUNTER )
-
-  if NEGATIVEWRITES_DEBUG :
-    print " ... running set negative rules ..."
-
-  # --------------------------------------------------- #
-  # run input program and collect results               #
-  # --------------------------------------------------- #
-  #print "made it here1."
-
-  # get results from running the input program P
-  pResults = evaluate( COUNTER, cursor )
-
-  # --------------------------------------------------- #
-  # rewrite lines containing negated IDBs               #
-  # --------------------------------------------------- #
-  # maintian list of IDB goal names to rewrite.
-  # IDBs pulled from rules across the entire program.
-  negatedList  = []
-  newDMRIDList = []
-
-  pRIDs = getAllRuleRIDs( cursor )
-
-  for rid in pRIDs :
-
-    if ruleContainsNegatedIDB( rid, cursor ) :
-      negatedIDBNames = rewriteParentRule( rid, cursor )
-      negatedList.extend( negatedIDBNames )
-
-    else :
-      pass
-
-  # --------------------------------------------------- #
-  # add new rules for negated IDBs                      #
-  # --------------------------------------------------- #
-  #####################################################################
-  # NOTE :                                                            #
-  # negatedList is an array of [ IDB goalName, parent rule id ] pairs #
-  #####################################################################
-  DMList   = []
-  newRules = oldRuleMeta
-
-  # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
-  # remove duplicates
-  # alleviates some rule duplication in 
-  # rewritten programs.
-  #print 
-  #print "REMOVING DUPLICATES IN NEGATED LIST :"
-  #print "before : negatedList : " + str( negatedList )
-  relNameList = []
-  tmp         = []
-  for nameData in negatedList :
-    posName     = nameData[0]  # name of negated IDB subgoal
-    parentRID   = nameData[1]  # rid of parent rule
-    sidInParent = nameData[2]  # rid of parent rule
-    if not posName in relNameList :
-      tmp.append( nameData )
-      relNameList.append( posName )
-  negatedList = tmp
-  #print "after : negatedList : " + str( negatedList )
-  # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> #
-
-  for nameData in negatedList :
-
-    posName     = nameData[0]  # name of negated IDB subgoal
-    parentRID   = nameData[1]  # rid of parent rule
-    sidInParent = nameData[2]  # rid of parent rule
-
-    print "nameData    : " + str( nameData )
-    print "posName     : " + posName
-    print "parent rule : " + dumpers.reconstructRule( parentRID, cursor )
-
-    # ............................................................... #
-    # collect all rids for this IDB name
-    posNameRIDs = getRIDsFromName( posName, cursor )
-
-    # ............................................................... #
-    # rewrite original rules to shift function calls in goal atts 
-    # and rewrite as a series of new rules.
-    # branch condition : 
-    # shift arith ops if IDB defined by multiple rules
-    # otherwise, just shift the equation from the goal to the body.
-    newArithRuleRIDList = shiftArithOps( posNameRIDs, cursor )
-
-    # build rule meta for provenance rewriter
-    for rid in newArithRuleRIDList :
-      print ">>> arith rule : " + dumpers.reconstructRule( rid, cursor )
-      newRule = Rule.Rule( rid, cursor )
-      newRules.append( newRule )
-
-    # ............................................................... #
-    # rewrite original rules with uniform universal attribute variables
-    # if relation possesses more than one IDB rule definition.
-    if len( posNameRIDs ) > 1 :
-      setUniformUniversalAttributes( posNameRIDs, cursor )
-
-    # ............................................................... #
-    # apply the demorgan's rewriting scheme to the rule set.
-    newDMRIDList = applyDeMorgans( parentRID, posNameRIDs, cursor )
-    DMList.append( [ newDMRIDList, posName ] )
-
-    print "//<< parent : " + dumpers.reconstructRule( parentRID, cursor )
-    for r in newDMRIDList :
-      print "//>> new DM rule : " + dumpers.reconstructRule( r, cursor )
-
-    # build rule meta for provenance rewriter
-    for rid in newDMRIDList :
-      newRule = Rule.Rule( rid, cursor )
-      newRules.append( newRule )
-
-    # ............................................................... #
-    # add domain rule and subgoals to new DM rules.
-    newRuleMeta = domainRewrites.domainRewrites( parentRID, sidInParent, posName, posNameRIDs, newDMRIDList, COUNTER, cursor )
-    newRules.append( newRuleMeta )
-
-    # --------------------------------------------------- #
-    # replace existential vars with wildcards.            #
-    # --------------------------------------------------- #
-    #setWildcards( EOT, newDMRIDList, cursor )
-
-  # --------------------------------------------------- #
-  # final checks
-  # --------------------------------------------------- #
-  # ................................................... #
-  # resolve negated subgoals in the new demorgans       # 
-  # rules.                                              #
-  # ................................................... #
-  filterDMNegations( DMList, cursor )
-
-  #if COUNTER == 1 :
-  #  tools.dumpAndTerm( cursor )
-
-  # ................................................... #
-  # rewrite rules with negated EDBs containing          #
-  # wildcards                                           #
-  # needed to make results readable by masking          #
-  # default values.                                     #
-  # Also, c4 doesn't properly handle negated subgoals   #
-  # with wildcards.                                     #
-  # ................................................... #
-  #additionalNewRules = rewriteNegativeSubgoalsWithWildcards.rewriteNegativeSubgoalsWithWildcards( cursor )
-  #newRules.extend( additionalNewRules )
-
-  #if COUNTER == 1 :
-  #  tools.dumpAndTerm( cursor )
-
-  # ................................................... #
-  # branch on continued presence of negated IDBs
-  # ................................................... #
-  # recurse if rewritten program still contains rogue negated IDBs
-  if not newDMRIDList == [] and stillContainsNegatedIDBs( newDMRIDList, cursor ) :
-    COUNTER += 1
-    new_original_program = c4_translator.c4datalog( cursor ) # assumes c4 evaluator
-    setNegativeRules( EOT, new_original_program, newRules, COUNTER, cursor )
-
-  # otherwise, the program only has negated EDB subgoals.
-  # get the hell out of here.
-  return newRules
-
-
-#########################
-#  FILTER DM NEGATIONS  #
-#########################
-# examine all new rules generated as a result of the 
-# de Morgan's rewrites.
-# replace subgoals satisfying the characteristics of 
-# circumstances triggering previous rewrites.
-# replace double negatives with calls to the original 
-# positive subgoals.
-def filterDMNegations( DMList, cursor ) :
-
-  print "DUMPING RULES HERE:"
-  print "DMList = " + str( DMList )
-
-  for ruleInfo in DMList :
-
-    newRIDList = ruleInfo[0]
-    origName   = ruleInfo[1]
-
-    for rid in newRIDList :
-
-      print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
-      print "FILTERING RULE "
-      print "old rule:"
-      print dumpers.reconstructRule( rid, cursor )
-
-      # ............................................... #
-      # replace previously rewritten negated subgoals   #
-      # ............................................... #
-      replaceRewrittenSubgoals( rid, origName, cursor )
-
-      # ............................................... #
-      # resolve double negatives                        #
-      # ............................................... #
-      resolveDoubleNegatives( rid, origName, cursor )
-
-      print "new rule:"
-      print dumpers.reconstructRule( rid, cursor )
-
-    #tools.dumpAndTerm( cursor )
 
 
 ##############################
@@ -1700,718 +2067,37 @@ def resolveDoubleNegatives( rid, fromName, cursor ) :
         print dumpers.reconstructRule( rid, cursor )
         #tools.bp( __name__, inspect.stack()[0][3], "ici" )
 
-################################
-#  REPLACE REWRITTEN SUBGOALS  #
-################################
-# check if the rule at rid contains a subgoal 
-# such that the not_ version of the subgoal 
-# already exists as a result of a previous 
-# DM rewrite.
-# returns boolean
-def replaceRewrittenSubgoals( rid, origName, cursor ) :
-
-  print "... running negatesRewrittenSubgoal ..."
-  print "origName : " + origName
-  print "this rule : " + dumpers.reconstructRule( rid, cursor )
-
-  # .............................................. #
-  # generate negated name base                     #
-  # (i.e. the "_from_" portion)                    #
-  baseName = "_from_" + origName
-
-  # .............................................. #
-  # get sids for all negated subgoals in this rule
-  cursor.execute( "SELECT sid From Subgoals WHERE rid=='" + rid + "' AND subgoalPolarity=='notin'" )
-  sids = cursor.fetchall()
-  sids = tools.toAscii_list( sids )
-
-  # get subgoal names for negated subgoals
-  negatedSubs = []
-  for sid in sids :
-    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-    thisName = cursor.fetchone()
-    thisName = tools.toAscii_str( thisName )
-    negatedSubs.append( [ thisName, sid ] )
-
-  # .............................................. #
-  # get list of previously DM-rewritten rule names
-  dmNames = prevDMRewrites_NamesOnly( cursor )
-
-  print "dmNames : " + str( dmNames )
-
-  # .............................................. #
-  flag = False
-  for sub in negatedSubs :
-
-    name = sub[0]
-    sid  = sub[1]
-
-    # build hypothetical full name
-    fullName = "not_" + name + baseName
-
-    # check for existence
-    if fullName in dmNames :
-
-      # replace subgoal name
-      cursor.execute( "UPDATE Subgoals SET subgoalName=='" + fullName + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-
-      # replace negation argument
-      cursor.execute( "UPDATE Subgoals SET polarity=='' WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-
-      print "REPLACED REWRITTEN SUBGOAL!"
-
-
-#################################
-#  PREV DM REWRITES NAMES ONLY  #
-#################################
-def prevDMRewrites_NamesOnly( cursor ) :
-
-  cursor.execute( "SELECT goalName FROM Rule WHERE ( goalName LIKE 'not_%' ) AND ( goalName LIKE '%_from_%' )" )
-  goalNames = cursor.fetchall()
-  goalNames = tools.toAscii_list( goalNames )
-
-  # remove duplicates
-  goalNames = set( goalNames )
-  goalNames = list( goalNames )
-
-  return goalNames
 
 
 #################################
 #  STILL CONTAINS NEGATED IDBS  #
 #################################
 # check if new rules contain negated IDBs
-def stillContainsNegatedIDBs( newDMRIDList, cursor ) :
+def stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
-  flag = False
-
-  for rid in newDMRIDList :
-    if ruleContainsNegatedIDB( rid, cursor ) :
-      flag = True
-    else :
-      continue
-
-  return flag
-
-
-###################
-#  SET WILDCARDS  #
-###################
-def setWildcards( EOT, newDMRIDList, cursor ) :
-
-  for rid in newDMRIDList :
-
-    # ---------------------------------------- #
-    # get goal att list
-    cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
-    goalAttList = cursor.fetchall()
-    goalAttList = tools.toAscii_multiList( goalAttList )
-
-    atts = [ x[1] for x in goalAttList ]
-
-    # ---------------------------------------- #
-    # get list of subgoal ids
-    cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
-    sids = cursor.fetchall()
-    sids = tools.toAscii_list( sids )
-
-    for sid in sids :
-
-      # ---------------------------------------- #
-      # branch on clock subgoals. 
-      if isClock( rid, sid, cursor ) :
-        handleClockSubgoals( EOT, rid, sid, cursor )
-
-      else :
-        handleNonClockSubgoals( atts, rid, sid, cursor )
-
-      #handleNonClockSubgoals( atts, rid, sid, cursor )
-
-
-###############################
-#  HANDLE NON CLOCK SUBGOALS  #
-###############################
-def handleNonClockSubgoals( atts, rid, sid, cursor ) :
-  # ---------------------------------------- #
-  # get subgoal att list
-  cursor.execute( "SELECT attID,attName,attType FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-  subgoalAttList = cursor.fetchall()
-  subgoalAttList = tools.toAscii_multiList( subgoalAttList )
-
-  # ---------------------------------------- #
-  # replace all subgoal atts not appearing in goal att list
-  # with wildcards
-  for att in subgoalAttList :
-
-    attID   = att[0]
-    attName = att[1]
-    attType = att[2]
-
-    if attName in atts :
-      continue
-
-    else :
-      if not attName == "_" :
-        replaceWithWildcard( rid, sid, attID, cursor )
-
-
-##########################
-#  REPLACE WITH WILCARD  #
-##########################
-def replaceWithWildcard( rid, sid, attID, cursor ) :
-  attName = "_"
-  cursor.execute( "UPDATE SubgoalAtt SET attName='" + attName + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
-
-
-###########################
-#  HANDLE CLOCK SUBGOALS  #
-###########################
-# check clock for existential attributes, regardless of whether clock is negative or positive.
-# if existential attributes exist for either SndTime or DelivTime, 
-# add an additional subgoal to the rule.
-def handleClockSubgoals( EOT, rid, sid, cursor ) :
-
-  # ------------------------------------ #
-  # get all goal atts
-  cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + rid + "'" )
-  gattData = cursor.fetchall()
-  gattData = tools.toAscii_multiList( gattData )
-
-  # ------------------------------------ #
-  # get all subgoal atts
-  cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-  sattData = cursor.fetchall()
-  sattData = tools.toAscii_multiList( sattData )
-
-  # ------------------------------------ #
-  # check if sugoal att is existnetial
-  gattList = [ att[1] for att in gattData ]
-  sattList = [ att[1] for att in sattData ]
-
-  # ------------------------------------ #
-  for i in range( 0, len(sattList) ) :
-
-    att = sattList[i]
-
-    # check if clock subgoal att appears in goal att list
-    # thus, att is universal
-    if att in gattList :
-      continue
-
-    # otherwise, clock subgoal att does not appear in goal
-    # att list. thus, att is existential.
-    else :
-      if att == "SndTime" or att == "DelivTime" :
-        addAdditionalTimeDom( EOT, att, rid, cursor )
-
-      else :
-        replaceWithWildcard( rid, sid, i, cursor )
-
-
-#############################
-#  ADD ADDITIONAL TIME DOM  #
-#############################
-def addAdditionalTimeDom( EOT, att, rid, cursor ) :
-
-  sid            = tools.getID()
-  subgoalTimeArg = ""
-  attID          = 0 # dom subgoals are fixed at arity 1
-  attType        = "int"
-  argName        = ""
-
-  if att == "SndTime" :
-    subgoalName = "dom_sndtime"
-    attName     = "SndTime"
-
-  else : # att == "DelivTime"
-    subgoalName = "dom_delivtime"
-    attName     = "DelivTime"
-
-  # ------------------------------------- #
-  # add info to Subgoals relation
-  cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','" + sid + "','" + subgoalName + "','" + argName + "','" + subgoalTimeArg + "')" )
-
-  # ------------------------------------- #
-  # add info to SubgoalAtt relation
-  cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str( attID ) + "','" + attName + "','" + attType + "')" )
-
-  # ------------------------------------- #
-  # add relevant new facts.
-  # dom ranges over all ints between 1 and EOT.
-  name    = subgoalName
-  timeArg = 1   # all dom facts are true starting at time 1
-  attType = "int"
-  attID   = 0
-
-  for i in range( 1, EOT+1 ) :
-    fid = tools.getID()
-
-    # ------------------------------------- #
-    # add info to Fact relation
-    cursor.execute( "INSERT INTO Fact VALUES ('" + fid + "','" + name + "','" + str( timeArg ) + "')" )
-
-    # ------------------------------------- #
-    # add info to FactData
-    attName = i
-    cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str( attID ) + "','" + str( attName ) + "','" + attType + "')" )
-
-
-##############
-#  IS CLOCK  #
-##############
-# check if subgoal at sid in rule rid is a clock subgoal
-def isClock( rid, sid, cursor ) :
-
-  cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-  subName = cursor.fetchone()
-  subName = tools.toAscii_str( subName )
-
-  if subName == "clock" :
-    return True
+  for rule in ruleMeta :
+    if not rule.relationName.startswith( "domcomp_" ) :
+      if ruleContainsNegatedIDB( rule.rid, cursor ) :
+        logging.debug( "  STILL CONTAINS NEGATED IDBs : rule contains negated idb : " + dumpers.reconstructRule( rule.rid, cursor ) )
+        return True
 
   return False
 
 
-#########################
-#  ADD DOMAIN SUBGOALS  #
-#########################
-# add domain constraints to universal attributes per rewritten rule.
-def addDomainSubgoals( parentRID, posName, nameRIDS, newDMRIDList, pResults, cursor ) :
-
-  if NEGATIVEWRITES_DEBUG :
-    print "   ... running ADD DOMAIN SUBGOALS ..."
-
-  # -------------------------------------------------- #
-  # make sure results exist.                           #
-  # -------------------------------------------------- #
-  attDomsMap        = getAttDoms( parentRID, posName, nameRIDS, newDMRIDList, pResults, cursor )
-  childParentAttMap = getChildParentAttMap( parentRID, posName, cursor )
-
-  if not attDomsMap == {} :
-
-    # -------------------------------------------------- #
-    # build domain EDBs and add to facts tables.         #
-    # -------------------------------------------------- #
-    # get base att domain name
-    domNameBase = getAttDomNameBase( posName )
-
-    # save EDB facts
-    newDomNames = saveDomFacts( childParentAttMap, domNameBase, attDomsMap, posName, pResults, cursor )
-
-    # -------------------------------------------------- #
-    # add attribute domain subgoals to all new DM rules. #
-    # -------------------------------------------------- #
-    addSubgoalsToRules( newDomNames, newDMRIDList, cursor )
-
-
-##############################
-#  GET CHILD PARENT ATT MAP  #
-##############################
-# map goal attribute indexes of parent rule to the attribute indexes of targeted negated subgoals.
-def getChildParentAttMap( parentRID, posName, cursor ) :
-
-  # ------------------------------------------- #
-  # get parent name
-
-  cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + parentRID + "'" )
-  parentName = cursor.fetchone()
-  parentName = tools.toAscii_str( parentName )
-
-  # ------------------------------------------- #
-  # get all parent goal atts
-
-  cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + parentRID + "'" )
-  gatts = cursor.fetchall()
-  gatts = tools.toAscii_multiList( gatts )
-
-  # ------------------------------------------- #
-  # get all subgoal atts for not_posName
-
-  negName = "not_" + posName + "_from_" + parentName
-  cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + parentRID + "' AND subgoalName=='" + negName + "'" )
-  sids = cursor.fetchall()
-  sids = tools.toAscii_list( sids )
-
-  # ------------------------------------------- #
-  # map indexes of subgoal atts to goal att indexes
-
-  childParentAttMap = {}
-  for sid in sids :
-    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + parentRID + "' AND sid=='" + sid + "'"  )
-    satts = cursor.fetchall()
-    satts = tools.toAscii_multiList( satts )
-
-    thisMap = {}
-    for gatt in gatts :
-      gattID   = gatt[0]
-      gattName = gatt[1]
-
-      for satt in satts :
-        sattID   = satt[0]
-        sattName = satt[1]
-
-        if sattName == "_" :
-          thisMap[ sattID ] = "_"
-
-        if gattName == sattName :
-          thisMap[ sattID ] = gattID
-
-    childParentAttMap[ sid ] = thisMap
-
-  childParentAttMap = combineMaps( childParentAttMap )
-
-  return childParentAttMap
-
-
-##################
-#  COMBINE MAPS  #
-##################
-# if parent rule negates the target subgoal multiple times,
-# then combine the goal index valus into a list per subgoal att index 
-# across negated instances.
-def combineMaps( childParentAttMap ) :
-
-  allMaps = []
-  for sidkey in childParentAttMap :
-    thismap = childParentAttMap[ sidkey ]
-    allMaps.append( thismap )
-
-  combinedMaps = {}
-
-  # iniliaze att id keys with empty lists
-  aMap = allMaps[0]
-  for key in aMap :
-    combinedMaps[ key ] = []
-
-  # iterate over all maps and accumulate indexes
-  for aMap in allMaps :
-    for key in aMap :
-      val = aMap[ key ]
-      if not val in combinedMaps[ key ] :
-        combinedMaps[ key ].append(val)
-
-  return combinedMaps
-
-
-##################
-#  GET ATT DOMS  #
-##################
-def getAttDoms( parentRID, posName, nameRIDS, newDMRIDList, pResults, cursor ) :
-
-  print "================================================"
-  print "... running GET ATT DOMS from negativeWrites ..."
-  print "================================================"
-
-  print "parent rule    : " + dumpers.reconstructRule( parentRID, cursor )
-  print "posName        : " + posName
-  print "nameRIDS rules :"
-  for rid in nameRIDS :
-    print dumpers.reconstructRule( rid, cursor )
-
-  attDomsMap = {}
-
-  #----------------------------------------------------------#
-  #if "missing_log" in posName[0:11] :
-  #  print "parent Rule:"
-  #  print dumpers.reconstructRule( parentRID, cursor )
-
-  #  print "nameRIDS"
-  #  for rid in nameRIDS :
-  #    print dumpers.reconstructRule( rid, cursor )
-
-  #  print "newDMRIDList"
-  #  for rid in newDMRIDList :
-  #    print dumpers.reconstructRule( rid, cursor )
-  #----------------------------------------------------------#
-
-  # ---------------------------------------------------- #
-  # get the parent rule name                             #
-  # ---------------------------------------------------- #
-  parentName = getParentName( parentRID, cursor )
-
-  print "parentName = " + parentName
-  print "pResults[ " + parentName + " ] :"
-  print pResults[ parentName ]
-
-  # ---------------------------------------------------- #
-  # get the domain for each attribute of positive rule,  #
-  # as determined in pResults.                           #
-  # ---------------------------------------------------- #
-  attDomsMap = getParentAttDomains( pResults[ parentName ] )
-
-  # ---------------------------------------------------- #
-  # empty domain map means parent rule didn't fire.      #
-  # fill doms with default values.                       #
-  # ---------------------------------------------------- #
-  if attDomsMap == {} :
-    print "filling defaults..."
-    attDomsMap = fillDefaults( newDMRIDList, cursor )
-
-  #----------------------------------------------------------#
-  #if "missing_log" in posName[0:11] :
-  #  print "attDomsMap = " + str( attDomsMap )
-  #  tools.bp( __name__, inspect.stack()[0][3], "shit" )
-  #----------------------------------------------------------#
-
-  print "attDomsMap = " + str( attDomsMap )
-
-  return attDomsMap
-
-
-###################
-#  FILL DEFAULTS  #
-###################
-def fillDefaults( newDMRIDList, cursor ) :
-
-  # get goal arity
-  chooseAnRID = newDMRIDList[0]
-  cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + chooseAnRID + "'" )
-  data = cursor.fetchall()
-  data = tools.toAscii_multiList( data )
-
-  lastAttID = data[-1][0]
-  arity     = lastAttID + 1
-
-  domMap = {}
-  for i in range( 0, arity ) :
-
-    attType = data[ i ][ 1 ]
-
-    if attType == "string" :
-      col = [ "_DEFAULT_STRING_" ]
-    else :
-      col = [ 99999999999 ]
-
-    domMap[ i ] = col
-
-  return domMap
-
-
-#####################
-#  GET PARENT NAME  #
-#####################
-def getParentName( parentRID, cursor ) :
-
-  cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + parentRID + "'" )
-  parentName = cursor.fetchone()
-  parentName = tools.toAscii_str( parentName )
-
-  return parentName
-
-
-###########################
-#  ADD SUBGOALS TO RULES  #
-###########################
-# add domain subgoals to new demorgan's rules.
-def addSubgoalsToRules( newDomNames, newDMRIDList, cursor ) :
-
-  for rid in newDMRIDList :
-
-    print "this rule : " + dumpers.reconstructRule( rid, cursor )
-
-    # ----------------------------------- #
-    # get goal att list
-    cursor.execute( "SELECT attID,attName,attType FROM GoalAtt WHERE rid=='" + rid + "'" )
-    goalAttList = cursor.fetchall()
-    goalAttList = tools.toAscii_multiList( goalAttList )
-
-    print "goalAttList = " + str( goalAttList )
-    print "newDomNames = " + str( newDomNames )
-
-    # ----------------------------------- #
-    # map att names to att indexes
-    attNameIndex = {}
-    for att in goalAttList :
-      attID   = att[0]
-      attName = att[1]
-      attType = att[2]
-
-      attIndex = attName.replace( "A", "" )
-
-      attNameIndex[ attName ] = attIndex
-
-    subNum = 0 
-    for subName in newDomNames :
-
-      # ----------------------------------- #
-      # generate sid                        #
-      # ----------------------------------- #
-      sid = tools.getID()
-
-      # ----------------------------------- #
-      # fixed subgoal time arg to nothing   #
-      # ----------------------------------- #
-      subgoalTimeArg = ""
-
-      # ----------------------------------- #
-      # insert subgoal metadata             #
-      # ----------------------------------- #
-      cursor.execute( "INSERT INTO Subgoals VALUES ('" + rid + "','"  + sid + "','" + subName + "','" + subgoalTimeArg +"')" )
-
-      # ----------------------------------- #
-      # insert subgoal att data             #
-      # ----------------------------------- #
-
-      print "subNum = " + str(subNum)
-      print "subName = " + str( subName )
-
-      att     = goalAttList[ subNum ]
-      attID   = 0       # domain subgoals have arity 1
-      attName = att[1]
-      attType = att[2]
-
-      cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + rid + "','" + sid + "','" + str( attID ) + "','" + attName + "','" + attType + "')" )
-
-      subNum += 1
-
-
 ####################
-#  SAVE DOM FACTS  #
+#  REMAINING IDBS  #
 ####################
-def saveDomFacts( childParentAttMap, domNameBase, attDomsMap, posName, pResults, cursor ) :
+# check if new rules contain negated IDBs
+def remainingIDBs( ruleMeta, cursor ) :
 
-  print "++++++++++++++++++++++++++++++++++++++++++++++++++"
-  print "... running SAVE DOM FACTS from negativeWrites ..."
-  print "++++++++++++++++++++++++++++++++++++++++++++++++++"
+  remainingRulesWIDBs = []
 
-  #if domNameBase[0:10] == "dom_clock_" :
-  #  print "domNameBase = " + domNameBase
-  #  print "attDomsMap = " + str( attDomsMap )
-  #  #tools.bp( __name__, inspect.stack()[0][3], "stop here" )
+  for rule in ruleMeta :
+    if not rule.relationName.startswith( "domcomp_" ) :
+      if ruleContainsNegatedIDB( rule.rid, cursor ) :
+        remainingRulesWIDBs.append( dumpers.reconstructRule( rule.rid, cursor ) )
 
-  if domNameBase.startswith( "dom_put_" ) :
-    print "domNameBase = " + domNameBase
-    print "attDomsMap = " + str( attDomsMap )
-    #tools.bp( __name__, inspect.stack()[0][3], "stop here" )
-
-  combinedAttMaps = combineAttMaps( childParentAttMap, attDomsMap, posName, pResults )
-
-  newDomNames = []
-  for att in combinedAttMaps :
-    attID = att
-    dom   = combinedAttMaps[ attID ]
-
-    # -------------------------------------------- #
-    # insert new fact data
-    for data in dom :
-
-      # ............................................ #
-      # generate new fact id
-      fid = tools.getID()
-
-      # ............................................ #
-      # create full fact name
-      factName = domNameBase + str( attID ) 
-
-      # ............................................ #
-      # all dom facts are true starting at time 1
-      timeArg = '1'
-
-      # ............................................ #
-      # insert new fact metadata
-
-      #if factName == "bcast" :
-      #  print "/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/"
-      #  print "  CHECK THIS BCAST INSERT!!!!"
-
-      #print "INSERT INTO Fact VALUES ('" + fid + "','" + factName + "','" + timeArg + "')"
-      cursor.execute( "INSERT INTO Fact VALUES ('" + fid + "','" + factName + "','" + timeArg + "')" )
-
-      # ............................................ #
-      # set type
-      if tools.isInt(data) :
-        attType = 'int'
-      else :
-        attType = 'string'
-        data    = '"' + data + '"'
-
-      # ............................................ #
-      # perform insertion
-      thisID = 0 # contant because domain relations are unary.
-      #print "INSERT INTO FactData VALUES ('" + fid + "','" + str(thisID) + "','" + data + "','" + attType + "')"
-      cursor.execute( "INSERT INTO FactData VALUES ('" + fid + "','" + str(thisID) + "','" + str( data ) + "','" + attType + "')" )
-
-    # -------------------------------------------- #
-    # collect domain subgoal names for convenience
-    if not factName in newDomNames :
-      newDomNames.append( factName )
-
-  return newDomNames
-
-
-######################
-#  COMBINE ATT MAPS  #
-######################
-def combineAttMaps( childParentAttMap, attDomsMap, posName, pResults ) :
-
-  finalMap = {}
-
-  print "childParentAttMap = " + str( childParentAttMap )
-
-  for subIndex in childParentAttMap :
-    goalIndexList = childParentAttMap[ subIndex ]
-    thisRange = []
-    for goalIndex in goalIndexList :
-
-      # check if wildcard
-      if goalIndex == "_" :
-        thisRange.extend( getDomAttRangeFromSubgoalRule( subIndex, posName, pResults ) )
-
-      else :
-        thisRange.extend( attDomsMap[ goalIndex ] )
-
-    finalMap[ subIndex ] = thisRange
-
-  return finalMap
-
-
-#########################################
-#  GET DOM ATT RANGE FROM SUBGOAL RULE  #
-#########################################
-def getDomAttRangeFromSubgoalRule( subIndex, posName, pResults ) :
-
-  domAttRange = []
-
-  results = pResults[ posName ]
-
-  domAttRange = []
-  for tup in results :
-    domAttRange.append( tup[ subIndex ] )
-
-  return domAttRange
-
-###########################
-#  GET ATT DOM NAME BASE  #
-###########################
-def getAttDomNameBase( name ) :
-  return "dom_" + name + "_att"
-
-
-############################
-#  GET PARENT ATT DOMAINS  #
-############################
-def getParentAttDomains( results ) :
-
-  #print "results = " + str( results )
-
-  if not results == [] :
-
-    # get tuple arity
-    arity = len( results[0] )
-
-    attDomsMap = {}
-    attID = 0
-    for i in range( 0, arity ) :
-      col = []
-      for tup in results :
-        if not tup[i] in col :
-          col.append( tup[i] )
-      attDomsMap[ i ] = col
-
-    return attDomsMap
-
-  else :
-    return {}
+  return remainingRulesWIDBs
 
 
 #####################
@@ -2697,218 +2383,6 @@ def addEqn( eqn, rid, cursor ) :
   cursor.execute( "INSERT INTO Equation VALUES ('" + rid + "','" + eid + "','" + eqn + "')" )
 
 
-######################################
-#  SET UNIFORM UNIVERSAL ATTRIBUTES  #
-######################################
-# rewrite original rules with uniform universal attribute variables
-def setUniformUniversalAttributes( rids, cursor ) :
-
-  print "===================================================================="
-  print "... running SET UNIFORM UNIVERSAL ATTRIBUTES from negativeWrites ..."
-  print "===================================================================="
-
-  print "positive rule version rids : " + str( rids )
-
-  # ------------------------------------------------------- #
-  # get arity of this IDB                                   #
-  # ------------------------------------------------------- #
-  arity = None
-
-  #print "rids = " + str( rids )
-  #for rid in rids :
-  #  print dumpers.reconstructRule( rid, cursor )
-
-  for rid in rids :
-    cursor.execute( "SELECT max(attID) FROM GoalAtt WHERE rid=='" + rid + "'" )
-    maxID = cursor.fetchone()
-    arity = maxID[0]
-
-  # ------------------------------------------------------- #
-  # generate list of uniform attribute names of same arity  #
-  # ------------------------------------------------------- #
-  uniformAttributeList = []
-
-  for i in range(0, arity) :
-    uniformAttributeList.append( "A" + str( i ) )
-
-  uniformAttributeList = tuple( uniformAttributeList ) # make immutable. fixes weird list update referencing bug.
-
-  # ------------------------------------------------------- #
-  # perform variable substitutions for rules accordingly    #
-  # ------------------------------------------------------- #
-  for rid in rids :
-
-    uniformList = list( uniformAttributeList ) # make mutable
-    variableMap = {}
-
-    print "arity : " + str( arity )
-    print "rule : " + dumpers.reconstructRule( rid, cursor )
-
-    for i in range(0, arity) :
-
-      # /////////////////////////// #
-      # populate variable map
-      cursor.execute( "SELECT attName FROM GoalAtt WHERE rid=='" + rid + "' AND attID=='" + str(i) + "'" )
-      attName = cursor.fetchone()
-      attName = tools.toAscii_str( attName )
-
-      # handle goal attributes with operators
-      if containsOp( attName ) :
-        decomposedAttName = getOp( attName )  # [ lhs, op, rhs ]
-
-        lhs = decomposedAttName[0]
-        op  = decomposedAttName[1]
-        rhs = decomposedAttName[2]
-
-        variableMap[ lhs ] = uniformList[i]
-        uniformList[i] = uniformList[i] + op + rhs
-
-      else :
-        variableMap[ attName ] = uniformList[i]
-
-      # /////////////////////////// #
-      # substitutions in head       #
-      # /////////////////////////// #
-      cursor.execute( "UPDATE GoalAtt SET attName=='" + uniformList[i] + "' WHERE rid=='" + rid + "' AND attID=='" + str(i) + "'" )
-
-    # /////////////////////////// #
-    # substitutions in subgoals   #
-    # /////////////////////////// #
-
-    # get sids for this rule
-    cursor.execute( "SELECT sid FROM Subgoals WHERE rid=='" + rid + "'" )
-    sids = cursor.fetchall()
-    sids = tools.toAscii_list( sids )
-
-    for sid in sids :
-
-      # map attIDs to attNames
-      attMap = {}
-      cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'"  )
-      attData = cursor.fetchall()
-      attData = tools.toAscii_multiList( attData )
-
-      for att in attData :
-        attID   = att[0]
-        attName = att[1]
-
-        if attName in variableMap :
-          cursor.execute( "UPDATE SubgoalAtt SET attName=='" + variableMap[ attName ] + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
-
-
-    # /////////////////////////// #
-    # substitutions in equations  #
-    # /////////////////////////// #
-
-    # get eids for this rule
-    cursor.execute( "SELECT eid FROM Equation WHERE rid=='" + rid + "'" )
-    eids = cursor.fetchall()
-    eids = tools.toAscii_list( eids )
-
-    for eid in eids :
-
-      # decompose eqn into components <- assumes structure
-      # of the form : <lhsVariable>=<rhsExpression>
-
-      cursor.execute( "SELECT eqn FROM Equation WHERE rid=='" + rid + "' AND eid=='" + eid + "'" )
-      eqn = cursor.fetchone()
-      eqn = tools.toAscii_str( eqn )
-
-      eqn = eqn.split( "==" )
-
-      lhs_eqn = eqn[0]
-      rhs_eqn = eqn[1]
-
-      decomposedAttName = getOp( rhs_eqn )  # [ lhs, op, rhs ]
-      lhs_expr = decomposedAttName[0]
-      op       = decomposedAttName[1]
-      rhs_expr = decomposedAttName[2]
-
-      # check contents of eqn for goal atts
-      # save existential vars for later annotation of "__KEEP__" string
-      # to prevent wildcard replacement in future stages.
-      existentialVarMap = {}
-      for var in variableMap :
-
-        # ************************************ #
-        # check lhs of eqn is a goal att
-        if tools.isInt( lhs_eqn ) : 
-          pass
-        else :
-          if var in lhs_eqn :
-            lhs_eqn = variableMap[ var ]
-
-          else : # it's an existential var
-
-            # generate new existential var
-            newExistentialVar = generateNewVar( lhs_eqn )
-
-            # save to map
-            existentialVarMap[ lhs_eqn ] = newExistentialVar
-
-        # ************************************ #
-        # check lhs of rhs expression
-        if tools.isInt( lhs_expr ) : 
-          pass
-        else :
-          if var in lhs_expr :
-            lhs_expr = variableMap[ var ]
-          else : # it's an existential var
-
-            # generate new existential var
-            newExistentialVar = generateNewVar( lhs_expr )
-
-            # save to map
-            existentialVarMap[ lhs_expr ] = newExistentialVar
-
-        # ************************************ #
-        # check rhs of rhs expression
-        if tools.isInt( rhs_expr ) : 
-          pass
-        else :
-          if var in rhs_expr :
-            rhs_expr = variableMap[ var ]
-          else : # it's an existential var
-
-            # generate new existential var
-            newExistentialVar = generateNewVar( lhs_eqn )
-
-            # save to map
-            existentialVarMap[ rhs_expr ] = newExistentialVar
-        # ************************************ #
-
-      # generate new equation using the variable substitutions, if applicable
-      if lhs_expr in existentialVarMap :
-        lhs_expr = existentialVarMap[ lhs_expr ]
-      if rhs_expr in existentialVarMap :
-        rhs_expr = existentialVarMap[ rhs_expr ]
-
-      newEqn = lhs_eqn + "==" + lhs_expr + op + rhs_expr
-
-      # replace old equation
-      cursor.execute( "UPDATE Equation SET eqn=='" + newEqn + "' WHERE rid=='" + rid + "' AND eid=='" + eid + "'" )
-
-
-      # ====================================================================== #
-      # preserve existential attributes appearing in the eqn across the rule
-      # ====================================================================== #
-
-      for sid in sids :
-
-        # get attribs
-        cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid=='" + rid + "' AND sid=='" + sid + "'" )
-        attData = cursor.fetchall()
-        attData = tools.toAscii_multiList( attData )
-
-        for att in attData :
-          attID   = att[0]
-          attName = att[1]
-
-          if attName in existentialVarMap :
-            newAttName = existentialVarMap[ attName ]
-            cursor.execute( "UPDATE SubgoalAtt SET attName=='" + newAttName + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
-
-
 ######################
 #  GENERATE NEW VAR  #
 ######################
@@ -2969,7 +2443,7 @@ def getAllRuleRIDs( cursor ) :
 # check if the given rule contains a negated IDB
 def ruleContainsNegatedIDB( rid, cursor ) :
 
-  cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + rid + "' AND subgoalPolarity=='notin'" )
+  cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + str( rid ) + "' AND subgoalPolarity=='notin'" )
   negatedSubgoals = cursor.fetchall()
   negatedSubgoals = tools.toAscii_list( negatedSubgoals )
 
@@ -2977,12 +2451,8 @@ def ruleContainsNegatedIDB( rid, cursor ) :
 
   for subgoalName in negatedSubgoals :
 
-    # skip arith op rewrites for now.
-    if "_arithoprewrite" in subgoalName :
-      pass
-
-    # skip edb rewrites
-    elif "_edbrewrite" in subgoalName :
+    # skip domcomp rules
+    if subgoalName.startswith( "domcomp_" ) :
       pass
 
     elif isIDB( subgoalName, cursor ) :
@@ -3092,79 +2562,6 @@ def getRIDsFromName( name, cursor ) :
   ridList = tools.toAscii_list( ridList )
 
   return ridList
-
-
-#####################
-#  APPLY DEMORGANS  #
-#####################
-# perform the rewrites on the negated IDB rules.
-# data for new rules are stored directly in the IR database.
-def applyDeMorgans( parentRID, nameRIDs, cursor ) :
-  return deMorgans.doDeMorgans( parentRID, nameRIDs, cursor )
-
-
-
-##############
-#  EVALUATE  #
-##############
-def evaluate( COUNTER, cursor ) :
-
-  # translate into c4 datalog
-  allProgramLines = c4_translator.c4datalog( cursor )
-
-  # run program
-  print "call c4 wrapper from negativeWrites"
-  results_array = c4_evaluator.runC4_wrapper( allProgramLines )
-
-  #print "FROM evaluate in negativeWrites : results_array :"
-  #print results_array
-
-  # ----------------------------------------------------------------- #
-  # dump evaluation results locally
-  eval_results_dump_dir = os.path.abspath( os.getcwd() ) + "/data/"
-
-  # make sure data dump directory exists
-  if not os.path.isdir( eval_results_dump_dir ) :
-    print "WARNING : evalulation results file dump destination does not exist at " + eval_results_dump_dir
-    print "> creating data directory at : " + eval_results_dump_dir
-    os.system( "mkdir " + eval_results_dump_dir )
-    if not os.path.isdir( eval_results_dump_dir ) :
-      tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unable to create evaluation results dump directory at " + eval_results_dump_dir )
-    print "...done."
-
-  # otherwise, data dump directory exists
-  eval_results_dump_to_file( COUNTER, results_array, eval_results_dump_dir )
-
-  # ----------------------------------------------------------------- #
-  # parse results into a dictionary
-  parsedResults = tools.getEvalResults_dict_c4( results_array )
-
-  #print "FROM evaluate in negativeWrites : parsedResults :"
-  #print parsedResults
-
-  # ----------------------------------------------------------------- #
-
-  return parsedResults
-
-
-###############################
-#  EVAL RESULTS DUMP TO FILE  #
-###############################
-def eval_results_dump_to_file( COUNTER, results_array, eval_results_dump_dir ) :
-
-  eval_results_dump_file_path = eval_results_dump_dir + "eval_dump_" + str( COUNTER ) + ".txt"
-
-  # save new contents
-  f = open( eval_results_dump_file_path, "w" )
-
-  for line in results_array :
-
-    print line
-
-    # output to file
-    f.write( line + "\n" )
-
-  f.close()
 
 
 #########

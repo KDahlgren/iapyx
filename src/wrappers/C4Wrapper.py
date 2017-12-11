@@ -6,7 +6,7 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, string, sys, time
+import logging, inspect, os, string, sys, time
 from ctypes import *
 from types  import *
 
@@ -40,7 +40,7 @@ class C4Wrapper( object ) :
   #########################
   def getInputProg_file( self, filename ) :
     if DEBUG :
-      print "Importing program from " + filename
+      logging.debug( "Importing program from " + filename )
 
     try :
       program = []
@@ -53,7 +53,7 @@ class C4Wrapper( object ) :
       return "".join( program )
 
     except IOError :
-      print "Could not open file " + filename
+      logging.error( "Could not open file " + filename )
       return None
 
 
@@ -283,18 +283,18 @@ class C4Wrapper( object ) :
 
     # ----------------------------------------- #
     # KD : bcsat debugging session 6/21/17
-    print "PRINTING RAW INPUT PROG"
+    logging.debug( "PRINTING RAW INPUT PROG" )
     for x in fullprog :
-      print x
+      logging.debug( x )
 
-    print "PRINTING LEGIBLE INPUT PROG"
+    logging.debug( "PRINTING LEGIBLE INPUT PROG" )
     for line in fullprog :
       line = line.split( ";" )
       for statement in line :
         statement = statement.rstrip()
         if not statement == "" :
           statement = statement + ";"
-          print statement
+          logging.debug( statement )
 
     # ----------------------------------------- #
 
@@ -304,33 +304,27 @@ class C4Wrapper( object ) :
 
     # ---------------------------------------- #
     # load program
-    if DEBUG :
-      print "... loading prog ..."
+    logging.debug( "... loading prog ..." )
 
     for subprog in fullprog :
-      print "SUBMITTING SUBPROG : "
-      print subprog
+      logging.debug( "SUBMITTING SUBPROG : " )
+      logging.debug( subprog )
       c_prog = bytes( subprog )
       self.lib.c4_install_str( self.c4_obj, c_prog )
 
     # ---------------------------------------- #
     # dump program results to file
-    if DEBUG :
-      print "... dumping program ..."
+    logging.debug( "... dumping program ..." )
 
     results_array = self.saveC4Results_toArray( tableList )
 
     # ---------------------------------------- #
     # close c4 program
-    if DEBUG :
-      print "... closing C4 ..."
+    logging.debug( "... closing C4 ..." )
 
     self.lib.c4_destroy( self.c4_obj )
     self.lib.c4_terminate( )
 
-    # ---------------------------------------- #
-    #print "FROM C4WRAPPER : results_array :"
-    #print results_array
     return results_array
 
 
@@ -346,10 +340,9 @@ class C4Wrapper( object ) :
     for table in tableList :
 
       # output to stdout
-      if DEBUG :
-        print "---------------------------"
-        print table
-        print self.lib.c4_dump_table( self.c4_obj, table )
+      "---------------------------"
+      logging.debug( table )
+      logging.debug( self.lib.c4_dump_table( self.c4_obj, table ) )
 
       # save in array
       results_array.append( "---------------------------" )
@@ -367,7 +360,7 @@ class C4Wrapper( object ) :
 #########################
 if __name__ == '__main__' :
 
-  print "[ Executing C4 wrapper ]"
+  logging.debug( "[ Executing C4 wrapper ]" )
   w = C4Wrapper( '../../lib/c4/build/src/libc4/libc4.dylib' ) # initializes c4
 
   # /////////////////////////////////// #

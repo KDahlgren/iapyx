@@ -16,10 +16,8 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 from utils import tools
 # ------------------------------------------------------ #
 
-DEBUG = tools.getConfig( "DEDT", "FACT_DEBUG", bool )
 
 class Fact :
-
 
   ################
   #  ATTRIBUTES  #
@@ -77,22 +75,40 @@ class Fact :
   # currently only supports strings and ints.
   def getDataAndTypes( self, dataList_raw ) :
 
+    logging.debug( "  GET DATA AND TYPES : dataList_raw = " + str( dataList_raw ) )
+
     dataListWithTypes = []
 
     for data in dataList_raw :
-      if self.isString( data ) :
-        dataType = "string"
-      else :
-        dataType = "int"
 
-      dataListWithTypes.append( [ data, dataType ] )
+      logging.debug( "  GET DATA AND TYPES : data         = " + str( data ) )
+      logging.debug( "  GET DATA AND TYPES : type( data ) = " + str( type( data ) ) )
+
+      #if self.isString( data ) :
+      #  dataType = "string"
+
+      #else :
+      #  dataType = "int"
+
+      #dataListWithTypes.append( [ data, dataType ] )
+      dataType = type( data ).__name__
+
+      if dataType == "int" :
+        dataListWithTypes.append( [ data, dataType ] )
+
+      elif isInt( data ) :
+        dataListWithTypes.append( [ data, "int" ] )
+
+      # c4 is picky.
+      elif dataType == "str" :
+        dataListWithTypes.append( [ data, "string" ] )
 
     return dataListWithTypes
 
 
-  ###############
-  #  SAVE FACT  #
-  ###############
+  ####################
+  #  SAVE FACT INFO  #
+  ####################
   # save fact name and time argument
   def saveFactInfo( self ) :
 
@@ -135,27 +151,47 @@ class Fact :
     if type( testString ) is int :
       return False
 
-    elif testString.isdigit() :
-      return False
-
     else :
-      alphabet = [ 'a', 'b', 'c', \
-                   'd', 'e', 'f', \
-                   'g', 'h', 'i', \
-                   'j', 'k', 'l', \
-                   'm', 'n', 'o', \
-                   'p', 'q', 'r', \
-                   's', 't', 'u', \
-                   'v', 'w', 'x', \
-                   'y', 'z' ]
+      if testString.count( "'" ) == 2 :
+        return True
+
+      elif testString.count( '"' ) == 2 :
+        return True
+
+      elif testString.isdigit() :
+        return False
+
+      else :
+        alphabet = [ 'a', 'b', 'c', \
+                     'd', 'e', 'f', \
+                     'g', 'h', 'i', \
+                     'j', 'k', 'l', \
+                     'm', 'n', 'o', \
+                     'p', 'q', 'r', \
+                     's', 't', 'u', \
+                     'v', 'w', 'x', \
+                     'y', 'z' ]
   
-      flag = False
-      for character in testString :
-        if character.lower() in alphabet :
-          flag = True
+        flag = False
+        for character in testString :
+          if character.lower() in alphabet :
+            flag = True
   
-      logging.debug( "  IS STRING : flag = " + str( flag ) )
-      return flag
+        logging.debug( "  IS STRING : flag = " + str( flag ) )
+        return flag
+
+
+############
+#  IS INT  #
+############
+# check if the input string is an integer
+def isInt( data ) :
+
+  if data.isdigit() :
+    return True
+
+  else :
+    return False
 
 
 #########

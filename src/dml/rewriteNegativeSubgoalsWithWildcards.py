@@ -25,7 +25,6 @@ from utils       import clockTools, tools, dumpers
 #############
 #  GLOBALS  #
 #############
-NEGATIVEWRITES_DEBUG = tools.getConfig( "DEDT", "NEGATIVEWRITES_DEBUG", bool )
 
 arithOps = [ "+", "-", "*", "/" ]
 

@@ -11,7 +11,7 @@ iapyx.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sqlite3, sys, time
+import logging, inspect, os, sqlite3, sys, time
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -29,8 +29,6 @@ from utils import parseCommandLineInput, tools
 #############
 #  GLOBALS  #
 #############
-DEBUG = tools.getConfig( "DRIVERS", "DRIVER_DEBUG", bool )
-
 C4_DUMP_SAVEPATH  = os.path.abspath( __file__ + "/../../.." ) + "/save_data/c4Output/c4dump.txt"
 TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/programFiles/" + "tableListStr.data"
 
@@ -61,8 +59,7 @@ def iapyx() :
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
-  if DEBUG :
-    "PROGRAM ENDED SUCESSFULLY."
+  logging.info( "PROGRAM ENDED SUCESSFULLY." )
 
 
 #########################

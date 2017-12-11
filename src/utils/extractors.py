@@ -20,7 +20,6 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-EXTRACTORS_DEBUG = tools.getConfig( "UTILS", "EXTRACTORS_DEBUG", bool )
 
 specialOps = ["notin"] # TODO: make this configurable
 eqnOps     = [ "+", "-", "*", "/", ">", "<", "<=", ">=", "==", "!=" ]

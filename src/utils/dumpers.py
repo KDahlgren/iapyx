@@ -12,12 +12,6 @@ import tools
 # import sibling packages HERE!!!
 # ------------------------------------------------------ #
 
-#############
-#  GLOBALS  #
-#############
-#DUMPERS_DEBUG = tools.getConfig( "UTILS", "DUMPERS_DEBUG", bool )
-DUMPERS_DEBUG = False
-
 ##################
 #  PROGRAM DUMP  #
 ##################
@@ -385,8 +379,7 @@ def clockDump( cursor ) :
 ######################
 def reconstructRule( rid, cursor ) :
 
-  if DUMPERS_DEBUG :
-    print "... running reconstructRule ..."
+  #logging.debug( "... running reconstructRule ..." )
 
   rule = ""
 

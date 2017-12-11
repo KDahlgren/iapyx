@@ -19,7 +19,6 @@ from utils import tools
 #############
 #  GLOBALS  #
 #############
-DEDALUSPARSER_DEBUG = tools.getConfig( "DEDT", "DEDALUSPARSER_DEBUG", bool )
 
 eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 opList = eqnOps + [ "+", "-", "/", "*" ]

@@ -21,7 +21,6 @@ from utils import tools, dumpers
 #############
 #  GLOBALS  #
 #############
-NEGATIVEWRITES_DEBUG = tools.getConfig( "DEDT", "NEGATIVEWRITES_DEBUG", bool )
 
 arithOps = [ "+", "-", "*", "/" ]
 
@@ -240,8 +239,7 @@ def getDNFFmla_v1( ridSidToPredicate_map ) :
 #
 def setNewRules( parentName, ruleName, simplified_negFmla, predicateToID_map, cursor ) :
 
-  if NEGATIVEWRITES_DEBUG :
-    print " ... running set new rules ..."
+  logging.debug( " ... running set new rules ..." )
 
   #print "simplified_negFmla = " + str( simplified_negFmla ) 
   #tools.dumpAndTerm( cursor )

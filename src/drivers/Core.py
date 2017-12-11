@@ -73,7 +73,7 @@ class Core :
     # ----------------------------------------------- #
 
     # use c4 wrapper 
-    parsedResults = self.evaluate( allProgramData )
+    parsedResults = self.evaluate( self.argDict, allProgramData )
 
 
   ########################
@@ -89,10 +89,10 @@ class Core :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, allProgramData ) :
+  def evaluate( self, argDict, allProgramData ) :
 
     # inject custom faults here.
-    allProgramData = injectCustomFaults( allProgramData )
+    allProgramData = injectCustomFaults( argDict, allProgramData )
 
     results_array = c4_evaluator.runC4_wrapper( allProgramData )
 
@@ -151,12 +151,12 @@ class Core :
 #   CUSTOM_FAULT = ['clock("str","str",2,2)']
 # use double quotes for str data in clock tuples and single quotes around clock facts.
 
-def injectCustomFaults( allProgramData ) :
+def injectCustomFaults( argDict, allProgramData ) :
 
 
   # grab the custom fault, which is a list of clock fact strings, with quotes,
   # to remove from full clock relation
-  customFaultList = tools.getConfig( "CORE", "CUSTOM_FAULT", list )
+  customFaultList = tools.getConfig( argDict[ "settings" ], "CORE", "CUSTOM_FAULT", list )
 
   if customFaultList :
     # delete specified clock facts from program

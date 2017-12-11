@@ -44,11 +44,7 @@ from utils import dumpers, extractors, tools
 # ------------------------------------------------------ #
 
 
-DEBUG = tools.getConfig( "DEDT", "RULE_DEBUG", bool )
-
-
 class Rule :
-
 
   ################
   #  ATTRIBUTES  #
@@ -143,14 +139,40 @@ class Rule :
   # GoalAtt( rid text, attID int, attName text, attType text )
   def saveToGoalAtt( self ) :
 
-    # delete all data for this id in the table, if applicable
-    self.cursor.execute( "DELETE FROM GoalAtt WHERE rid='%s'" % str( self.rid ) )
+    logging.debug( "========================================================" )
+    if self.relationName == "log" :
+      logging.debug( "  SAVE TO GOAL ATT : log rule meta = " + str( self.ruleData ) )
+      self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+      typeList = self.cursor.fetchall()
+      typeList = tools.toAscii_multiList( typeList )
+      for t in typeList :
+        logging.debug(  "  SAVE TO GOAL ATT : " + str( t ) )
+
+    # get type list
+    self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+    typeList = self.cursor.fetchall()
+    typeList = tools.toAscii_multiList( typeList )
+
+    logging.debug( "  SAVE TO GOAL ATT : len( self.goalAttList ) = " + str( self.goalAttList ) )
+    logging.debug( "  SAVE TO GOAL ATT : typeList                = " + str( typeList ) )
+
+    # delete all data for this id in the table
+    self.cursor.execute( "DELETE FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
 
     attID = 0  # allows duplicate attributes in attList
 
-    for attName in self.goalAttList :
+    #for attName in self.goalAttList :
+    for i in range( 0, len( self.goalAttList ) ) :
 
-      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + str( self.rid ) + "','" + str( attID ) + "','" + str( attName ) + "','UNDEFINEDTYPE')")
+      attName = self.goalAttList[ i ]
+      try :
+        attType = typeList[ i ][ 1 ]
+      except IndexError :
+        attType = "UNDEFINEDTYPE"
+
+      logging.debug( "  SAVE TO GOAL ATT : attType = " + str( attType ) )
+
+      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + str( self.rid ) + "','" + str( attID ) + "','" + str( attName ) + "','" + attType + "')")
 
       attID += 1
 
@@ -166,10 +188,21 @@ class Rule :
   def saveSubgoals( self ) :
 
     # delete all data for this id in the table, if applicable
-    logging.debug( "  SAVE SUBGOALS : self.ruleData = = " + str( self.ruleData ) ) 
+    logging.debug( "  SAVE SUBGOALS : self.cursor             = " + str( self.cursor ) ) 
+    logging.debug( "  SAVE SUBGOALS : self.ruleData           = " + str( self.ruleData ) ) 
+    logging.debug( "  SAVE SUBGOALS : self.rid                = " + str( self.rid ) ) 
+    logging.debug( "  SAVE SUBGOALS : self.relationName       = " + self.relationName )
+    logging.debug( "  SAVE SUBGOALS : self.goalAttList        = " + str( self.goalAttList ) )
+    logging.debug( "  SAVE SUBGOALS : self.goalTimeArg        = " + self.goalTimeArg )
+    logging.debug( "  SAVE SUBGOALS : self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
+
+    self.cursor.execute( "SELECT * FROM Subgoals WHERE rid=='" + str( self.rid ) + "'" )
+    res = self.cursor.fetchall()
+    res = tools.toAscii_multiList( res )
+    for r in res :
+      logging.debug( "r = " + str( r ) )
 
     logging.debug( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) ) 
-
     self.cursor.execute( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) )
 
     logging.debug( "self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
@@ -183,6 +216,11 @@ class Rule :
       subgoalAttList = sub[ "subgoalAttList" ]
       polarity       = sub[ "polarity" ]
       subgoalTimeArg = sub[ "subgoalTimeArg" ]
+
+      logging.debug( "  SAVE SUBGOALS : subgoalName    = " + subgoalName )
+      logging.debug( "  SAVE SUBGOALS : subgoalAttList = " + str( subgoalAttList ) )
+      logging.debug( "  SAVE SUBGOALS : polarity       = " + polarity )
+      logging.debug( "  SAVE SUBGOALS : subgoalTimeArg = " + subgoalTimeArg )
 
       # ----------------------------- #
       # generate random subgoal id 
@@ -220,6 +258,11 @@ class Rule :
 
     attID = 0
     for attName in subgoalAttList :
+
+      logging.debug( "  SAVE TO SUBGOAL ATT : self.rid = " + str( self.rid ) )
+      logging.debug( "  SAVE TO SUBGOAL ATT : self.sid = " + str( sid ) )
+      logging.debug( "  SAVE TO SUBGOAL ATT : attID    = " + str( attID ) )
+      logging.debug( "  SAVE TO SUBGOAL ATT : attName  = " + str( attName ) )
 
       self.cursor.execute( "INSERT INTO SubgoalAtt VALUES ('" + str( self.rid )     + "','" \
                                                               + str( sid )          + "','" \

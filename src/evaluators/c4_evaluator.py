@@ -6,7 +6,7 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, os, sys
+import logging, inspect, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -20,9 +20,6 @@ from wrappers import C4Wrapper
 
 
 C4_EXEC_PATH = os.path.dirname(os.path.abspath( __file__ )) + "/../../lib/c4/build/src/c4i/c4i"
-
-DEBUG = tools.getConfig( "EVALUATORS", "C4_EVALUATOR_DEBUG", bool )
-
 
 #####################
 #  CLEAN TABLE STR  #
@@ -65,20 +62,18 @@ def getTables( table_path ) :
 # posts the results to standard out while capturing in a file for future processing.
 def runC4_directly( c4_file_path, table_path, savepath ) :
 
-  if DEBUG :
-    print "USING C4 DIRECTLY..."
-    print "c4_file_path = " + c4_file_path
-    print "table_path   = " + table_path
-    print "savepath     = " + savepath
+  logging.debug( "USING C4 DIRECTLY..." )
+  logging.debug( "c4_file_path = " + c4_file_path )
+  logging.debug( "table_path   = " + table_path )
+  logging.debug( "savepath     = " + savepath )
 
   # check if executable and input file exist
   if os.path.exists( C4_EXEC_PATH ) :
     if os.path.exists( c4_file_path ) :
       tableListStr = getTables( table_path )
 
-      if DEBUG :
-        print "tableListStr = " + tableListStr
-        print "savepath     = " + savepath
+      logging.debug( "tableListStr = " + tableListStr )
+      logging.debug( "savepath     = " + savepath )
 
       # run the program using the modified c4 executable installed during the pyLDFI setup process.
       os.system( C4_EXEC_PATH + " " + c4_file_path + ' "' + tableListStr + '" "' + savepath + '"' )
@@ -107,10 +102,9 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
 # saves the evaluation results to file at c4_results_dump_path.
 def runC4_wrapper( allProgramData ) :
 
-  if DEBUG :
-    print "USING C4 WRAPPER..."
-    print "allProgramLines = " + str( allProgramData[0] )
-    print "tableListArray  = " + allProgramData[1]
+  logging.debug( "USING C4 WRAPPER..." )
+  logging.debug( "allProgramLines = " + str( allProgramData[0] ) )
+  logging.debug( "tableListArray  = " + str( allProgramData[1] ) )
 
   # branch on empty generated programs
   if len( allProgramData[0] ) > 1 :

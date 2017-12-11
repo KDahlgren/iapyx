@@ -124,30 +124,6 @@ def dedalus_to_datalog( starterFile, cursor ) :
 #    setTypes( cursor )
 #  
 #    # ----------------------------------------------------------------------------- #
-#    # wilcard rewrites
-#  
-#  #  logging.debug( "  REWRITE : calling wildcard rewrites..." )
-#  #
-#  #  try :
-#  #    rewriteWildcards = tools.getConfig( "DEFAULT", "REWRITE_WILDCARDS", bool )
-#  #    if rewriteWildcards :
-#  #      rewriteNegativeSubgoalsWithWildcards.rewriteNegativeSubgoalsWithWildcards( cursor )
-#  #
-#  #  except ConfigParser.NoOptionError :
-#  #    print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
-#  #    pass
-#  
-#    # ----------------------------------------------------------------------------- #
-#    # negative rewrites
-#  
-#  #  logging.debug( "  REWRITE : calling negative rewrites..." )
-#  #
-#  #  NEGPROV = tools.getConfig( "DEFAULT", "NEGPROV", bool )
-#  #  if NEGPROV :
-#  #    newDMRuleMeta = negativeWrites.negativeWrites( EOT, original_prog, cursor )
-#  #    ruleMeta.extend( newDMRuleMeta )
-#  
-#    # ----------------------------------------------------------------------------- #
 #    # provenance rewrites
 #  
 #    logging.debug( "  REWRITE : calling provenance rewrites..." )

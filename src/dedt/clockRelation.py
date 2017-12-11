@@ -15,11 +15,6 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 from utils import dumpers, parseCommandLineInput, tools
 # ------------------------------------------------------ #
 
-#############
-#  GLOBALS  #
-#############
-CLOCKRELATION_DEBUG = tools.getConfig( "DEDT", "CLOCKRELATION_DEBUG", bool )
-COMM_MODEL          = tools.getConfig( "DEDT", "COMM_MODEL", str )
 
 #########################
 #  INIT CLOCK RELATION  #
@@ -28,6 +23,8 @@ COMM_MODEL          = tools.getConfig( "DEDT", "COMM_MODEL", str )
 # create initial clock relation
 # output nothing
 def initClockRelation( cursor, argDict ) :
+
+  COMM_MODEL = tools.getConfig( argDict[ "settings" ], "DEDT", "COMM_MODEL", str )
 
   # check if node topology defined in Fact relation
   nodeFacts = cursor.execute('''SELECT name FROM Fact WHERE Fact.name == "node"''')
@@ -39,8 +36,7 @@ def initClockRelation( cursor, argDict ) :
   # prefer cmdline topology
   if argDict[ "nodes" ] :
 
-    if CLOCKRELATION_DEBUG :
-      print "Using node topology from command line: " + str(argDict[ "nodes" ]) 
+    logging.debug( "Using node topology from command line: " + str(argDict[ "nodes" ]) )
 
     nodeSet = argDict[ "nodes" ]
 
@@ -79,8 +75,7 @@ def initClockRelation( cursor, argDict ) :
   # --------------------------------------------------------------------- #
   # otherwise use topology from input files
   elif nodeFacts :
-    if CLOCKRELATION_DEBUG :
-      print "Using node topology from input file(s)."
+    logging.debug( "Using node topology from input file(s)." )
 
     # collect all connection info
     # assumes topology facts characterized by name == "node"

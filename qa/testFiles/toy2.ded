@@ -1,0 +1,5 @@
+b("a")@1 ;
+c("a",2)@1 ;
+e("a",4)@1 ;
+a(X,Y)@next :- b(X), c(X,Y) ;
+d(X,Y)@next :- e(X,Y), notin a(X,Y) ;
