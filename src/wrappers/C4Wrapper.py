@@ -63,7 +63,6 @@ class C4Wrapper( object ) :
   # this is what molly does.
   def getInputProg_one_group_for_everything_besides_clocks_and_group_clocks_by_sndTime( self, program ) :
 
-
     nonClock             = []
     clockStatementGroups = [] # list of strings grouping clock statements by SndTime
     currClockList        = ""
@@ -340,7 +339,7 @@ class C4Wrapper( object ) :
     for table in tableList :
 
       # output to stdout
-      "---------------------------"
+      logging.debug( "---------------------------" )
       logging.debug( table )
       logging.debug( self.lib.c4_dump_table( self.c4_obj, table ) )
 

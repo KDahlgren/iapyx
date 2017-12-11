@@ -170,11 +170,9 @@ class Test_dml( unittest.TestCase ) :
     self.assertEqual( iapyx_results, expected_iapyx_results )
 
     # ========================================================== #
-    # CHECK EVALUATION OVERLAP
-    #
-    # grab expected output results as a string
+    # EVALUATION COMPARISON
 
-    self.assertFalse( self.evaluate( programData ) )
+    self.evaluate( programData )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -188,11 +186,11 @@ class Test_dml( unittest.TestCase ) :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, program_lines ) :
+  def evaluate( self, programData ) :
 
     noOverlap = False
 
-    results_array = c4_evaluator.runC4_wrapper( program_lines )
+    results_array = c4_evaluator.runC4_wrapper( programData )
 
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
@@ -204,10 +202,18 @@ class Test_dml( unittest.TestCase ) :
 
     rule_pairs = self.getRulePairs( eval_results_dict )
 
+    logging.debug( "  EVALUATE : rule_pairs = " + str( rule_pairs ) )
+
     # ----------------------------------------------------------------- #
     # make sure tables do not overlap
 
-    return self.hasOverlap( rule_pairs, eval_results_dict )
+    self.assertFalse( self.hasOverlap( rule_pairs, eval_results_dict ) )
+
+    # ----------------------------------------------------------------- #
+    # make sure dml positive relation results are identical to molly
+    # relation results
+
+    #
 
 
   #################
@@ -218,29 +224,31 @@ class Test_dml( unittest.TestCase ) :
 
     for pair in rule_pairs :
 
+      logging.debug( "  HAS OVERLAP : pair = " + str( pair ) )
+
       pos_results = eval_results_dict[ pair[0] ]
       not_results = eval_results_dict[ pair[1] ]
 
-      # check is too strong
-      #logging.debug( "  HAS OVERLAP : pos_results :" )
-      #for r in pos_results :
-      #  logging.debug( r )
-
-      #logging.debug( "  HAS OVERLAP : not_results :" )
-      #for r in not_results :
-      #  logging.debug( r )
-
-      #if len( pos_results ) > 0 :
-      #  nonEmpty_pos = True
-      #else :
-      #  nonEmpty_pos = False
-      #self.assertTrue( nonEmpty_pos )
-
-      #if len( not_results ) > 0 :
-      #  nonEmpty_not = True
-      #else :
-      #  nonEmpty_not = False
-      #self.assertTrue( nonEmpty_not )
+#      # check is too strong
+#      logging.debug( "  HAS OVERLAP : pos_results :" )
+#      for r in pos_results :
+#        logging.debug( r )
+#
+#      logging.debug( "  HAS OVERLAP : not_results :" )
+#      for r in not_results :
+#        logging.debug( r )
+#
+#      if len( pos_results ) > 0 :
+#        nonEmpty_pos = True
+#      else :
+#        nonEmpty_pos = False
+#      self.assertTrue( nonEmpty_pos )
+#
+#      if len( not_results ) > 0 :
+#        nonEmpty_not = True
+#      else :
+#        nonEmpty_not = False
+#      self.assertTrue( nonEmpty_not )
 
       for pos_row in pos_results :
         if pos_row in not_results :
@@ -260,7 +268,7 @@ class Test_dml( unittest.TestCase ) :
     # pull out positive names
     for relName1 in eval_results_dict :
 
-      if not relName1.startswith( "not_" ) :
+      if not relName1.startswith( "not_" ) and not "_prov" in relName1 :
 
         for relName2 in eval_results_dict :
   
