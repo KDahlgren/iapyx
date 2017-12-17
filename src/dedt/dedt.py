@@ -17,6 +17,7 @@ IR SCHEMA:
   Equation     ( rid text, eid text,      eqn text                                                    )
   EquationVars ( rid text, eid text,      varID int,        var text                                  )
   Clock        ( src text, dest text,     sndTime int,      delivTime int,        simInclude text     )
+  NextClock    ( src text, dest text,     sndTime int,      delivTime int,        simInclude text     )
 
 '''
 
@@ -1129,7 +1130,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   logging.debug( "  REWRITE : calling dedalus rewrites..." )
 
-  allMeta  = dedalusRewriter.rewriteDedalus( factMeta, ruleMeta, cursor )
+  allMeta  = dedalusRewriter.rewriteDedalus( argDict, factMeta, ruleMeta, cursor )
   factMeta = allMeta[0]
   ruleMeta = allMeta[1]
 
@@ -1224,7 +1225,7 @@ def rewrite_dml( argDict, factMeta, ruleMeta, cursor ) :
 
         logging.debug( "  REWRITE DML : launching c4 evaluation..." )
 
-        allProgramLines = c4_translator.c4datalog( cursor )
+        allProgramLines = c4_translator.c4datalog( argDict, cursor )
 
         logging.debug( "  REWRITE DML : ...done with c4 evaluation." )
 
@@ -1287,7 +1288,7 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
 
     logging.debug( "  RUN TRANSLATOR : launching c4 evaluation..." )
 
-    allProgramLines = c4_translator.c4datalog( cursor )
+    allProgramLines = c4_translator.c4datalog( argDict, cursor )
 
     logging.debug( "  RUN TRANSLATOR : ...done with c4 evaluation." )
 
@@ -1315,7 +1316,9 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS Equation     (rid text, eid text, eqn text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS EquationVars (rid text, eid text, varID int, var text)''')
   cursor.execute('''CREATE TABLE IF NOT EXISTS Clock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
+  cursor.execute('''CREATE TABLE IF NOT EXISTS NextClock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_NextClock ON NextClock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
   cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, delivTime int, simInclude text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Crash ON Crash(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
 

@@ -28,9 +28,382 @@ from utils import dumpers, globalCounters, tools
 class Test_dedt( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
+  PRINT_STOP = False
+
+  ##############################
+  #  TOY 2 USE NEXT CLOCK DML  #
+  ##############################
+  # tests next rule hanlding using the next clock and dml
+  #@unittest.skip( "working on different example" )
+  def test_toy2_use_next_clock_dml( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_use_next_clock_dml.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_use_next_clock_dml.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ##########################
+  #  TOY 2 USE NEXT CLOCK  #
+  ##########################
+  # tests next rule hanlding using the next clock
+  #@unittest.skip( "working on different example" )
+  def test_toy2_use_next_clock( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_use_next_clock.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_use_next_clock.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ###############################
+  #  TOY 2 SYNC ASSUMPTION DML  #
+  ###############################
+  # tests next rule hanlding assuming a synchronous communication model and using dml
+  #@unittest.skip( "working on different example" )
+  def test_toy2_sync_assumption_dml( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_sync_assumption_dml.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_sync_assumption_dml.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ###########################
+  #  TOY 2 SYNC ASSUMPTION  #
+  ###########################
+  # tests next rule hanlding assuming a synchronous communication model
+  #@unittest.skip( "working on different example" )
+  def test_toy2_sync_assumption( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_sync_assumption.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ########################
+  #  TOY 2 USE AGGS DML  #
+  ########################
+  # tests next rule hanlding using agg rewrites and dml
+  #@unittest.skip( "working on different example" )
+  def test_toy2_use_aggs_dml( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_use_aggs_dml.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_use_aggs_dml.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ####################
+  #  TOY 2 USE AGGS  #
+  ####################
+  # tests next rule hanlding using agg rewrites
+  #@unittest.skip( "working on different example" )
+  def test_toy2_use_aggs( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_use_aggs.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy2_use_aggs.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
+  ################
+  #  EXAMPLE 16  #
+  ################
+  # example 16 details a correct program.
+  # tests ded to c4 datalog translation with an aggregate function.
+  # make sure this test produces the expected olg program.
+  #@unittest.skip( "working on different example" )
+  def test_example16( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/example16.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/example16.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
 
   ################
   #  EXAMPLE 16  #

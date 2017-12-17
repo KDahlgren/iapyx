@@ -29,8 +29,8 @@ import dml
 ##############
 class Test_dml( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
@@ -2444,31 +2444,31 @@ class Test_dml( unittest.TestCase ) :
     return program_string
 
 
-  ##################
-  #  GET ARG DICT  #
-  ##################
-  def getArgDict( self, inputfile ) :
-
-    # initialize
-    argDict = {}
-
-    # populate with unit test defaults
-    argDict[ 'prov_diagrams' ]            = False
-    argDict[ 'use_symmetry' ]             = False
-    argDict[ 'crashes' ]                  = 0
-    argDict[ 'solver' ]                   = None
-    argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_dml.ini"
-    argDict[ 'negative_support' ]         = False
-    argDict[ 'strategy' ]                 = None
-    argDict[ 'file' ]                     = inputfile
-    argDict[ 'EOT' ]                      = 4
-    argDict[ 'find_all_counterexamples' ] = False
-    argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
-    argDict[ 'evaluator' ]                = "c4"
-    argDict[ 'EFF' ]                      = 2
-
-    return argDict
+#  ##################
+#  #  GET ARG DICT  #
+#  ##################
+#  def getArgDict( self, inputfile ) :
+#
+#    # initialize
+#    argDict = {}
+#
+#    # populate with unit test defaults
+#    argDict[ 'prov_diagrams' ]            = False
+#    argDict[ 'use_symmetry' ]             = False
+#    argDict[ 'crashes' ]                  = 0
+#    argDict[ 'solver' ]                   = None
+#    argDict[ 'disable_dot_rendering' ]    = False
+#    argDict[ 'settings' ]                 = "./settings_dml.ini"
+#    argDict[ 'negative_support' ]         = False
+#    argDict[ 'strategy' ]                 = None
+#    argDict[ 'file' ]                     = inputfile
+#    argDict[ 'EOT' ]                      = 4
+#    argDict[ 'find_all_counterexamples' ] = False
+#    argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
+#    argDict[ 'evaluator' ]                = "c4"
+#    argDict[ 'EFF' ]                      = 2
+#
+#    return argDict
 
 
 #########

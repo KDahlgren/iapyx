@@ -90,6 +90,15 @@ def setTypes( cursor ) :
           attType = attTypeList[i]
           cursor.execute( "UPDATE SubgoalAtt SET attType=='" + attType + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
 
+      # if subgoal is next_clock, then schema is trivial
+      elif subgoalName == "next_clock" :
+        attIDList   = [ 0, 1, 2, 3 ]
+        attTypeList = [ "string", "string", "int", "int" ]
+        for i in range( 0, len( attIDList ) ) :
+          attID   = attIDList[i]
+          attType = attTypeList[i]
+          cursor.execute( "UPDATE SubgoalAtt SET attType=='" + attType + "' WHERE rid=='" + rid + "' AND sid=='" + sid + "' AND attID=='" + str( attID ) + "'" )
+
       # if subgoal is crash, then schema is trivial
       elif subgoalName == "crash" :
         attIDList   = [ 0, 1, 2 ]

@@ -69,6 +69,11 @@ def dedalus_to_datalog( starterFile, cursor ) :
 
   logging.debug( "  DEDALUS TO DATALOG : running process..." )
 
+  argDict               = {} 
+  argDict[ "settings" ] = "./settings.ini" 
+  argDict[ "EOT" ]      = 4
+  argDict[ "nodes" ]    = ["a","b","c","d"]
+
   # ----------------------------------------------------------------- #
   # create tables
   dedt.createDedalusIRTables( cursor )
@@ -103,7 +108,7 @@ def dedalus_to_datalog( starterFile, cursor ) :
   
     logging.debug( "  RUN TRANSLATOR : building starter clock..." )
   
-    dedt.starterClock( cursor, { "EOT":4, "nodes":["a","b","c","d"]} )
+    dedt.starterClock( cursor, argDict )
   
     logging.debug( "  RUN TRANSLATOR : ...done building starter clock." )
   
@@ -142,8 +147,8 @@ def dedalus_to_datalog( starterFile, cursor ) :
     # translate IR into datalog
   
     logging.debug( "  DEDALUS TO DATALOG : launching c4 translation ..." )
-  
-    allProgramData.extend( c4_translator.c4datalog( cursor ) )
+
+    allProgramData.extend( c4_translator.c4datalog( argDict, cursor ) )
   
     logging.debug( "  DEDALUS TO DATALOG : ...done with c4 translation." )
   

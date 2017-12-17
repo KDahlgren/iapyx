@@ -7,6 +7,7 @@ c4.py
 
 import inspect, logging, os, re, string, sqlite3, sys
 import dumpers_c4
+import ConfigParser
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -39,7 +40,7 @@ def existingDefine( name, definesNames ) :
 # input cursor for IR db
 # output the full path for the intermediate file containing the c4 datalog program.
 
-def c4datalog( cursor ) :
+def c4datalog( argDict, cursor ) :
 
   logging.debug( "  C4 DATALOG : running process..." )
 
@@ -266,6 +267,43 @@ def c4datalog( cursor ) :
 
 
   # ----------------------------------------------------------- #
+  # add next_clock, if necessary
+
+  # ------------------------------------------------------ #
+  # grab the next rule handling method
+
+  try :
+    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in settings file." )
+
+  # sanity check next rule handling value
+  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+    pass
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+
+  if NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+
+    # ------------------------------------------------------ #
+    # add define
+
+    definesList.append( "define(next_clock,{string,string,int,int});\n" )
+    tableListStr += "next_clock,"
+    tableListArray.append( "next_clock" )
+
+    # ------------------------------------------------------ #
+    # add next_clock facts for all synchronous facts appearing clock
+
+    next_clock_factList = []
+    for cfact in clockFactList :
+      if isSynchronous( cfact ) :
+        next_clock_fact = "next_" + cfact
+        next_clock_factList.append( next_clock_fact )
+
+  # ----------------------------------------------------------- #
   # save table list
 
   logging.debug( "*******************************************" )
@@ -284,7 +322,11 @@ def c4datalog( cursor ) :
 
   #listOfStatementLists = [ definesList, factList, ruleList, clockFactList ]
   listOfStatementLists = [ definesList, factList, ruleList, clockFactList, crashFactList ]
-  program              = tools.combineLines( listOfStatementLists )
+
+  if NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+    listOfStatementLists = [ definesList, factList, ruleList, clockFactList, crashFactList, next_clock_factList ]
+
+  program = tools.combineLines( listOfStatementLists )
 
   # break down into list of individual statements
   allProgramLines = []
@@ -298,6 +340,25 @@ def c4datalog( cursor ) :
 
   logging.debug( "  C4 DATALOG : ...done." )
   return [ allProgramLines, tableListArray ]
+
+
+####################
+#  IS SYNCHRONOUS  #
+####################
+# check if the input clock fact is synchronous
+def isSynchronous( cfact ) :
+
+  cfact = cfact.replace( "clock(", "" )
+  cfact = cfact.replace( ");","" )
+
+  cfact = cfact.split( "," )
+  send  = cfact[2]
+  deliv = cfact[3]
+
+  if int( deliv ) == int( send ) + 1 :
+    return True
+  else :
+    return False
 
 
 #########

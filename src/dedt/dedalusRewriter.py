@@ -6,6 +6,7 @@ dedalusRewriter.py
 '''
 
 import inspect, logging, os, sys
+import ConfigParser
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -138,10 +139,26 @@ def rewriteDeductive( metarule, cursor ) :
 #              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
 #                          ... , 
 #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
-def rewriteInductive( metarule, cursor ) :
+def rewriteInductive( argDict, metarule, cursor ) :
 
   logging.debug( "  REWRITE INDUCTIVE : running process..." )
   logging.debug( "  REWRITE INDUCTIVE : metarule.ruleData = " + str( metarule.ruleData ) )
+
+  # ------------------------------------------------------ #
+  # grab the next rule handling method
+
+  try :
+    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in settings file." )
+
+  # sanity check next rule handling value
+  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+    pass
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # ------------------------------------------------------ #
   # dedalus rewrites overwrite the original rules
@@ -158,8 +175,12 @@ def rewriteInductive( metarule, cursor ) :
   # ------------------------------------------------------ #
   # add SndTime+1/DelivTime to goal attribute list
 
-  #new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
-  new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv ) # only works in synchronous communication model.
+  if NEXT_RULE_HANDLING == "USE_AGGS" :
+    new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
+  elif NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" :
+    new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
+  elif NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+    new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
 
   # ------------------------------------------------------ #
   # remove goal time arg
@@ -199,11 +220,24 @@ def rewriteInductive( metarule, cursor ) :
   #     polarity : 'notin' OR '', 
   #     subgoalTimeArg : <anInteger> }
 
-  clock_subgoalName    = "clock"
-  #clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
-  clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "MRESERVED" ] # only works for synchronous model.
-  clock_polarity       = "" # clocks are positive until proven negative.
-  clock_subgoalTimeArg = ""
+  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" :
+
+    if NEXT_RULE_HANDLING == "USE_AGGS" :
+      clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
+
+    elif NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" :
+      clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "MRESERVED" ] # only works for synchronous model.
+
+    clock_subgoalName    = "clock"
+    clock_polarity       = "" # clocks are positive until proven negative.
+    clock_subgoalTimeArg = ""
+
+  elif NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+
+    clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "MRESERVED" ]
+    clock_subgoalName    = "next_clock"
+    clock_polarity       = "" # clocks are positive until proven negative.
+    clock_subgoalTimeArg = ""
 
   clock_subgoalDict                      = {}
   clock_subgoalDict[ "subgoalName" ]     = clock_subgoalName
@@ -383,7 +417,7 @@ def rewriteFacts( factMeta, cursor ) :
 #####################
 # 'rewrite' the rule manifestations in the IR db
 # into a format more amenable to datalog translations
-def rewriteDedalus( factMeta, ruleMeta, cursor ) :
+def rewriteDedalus( argDict, factMeta, ruleMeta, cursor ) :
 
   logging.debug( "  REWRITE DEDALUS : running rewriteDedalus..." )
 
@@ -405,7 +439,7 @@ def rewriteDedalus( factMeta, ruleMeta, cursor ) :
     # (aka 'next' rules)
 
     elif isInductive( rule ) :
-      new_ruleMeta.append( rewriteInductive( rule, cursor ) )
+      new_ruleMeta.append( rewriteInductive( argDict, rule, cursor ) )
   
     # ------------------------------------ #
     # rewrite asynchronous rules

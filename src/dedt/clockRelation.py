@@ -6,6 +6,7 @@ clockRelation.py
 '''
 
 import inspect, logging, os, sys
+import ConfigParser
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -25,6 +26,24 @@ from utils import dumpers, parseCommandLineInput, tools
 def initClockRelation( cursor, argDict ) :
 
   COMM_MODEL = tools.getConfig( argDict[ "settings" ], "DEDT", "COMM_MODEL", str )
+
+  # ------------------------------------------------------ #
+  # grab the next rule handling method
+
+  try :
+    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in settings file." )
+
+  # sanity check next rule handling value
+  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+    pass
+  else :
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+
+  # --------------------------------------------------------------------- #
 
   # check if node topology defined in Fact relation
   nodeFacts = cursor.execute('''SELECT name FROM Fact WHERE Fact.name == "node"''')
@@ -50,6 +69,11 @@ def initClockRelation( cursor, argDict ) :
             logging.debug( "INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')" )
             cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')")
 
+            # handle using next_clock relation
+            if NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+              logging.debug( "INSERT OR IGNORE INTO NextClock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')" )
+              cursor.execute("INSERT OR IGNORE INTO NextClock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "', 'True')")
+
     # asynchronous communication model
     elif COMM_MODEL == "ASYNC" :
       for i in range( int(defaultStartSendTime), int(maxSendTime)+1 ) :
@@ -58,6 +82,10 @@ def initClockRelation( cursor, argDict ) :
             for n2 in nodeSet :
               #cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + delivTime + "')")
               cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + str( j ) + "', 'True')")
+
+              # handle using next_clock relation
+              if NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" and j == i + 1 :
+                cursor.execute("INSERT OR IGNORE INTO Clock VALUES ('" + n1 + "','" + n2 + "','" + str(i) + "','" + str( j ) + "', 'True')")
 
     else :
       tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : in settings.ini : COMM_MODEL '" + str(COMM_MODEL) + "' not recognized. Aborting." )

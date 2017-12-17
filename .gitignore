@@ -1,5 +1,7 @@
+*.png
 .DS_Store
 qa/IR*
+src/drivers/IR.db
 *.swp
 examples/omissionProblem/data/*
 examples/delayProblem/data/*
