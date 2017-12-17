@@ -158,7 +158,8 @@ def rewriteInductive( metarule, cursor ) :
   # ------------------------------------------------------ #
   # add SndTime+1/DelivTime to goal attribute list
 
-  new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
+  #new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
+  new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv ) # only works in synchronous communication model.
 
   # ------------------------------------------------------ #
   # remove goal time arg
@@ -199,7 +200,8 @@ def rewriteInductive( metarule, cursor ) :
   #     subgoalTimeArg : <anInteger> }
 
   clock_subgoalName    = "clock"
-  clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
+  #clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "_" ]
+  clock_subgoalAttList = [ firstAtt, "_", timeAtt_snd, "MRESERVED" ] # only works for synchronous model.
   clock_polarity       = "" # clocks are positive until proven negative.
   clock_subgoalTimeArg = ""
 

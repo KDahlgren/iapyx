@@ -26,22 +26,8 @@ import copy, inspect, logging, os, pydot, string, sqlite3, sys
 # import sibling packages HERE!!!
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
-if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
-  sys.path.append( os.path.abspath( __file__ + "/../translators" ) )
-if not os.path.abspath( __file__ + "/../../dml" ) in sys.path :
-  sys.path.append( os.path.abspath( __file__ + "/../../dml" ) )
 
-from utils       import dumpers, extractors, globalCounters, tools, parseCommandLineInput
-from translators import c4_translator, dumpers_c4
-
-import dml, rewriteNegativeSubgoalsWithWildcards
-
-import clockRelation
-import dedalusParser
-import dedalusRewriter
-import provenanceRewriter
-import Fact, Rule
-import ConfigParser
+import dumpers, extractors, globalCounters, tools, parseCommandLineInput
 
 # ------------------------------------------------------ #
 

@@ -20,7 +20,7 @@ if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
 
 from dedt        import Rule
 from evaluators  import c4_evaluator
-from translators import c4_translator
+#from translators import c4_translator
 from utils       import clockTools, tools, dumpers, setTypes
 
 import deMorgans
@@ -1666,16 +1666,22 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule,
 
     if len( existentialVarsRules ) > 0 :
 
-      # just pick the first rule, 'cause we only need the goal data
-      firstExistentialVarDomRule = existentialVarsRules[0]
-  
-      existentialVarSubgoal_dict = {}
-      existentialVarSubgoal_dict[ "subgoalName" ]    = firstExistentialVarDomRule.ruleData[ "relationName" ]
-      existentialVarSubgoal_dict[ "subgoalAttList" ] = firstExistentialVarDomRule.ruleData[ "goalAttList" ]
-      existentialVarSubgoal_dict[ "polarity" ]       = ""
-      existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
-  
-      subgoalListOfDicts.append( existentialVarSubgoal_dict )
+      prevRules = []
+      for currRule in existentialVarsRules :
+
+        if currRule.relationName in prevRules :
+          pass
+
+        else :
+          prevRules.append( currRule.relationName )
+
+          existentialVarSubgoal_dict = {}
+          existentialVarSubgoal_dict[ "subgoalName" ]    = currRule.ruleData[ "relationName" ]
+          existentialVarSubgoal_dict[ "subgoalAttList" ] = currRule.ruleData[ "goalAttList" ]
+          existentialVarSubgoal_dict[ "polarity" ]       = ""
+          existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
+    
+          subgoalListOfDicts.append( existentialVarSubgoal_dict )
 
     # ----------------------------------------- #
     # build ruleData for new rule and save

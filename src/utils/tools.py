@@ -488,7 +488,6 @@ def containsInclude( currPath ) :
   if os.path.isfile( currPath ) :
 
     fo = open( currPath )
-
     for line in fo :
       line = line.translate( None, string.whitespace )
 
@@ -498,8 +497,8 @@ def containsInclude( currPath ) :
         if '"' in line or "'" in line :
           logging.debug( "  CONTAINS INCLUDE : returning True" )
           return True
-
     fo.close()
+
   else :
     sys.exit( "  CONTAINS INCLUDE : ERROR : could not open file currPath '" + currPath + "'"  )
 

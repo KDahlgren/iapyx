@@ -31,7 +31,7 @@ if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dml" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dml" ) )
 
-from utils       import dumpers, extractors, globalCounters, tools, parseCommandLineInput
+from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
 
 import dml, rewriteNegativeSubgoalsWithWildcards
@@ -149,11 +149,11 @@ def dedToIR( filename, cursor ) :
   # fire the logic for deriving data types for all
   # goals and subgoals per rule.
 
-  setTypes( cursor )
+  setTypes.setTypes( cursor )
 
   return [ factMeta, ruleMeta ]
 
-
+'''
 ###############
 #  SET TYPES  #
 ###############
@@ -331,7 +331,7 @@ def setTypes( cursor ) :
 
   logging.debug( generateDatalogDependencyGraph( cursor ) )
   logging.debug( "  SET TYPES : ...done." )
-
+'''
 
 #######################################
 #  GENERATE DATALOG DEPENDENCY GRAPH  #
@@ -1134,7 +1134,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta = allMeta[1]
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes( cursor )
+  setTypes.setTypes( cursor )
 
   # ----------------------------------------------------------------------------- #
   # wilcard rewrites
@@ -1160,7 +1160,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
       ruleMeta = dml.dml( factMeta, ruleMeta, cursor ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
-      setTypes( cursor )
+      setTypes.setTypes( cursor )
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
@@ -1182,7 +1182,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes( cursor )
+  setTypes.setTypes( cursor )
 
   # ----------------------------------------------------------------------------- #
 
@@ -1215,7 +1215,7 @@ def rewrite_dml( argDict, factMeta, ruleMeta, cursor ) :
       # fire the logic for deriving data types for all
       # goals and subgoals per rule.
     
-      setTypes( cursor )
+      setTypes.setTypes( cursor )
 
       # ------------------------------------------------------------- #
       # translate IR into datalog

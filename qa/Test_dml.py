@@ -8,8 +8,7 @@ Test_dml.py
 #  IMPORTS  #
 #############
 # standard python packages
-import inspect, logging, os, sqlite3, sys, unittest
-from StringIO import StringIO
+import inspect, logging, os, string, sqlite3, sys, unittest
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -30,11 +29,12 @@ import dml
 ##############
 class Test_dml( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = False
+  PRINT_STOP    = False
+  COMPARE_PROGS = True
 
   ################
   #  DML REPLOG  #
@@ -46,8 +46,9 @@ class Test_dml( unittest.TestCase ) :
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
     expected_iapyx_dml_path = "./testFiles/replog_iapyx_dml.olg"
+    expected_eval_path      = "./testFiles/replog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
 
 
   ###############
@@ -60,8 +61,9 @@ class Test_dml( unittest.TestCase ) :
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
     expected_iapyx_dml_path = "./testFiles/rdlog_iapyx_dml.olg"
+    expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
 
 
   #################
@@ -74,8 +76,9 @@ class Test_dml( unittest.TestCase ) :
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
     expected_iapyx_dml_path = "./testFiles/simplog_iapyx_dml.olg"
+    expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
 
 
   ############################
@@ -89,21 +92,21 @@ class Test_dml( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
     expected_iapyx_dml_path = "./testFiles/toy3_aggRewrites.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
 
 
   ###############
   #  DML TOY 2  #
   ###############
   # tests rewriting the second toy program
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
   def test_dml_toy2( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy2.ded"
     expected_iapyx_dml_path = "./testFiles/toy2.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
 
 
   #############
@@ -117,14 +120,14 @@ class Test_dml( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/toy.ded"
     expected_iapyx_dml_path = "./testFiles/toy.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx dml comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_dml_path ) :
+  def comparison_workflow( self, inputfile, expected_iapyx_dml_path, expected_eval_path ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -163,16 +166,17 @@ class Test_dml( unittest.TestCase ) :
     #
     # grab expected output results as a string
 
-    expected_iapyx_results = None
-    with open( expected_iapyx_dml_path, 'r' ) as expectedFile :
-      expected_iapyx_results = expectedFile.read()
+    if self.COMPARE_PROGS :
+      expected_iapyx_results = None
+      with open( expected_iapyx_dml_path, 'r' ) as expectedFile :
+        expected_iapyx_results = expectedFile.read()
 
-    self.assertEqual( iapyx_results, expected_iapyx_results )
+      self.assertEqual( iapyx_results, expected_iapyx_results )
 
     # ========================================================== #
     # EVALUATION COMPARISON
 
-    self.evaluate( programData )
+    self.evaluate( programData, expected_eval_path )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -186,7 +190,7 @@ class Test_dml( unittest.TestCase ) :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, programData ) :
+  def evaluate( self, programData, expected_eval_path ) :
 
     noOverlap = False
 
@@ -213,7 +217,63 @@ class Test_dml( unittest.TestCase ) :
     # make sure dml positive relation results are identical to molly
     # relation results
 
-    #
+    if expected_eval_path :
+
+      self.compare_evals( eval_results_dict, expected_eval_path )
+
+
+  ###################
+  #  COMPARE EVALS  #
+  ###################
+  # compare the actual evaluation results with the 
+  # expected evaluation results.
+  def compare_evals( self, eval_results_dict, expected_eval_path ) :
+
+    # ----------------------------------------------------------------- #
+    # get a dictionary of the expected results
+
+    expected_results_array = []
+    fo = open( expected_eval_path )
+    for line in fo :
+      line = line.rstrip()
+      expected_results_array.append( line )
+    fo.close()
+
+    expected_eval_results_dict = tools.getEvalResults_dict_c4( expected_results_array )
+
+    # ----------------------------------------------------------------- #
+    # compare all positive tables (not prov)
+
+    for rel_key in eval_results_dict :
+
+      # ----------------------------------------------------------------- #
+      # skip not_ rules, _prov rules, adom_ rules
+
+      if rel_key.startswith( "not_" ) or \
+         rel_key.startswith( "domcomp_" ) or \
+         rel_key.startswith( "dom_" ) or \
+         rel_key == "adom_string" or \
+         rel_key == "adom_int" or \
+         "_prov" in rel_key or \
+         "_agg" in rel_key :
+
+        pass
+
+      # ----------------------------------------------------------------- #
+
+      else :
+
+        actual_eval   = eval_results_dict[ rel_key ]
+        expected_eval = expected_eval_results_dict[ rel_key ]
+
+        flag = True
+        for expected_row in expected_eval :
+          if not expected_row in actual_eval :
+            logging.debug( "  COMPARE_EVALS : missing row : relation = " + rel_key + "\nexpected_row = " + str( expected_row ) + "\nactual_eval = " + str( actual_eval ) )
+            flag = False
+            break
+
+        self.assertTrue( flag )
 
 
   #################
@@ -252,6 +312,9 @@ class Test_dml( unittest.TestCase ) :
 
       for pos_row in pos_results :
         if pos_row in not_results :
+          logging.debug( "HAS OVERLAP : pos_row '" + str( pos_row ) + "' is in not_results:" )
+          for not_row in not_results :
+            logging.debug( "HAS OVERLAP : not_row " + str( not_row ) )
           return True
 
     return False
