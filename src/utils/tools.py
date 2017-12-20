@@ -704,7 +704,7 @@ def isFactNode( goalName, triggerRecordList, cursor ) :
 
   print "runnin isFactNode on goalName = " + goalName 
 
-  cursor.execute( "SELECT Fact.fid,dataID,attName,timeArg FROM Fact,FactData WHERE Fact.fid==FactData.fid AND Fact.name=='" + str(goalName) + "'" )
+  cursor.execute( "SELECT Fact.fid,dataID,data,timeArg FROM Fact,FactData WHERE Fact.fid==FactData.fid AND Fact.name=='" + str(goalName) + "'" )
   factRecords_raw = cursor.fetchall()
   factRecords_raw = toAscii_multiList( factRecords_raw )
 
