@@ -96,6 +96,7 @@ abort_prov19(C,X,NRESERVED,MRESERVED) :-  abort(C,X,NRESERVED), clock(C,_,NRESER
 commit_prov20(C,X,NRESERVED,MRESERVED) :-  commit(C,X,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
 vote_prov21(C,A,X,S,NRESERVED,MRESERVED) :-  vote(C,A,X,S,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
 prepared_prov22(C,A,X,Y,NRESERVED,MRESERVED) :-  prepared(C,A,X,Y,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -132,4 +133,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

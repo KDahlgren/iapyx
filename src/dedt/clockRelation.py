@@ -35,7 +35,7 @@ def initClockRelation( cursor, argDict ) :
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in settings file." )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # sanity check next rule handling value
   if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :

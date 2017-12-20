@@ -28,8 +28,8 @@ from utils import dumpers, globalCounters, tools
 class Test_dedt( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
 
@@ -356,54 +356,6 @@ class Test_dedt( unittest.TestCase ) :
     IRDB.close()
     os.remove( testDB )
 
-
-  ################
-  #  EXAMPLE 16  #
-  ################
-  # example 16 details a correct program.
-  # tests ded to c4 datalog translation with an aggregate function.
-  # make sure this test produces the expected olg program.
-  #@unittest.skip( "working on different example" )
-  def test_example16( self ) :
-
-    # --------------------------------------------------------------- #
-    # testing set up.
-    testDB = "./IR.db"
-    IRDB    = sqlite3.connect( testDB )
-    cursor  = IRDB.cursor()
-
-    # --------------------------------------------------------------- #
-    #dependency
-    #dedt.createDedalusIRTables(cursor)
-    dedt.globalCounterReset()
-
-    # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
-
-    # specify input file path
-    inputfile = "./testFiles/example16.ded"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-
-    # run translator
-    programData = dedt.translateDedalus( argDict, cursor )
-
-    # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
-
-    # grab expected output results as a string
-    expected_results_path = "./testFiles/example16.olg"
-    expected_results      = None
-    with open( expected_results_path, 'r' ) as expectedFile :
-      expected_results = expectedFile.read()
-
-    self.assertEqual( actual_results, expected_results )
-
-    # --------------------------------------------------------------- #
-    #clean up testing
-    IRDB.close()
-    os.remove( testDB )
 
   ################
   #  EXAMPLE 16  #
@@ -1189,7 +1141,6 @@ class Test_dedt( unittest.TestCase ) :
   #################
   # example 6 details an incorrect program.
   # tests ded to c4 datalog translation using f(X) :- e(X)@1 ;
-  # make sure this test produces the expected olg program.
   #@unittest.skip( "working on different example" )
   def test_example6d( self ) :
 

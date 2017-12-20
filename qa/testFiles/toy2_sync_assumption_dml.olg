@@ -87,6 +87,7 @@ dom_a_nreserved_prov20(NRESERVED) :-  clock(_,_,NRESERVED,_),notin b(_,NRESERVED
 not_a_prov21(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin b(X,NRESERVED) ;
 not_a_prov22(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin c(X,Y,NRESERVED) ;
 not_a_prov23(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin clock(X,_,NRESERVED,MRESERVED) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -123,4 +124,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

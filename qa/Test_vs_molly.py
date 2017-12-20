@@ -36,8 +36,9 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 ###################
 class Test_vs_molly( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
 
@@ -815,6 +816,11 @@ class Test_vs_molly( unittest.TestCase ) :
     with open( molly_path, 'r' ) as mollyFile :
       molly_results = mollyFile.read()
 
+    print "iapyx_results"
+    print iapyx_results
+    print "molly_results"
+    print molly_results
+
     expected_results = self.compareIapyxAndMolly( iapyx_results, molly_results )
 
     self.assertEqual( True, expected_results )
@@ -872,9 +878,13 @@ class Test_vs_molly( unittest.TestCase ) :
 
       logging.debug( "  COMPARE IAPYX AND MOLLY : iapyx_line = " + iapyx_line )
 
+      # skip all crash facts from iapyx.
+      if iapyx_line.startswith( 'crash("' ) :
+        pass
+
       # skip all defines since molly's using some weird rule to 
       # order goal atts in prov rules.
-      if iapyx_line.startswith( "define(" ) and iapyx_line.endswith( "})" ) :
+      elif iapyx_line.startswith( "define(" ) and iapyx_line.endswith( "})" ) :
         pass
 
       else : # next question : does a matching line exist in the molly table?
@@ -930,6 +940,8 @@ class Test_vs_molly( unittest.TestCase ) :
       return True
 
     else :
+      logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_iapyx = " + str( match_elements_flag_iapyx ) )
+      logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_molly = " + str( match_elements_flag_molly ) )
       logging.debug( "  COMPARE IAPYX AND MOLLY : returning False" )
       return False
 

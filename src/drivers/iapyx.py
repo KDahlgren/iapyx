@@ -35,16 +35,14 @@ TABLE_LIST_PATH   = os.path.abspath( __file__ + "/../.."    ) + "/evaluators/pro
 # remove files from previous runs or else suffer massive file collections.
 os.system( "rm " + os.path.abspath( __file__ + "/../../.." ) + "/save_data/graphOutput/*.png" )
 
-##########
-#  IAPYX #
-##########
-def iapyx() :
+###################
+#  IAPYX  DRIVER  #
+###################
+def iapyx_driver( argDict ) :
+
+  logging.debug( "  IAPYX DRIVER : running process..." )
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
-
-  # get dictionary of commandline arguments.
-  # exits here if user provides invalid inputs.
-  argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
 
   # instantiate IR database
   saveDB = os.getcwd() + "/IR.db"
@@ -56,16 +54,33 @@ def iapyx() :
 
   # run iapyx on given spec (in file provided in argDict)
   c.run_workflow()
+  program_array = c.program_array
+  table_array   = c.table_array
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
   logging.info( "PROGRAM ENDED SUCESSFULLY." )
 
+  return [ program_array, table_array ]
+
+
+###########
+#  IAPYX  #
+###########
+def iapyx() :
+
+  # get dictionary of commandline arguments.
+  # exits here if user provides invalid inputs.
+  argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
+
+  iapyx_driver( argDict )
+
 
 #########################
 #  THREAD OF EXECUTION  #
 #########################
-iapyx()
+if __name__ == '__main__' :
+  iapyx()
 
 
 #########

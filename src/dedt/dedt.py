@@ -1368,12 +1368,6 @@ def translateDedalus( argDict, cursor ) :
   factMeta     = allData[ 1 ]
   ruleMeta     = allData[ 2 ]
 
-  # ------------------------------------------------------------- #
-  # apply the dml rewrites after provenance rewrites.
-
-  #allData_dml = rewrite_dml( argDict, factMeta, ruleMeta, cursor )
-  #datalogLines = allData_dml[0]
-
   # ----------------------------------------------------------------- #
 
   logging.debug( "  TRANSLATE DEDALUS : datalogLines = " + str( datalogLines ) )

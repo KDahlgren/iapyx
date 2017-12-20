@@ -23,6 +23,7 @@ e_prov1(X,NRESERVED,Z,MRESERVED) :-  b(X,NRESERVED), d(X,Z,1), clock(X,_,NRESERV
 f_prov2(X,NRESERVED,Z,MRESERVED) :-  b(X,NRESERVED), d(X,Z,1), clock(X,X,NRESERVED,MRESERVED),notin c(X,Z,NRESERVED) ;
 f_vars(X,Z,NRESERVED,Y) :-  a(X,NRESERVED), c(X,Z,NRESERVED), d(Y,Z,NRESERVED), clock(X,X,NRESERVED,_) ;
 f_prov3(X,count<Z>,NRESERVED) :-  f_vars(X,Z,NRESERVED,_) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -59,4 +60,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

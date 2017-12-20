@@ -1,0 +1,2 @@
+include "../delivery/simplog.ded" ;
+include "../delivery/deliv_assert.ded" ;

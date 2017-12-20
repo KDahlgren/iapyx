@@ -37,8 +37,10 @@ class Core :
   #############
   #  ATTRIBS  #
   #############
-  argDict                  = None  # dictionary of commaned line args
-  cursor                   = None  # a reference to the IR database
+  argDict       = None  # dictionary of commaned line args
+  cursor        = None  # a reference to the IR database
+  program_array = None  # the translated datalog program as an array of program lines
+  table_array   = None  # the array of tables in the program
 
   # --------------------------------- #
 
@@ -66,14 +68,16 @@ class Core :
     # ---------------------------------------------------------------- #
 
     # allProgramData := [ allProgramLines, tableListArray ]
-    allProgramData = self.dedalus_to_datalog( self.argDict, self.cursor )
+    allProgramData     = self.dedalus_to_datalog( self.argDict, self.cursor )
+    self.program_array = allProgramData[0]
+    self.table_array   = allProgramData[1]
 
     # ----------------------------------------------- #
     # 2. evaluate                                     #
     # ----------------------------------------------- #
 
     # use c4 wrapper 
-    parsedResults = self.evaluate( self.argDict, allProgramData )
+    #parsedResults = self.evaluate( self.argDict, allProgramData )
 
 
   ########################

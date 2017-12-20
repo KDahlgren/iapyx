@@ -1,5 +1,6 @@
 define(clock,{string,string,int,int});
 define(crash,{string,string,int});
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -36,4 +37,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

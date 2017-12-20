@@ -103,6 +103,7 @@ dom_a_agg2_att2_prov24(Att2) :-  clock(_,_,Att2,_),notin b(_,Att2),notin c(_,_,A
 not_a_agg2_prov25(Att0,Att1,Att2,Att2+1) :-  dom_a_agg2_att2(Att2), domcomp_a_agg2(Att0,Att1,Att2),notin b(Att0,Att2) ;
 not_a_agg2_prov26(Att0,Att1,Att2,Att2+1) :-  dom_a_agg2_att2(Att2), domcomp_a_agg2(Att0,Att1,Att2),notin c(Att0,Att1,Att2) ;
 not_a_agg2_prov27(Att0,Att1,Att2,Att2+1) :-  dom_a_agg2_att2(Att2), domcomp_a_agg2(Att0,Att1,Att2),notin clock(Att0,_,Att2,_) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -139,4 +140,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

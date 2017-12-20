@@ -44,6 +44,7 @@ a_agg12_prov5(Att0,Att1+1,Att2+1,Att1,Att3,Att2) :-  e(_,Att1,Att3), f(Att0,Att2
 a_agg1_prov6(Att0,Att1+1,Att1,Att3,Z1) :-  c(Att0,Att1,Att3), m(Att0,Z1,Att3), n(Z1,Att1,Att3), clock(Att0,Att0,Att3,_) ;
 a_agg1_prov7(Att0,Att1+1,Att1,Att3,Z2) :-  d(Att0,Att1,Att3), m(Att0,Z2,Att3), n(Z2,Att1,Att3), clock(Att0,Att0,Att3,_) ;
 a_agg1_prov8(Att0,Att1+1,Att1,Att3) :-  e(Att0,Att1,Att3), clock(Att0,Att0,Att3,_) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -80,4 +81,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

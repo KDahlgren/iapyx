@@ -169,6 +169,7 @@ coordinator_prov38(A,C,NRESERVED,MRESERVED) :-  coordinator(A,C,NRESERVED), cloc
 timer_state_prov39(H,I,T-1,T,NRESERVED,MRESERVED) :-  timer_svc(H,I,T,NRESERVED), clock(H,_,NRESERVED,MRESERVED) ;
 timer_state_prov40(H,I,T-1,T,NRESERVED,MRESERVED) :-  timer_state(H,I,T,NRESERVED), clock(H,_,NRESERVED,MRESERVED),notin timer_cancel(H,I,NRESERVED),T>1 ;
 timeout_prov41(H,I,NRESERVED) :-  timer_state(H,I,1,NRESERVED), clock(H,H,NRESERVED,_) ;
+crash("NULL","NULL",99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);
@@ -205,4 +206,3 @@ clock("b","c",4,5);
 clock("c","a",4,5);
 clock("c","b",4,5);
 clock("c","c",4,5);
-crash("NULL","NULL",99999999);

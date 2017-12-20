@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 
-cmd="time python ../../src/drivers/iapyx.py -c 0 -n str --EOT 1 -f ./omissionProblem_v0.ded --evaluator c4"
+cmd="time python ../../src/drivers/iapyx.py -c 0 -n str --EOT 1 -f ./omissionProblem_v0.ded --evaluator c4 --settings ./settings.ini"
 opt_cmd="cmd"
 
 rm ./IR.db
