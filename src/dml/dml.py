@@ -24,7 +24,6 @@ from evaluators  import c4_evaluator
 from utils       import clockTools, tools, dumpers, setTypes
 
 import deMorgans
-import domainRewrites
 import rewriteNegativeSubgoalsWithWildcards
 
 # ------------------------------------------------------ #
