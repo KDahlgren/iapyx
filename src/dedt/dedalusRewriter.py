@@ -120,7 +120,29 @@ def rewriteDeductive( metarule, cursor ) :
   # preserve adjustments by instantiating the new meta rule
   # as a Rule
 
+#  if new_metarule_ruleData[ "relationName" ] == "post" :
+#    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + str( rid ) + "'" )
+#    attList = cursor.fetchall()
+#    attList = tools.toAscii_multiList( attList )
+#    print attList
+#
+#    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + str( rid ) + "'" )
+#    subgoalList = cursor.fetchall()
+#    subgoalList = tools.toAscii_multiList( subgoalList )
+#    print subgoalList
+
   new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+#  if new_metarule_ruleData[ "relationName" ] == "post" :
+#    for sub in new_metarule_ruleData[ "subgoalListOfDicts" ] :
+#      print sub
+#    _rid = new_metarule.rid
+#    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + str( _rid ) + "'" )
+#    attList = cursor.fetchall()
+#    attList = tools.toAscii_multiList( attList )
+#    print attList
+#    sys.exit( "blah")
+
 
   logging.debug( "  REWRITE DEDUCTIVE : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
   return new_metarule

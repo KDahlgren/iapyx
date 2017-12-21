@@ -196,6 +196,7 @@ class Rule :
     logging.debug( "  SAVE SUBGOALS : self.goalTimeArg        = " + self.goalTimeArg )
     logging.debug( "  SAVE SUBGOALS : self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
 
+    # Subgoals deletes
     self.cursor.execute( "SELECT * FROM Subgoals WHERE rid=='" + str( self.rid ) + "'" )
     res = self.cursor.fetchall()
     res = tools.toAscii_multiList( res )
@@ -204,6 +205,16 @@ class Rule :
 
     logging.debug( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) ) 
     self.cursor.execute( "DELETE FROM Subgoals WHERE rid='%s'" % str( self.rid ) )
+
+    # SubgoalAtt deletes
+    self.cursor.execute( "SELECT * FROM SubgoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+    res = self.cursor.fetchall()
+    res = tools.toAscii_multiList( res )
+    for r in res :
+      logging.debug( "r = " + str( r ) )
+
+    logging.debug( "DELETE FROM SubgoalAtt WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM SubgoalAtt WHERE rid='%s'" % str( self.rid ) )
 
     logging.debug( "self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
 
