@@ -1,3 +1,5 @@
+**/complete_dedalus_program.ded
+examples/**/data/*
 *.png
 .DS_Store
 qa/IR*

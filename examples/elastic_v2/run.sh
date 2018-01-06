@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+
+cmd="time python ../../src/drivers/iapyx.py -c 1 -n a,b,c,C,G --EOT 15 --EFF 0 -f ./elastic_v2.ded --evaluator c4 --settings ./settings.ini"
+
+
+rm ./IR.db
+$cmd
+rm ./IR.db
