@@ -924,6 +924,11 @@ def getType( var ) :
 # look up the type from the goal or fact table (or clock schema, if subgoal name is 'clock')
 def getVarType( var, rid, cursor ) :
 
+  logging.debug( "  GET VAR TYPE : var    = " + str( var ) )
+  logging.debug( "  GET VAR TYPE : rid    = " + str( rid ) )
+  logging.debug( "  GET VAR TYPE : cursor = " + str( cursor ) )
+  sys.exit( "blah" )
+
   if isString( var ) :
     return "string"
   else :

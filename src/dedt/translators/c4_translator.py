@@ -249,15 +249,17 @@ def c4datalog( argDict, cursor ) :
 
   ruleList = []
   for rid in ridList :
+
     # verify data type compatibility for rules with equations
-    verificationResults = tools.checkDataTypes( rid, cursor ) # returns array
+    #verificationResults = tools.checkDataTypes( rid, cursor ) # returns array
 
-    yesCompatible = verificationResults[0]
-    offensiveEqn  = verificationResults[1]
-    lhsType       = verificationResults[2]
-    rhsType       = verificationResults[3]
+    #yesCompatible = verificationResults[0]
+    #offensiveEqn  = verificationResults[1]
+    #lhsType       = verificationResults[2]
+    #rhsType       = verificationResults[3]
 
-    if yesCompatible :
+    #if yesCompatible :
+    if True :
       newRule = dumpers_c4.dumpSingleRule_c4( rid, cursor )
       ruleList.append( newRule )
 
