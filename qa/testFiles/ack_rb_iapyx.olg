@@ -17,7 +17,7 @@ define(rbcast_prov8,{string,string,string,int});
 define(log_prov9,{string,string,int});
 define(bcast,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 node("a","b",1);
 node("a","c",1);
 node("b","a",1);
@@ -45,7 +45,7 @@ rbcast_prov6(Node2,Node1,Pload,NRESERVED,MRESERVED) :-  log(Node1,Pload,NRESERVE
 ack_prov7(From,Host,Pl,NRESERVED,MRESERVED) :-  rbcast(Host,From,Pl,NRESERVED), clock(Host,From,NRESERVED,MRESERVED) ;
 rbcast_prov8(A,A,P,NRESERVED) :-  bcast(A,P,NRESERVED), clock(A,A,NRESERVED,_) ;
 log_prov9(N,P,NRESERVED) :-  rbcast(N,_,P,NRESERVED), clock(N,N,NRESERVED,_) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

@@ -69,7 +69,7 @@ define(timer_state_prov36,{string,string,int,int,int,int});
 define(timeout_prov37,{string,string,int});
 define(proposal,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 proposal("a","peter",1);
 proposal("b","foobar",1);
 seed("a",4,1);
@@ -164,7 +164,7 @@ good_prov34("yay",A,M,NRESERVED) :-  important(A,M,NRESERVED), clock(A,A,NRESERV
 timer_state_prov35(H,I,T-1,T,NRESERVED,MRESERVED) :-  timer_svc(H,I,T,NRESERVED), clock(H,_,NRESERVED,MRESERVED) ;
 timer_state_prov36(H,I,T-1,T,NRESERVED,MRESERVED) :-  timer_state(H,I,T,NRESERVED), clock(H,_,NRESERVED,MRESERVED),notin timer_cancel(H,I,NRESERVED),T>1 ;
 timeout_prov37(H,I,NRESERVED) :-  timer_state(H,I,1,NRESERVED), clock(H,H,NRESERVED,_) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

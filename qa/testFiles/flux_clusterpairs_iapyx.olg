@@ -88,7 +88,7 @@ define(peek_prov48,{string,string,int,string,int});
 define(dest_prov49,{string,string,int,int});
 define(watch,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 conn("i","pc","SEND",1);
 conn("i","sc","SEND",1);
 conn("i","pc","ACK",1);
@@ -228,7 +228,7 @@ advanced_prov46(H,D,Sn,NRESERVED,MRESERVED) :-  advance(H,D,NRESERVED), bot(H,D,
 advanced_prov47(H,D,S,NRESERVED,MRESERVED) :-  advanced(H,D,S,NRESERVED), clock(H,_,NRESERVED,MRESERVED) ;
 peek_prov48(H,Dest,Sn,Data,NRESERVED) :-  bot(H,Dest,Sn,NRESERVED), buf(H,Data,Sn,_,NRESERVED), clock(H,H,NRESERVED,_) ;
 dest_prov49(H,D,NRESERVED,MRESERVED) :-  dest(H,D,NRESERVED), clock(H,_,NRESERVED,MRESERVED) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

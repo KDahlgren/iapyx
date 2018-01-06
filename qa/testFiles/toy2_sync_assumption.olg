@@ -7,7 +7,7 @@ define(c,{string,int,int});
 define(e,{string,int,int});
 define(f,{string,int,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 b("a",1);
 c("a",2,1);
 e("a",3,1);
@@ -16,7 +16,7 @@ a(X,Y,MRESERVED) :-  b(X,NRESERVED), c(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESE
 d(X,Y,MRESERVED) :-  e(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED),notin a(X,Y,NRESERVED) ;
 a_prov0(X,Y,NRESERVED,MRESERVED) :-  b(X,NRESERVED), c(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED) ;
 d_prov1(X,Y,NRESERVED,MRESERVED) :-  e(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED),notin a(X,Y,NRESERVED) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

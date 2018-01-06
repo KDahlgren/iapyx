@@ -1,8 +1,8 @@
 define(b,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 b("a","a",1);
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

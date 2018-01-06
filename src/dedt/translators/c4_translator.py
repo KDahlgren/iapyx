@@ -206,7 +206,7 @@ def c4datalog( argDict, cursor ) :
   # ----------------------------------------------------------- #
   # add crash define
 
-  definesList.append( "define(crash,{string,string,int});\n" )
+  definesList.append( "define(crash,{string,string,int,int});\n" )
   tableListStr += "crash,"
   tableListArray.append( "crash" )
 

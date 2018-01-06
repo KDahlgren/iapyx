@@ -205,8 +205,8 @@ def setTypes( cursor ) :
 
       # if subgoal is crash, then schema is trivial
       elif subgoalName == "crash" :
-        attIDList   = [ 0, 1, 2 ]
-        attTypeList = [ "string", "string", "int" ]
+        attIDList   = [ 0, 1, 2, 3 ]
+        attTypeList = [ "string", "string", "int", "int" ]
         for i in range( 0, len( attIDList ) ) :
           attID   = attIDList[i]
           attType = attTypeList[i]
@@ -1319,8 +1319,8 @@ def createDedalusIRTables( cursor ) :
   cursor.execute('''CREATE TABLE IF NOT EXISTS NextClock (src text, dest text, sndTime int, delivTime int, simInclude text)''')
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Clock ON Clock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
   cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_NextClock ON NextClock(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
-  cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, delivTime int, simInclude text)''')
-  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Crash ON Crash(src, dest, sndTime, delivTime, simInclude)''') # make all rows unique
+  cursor.execute('''CREATE TABLE IF NOT EXISTS Crash (src text, dest text, sndTime int, NRESERVED int, simInclude text)''')
+  cursor.execute('''CREATE UNIQUE INDEX IF NOT EXISTS IDX_Crash ON Crash(src, dest, sndTime, NRESERVED, simInclude)''') # make all rows unique
 
 
 ##############

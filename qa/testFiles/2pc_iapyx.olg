@@ -36,7 +36,7 @@ define(vote_prov21,{string,string,string,string,int,int});
 define(prepared_prov22,{string,string,string,string,int,int});
 define(begin,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 begin("C","hello",1);
 agent("C","a",1);
 agent("C","b",1);
@@ -96,7 +96,7 @@ abort_prov19(C,X,NRESERVED,MRESERVED) :-  abort(C,X,NRESERVED), clock(C,_,NRESER
 commit_prov20(C,X,NRESERVED,MRESERVED) :-  commit(C,X,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
 vote_prov21(C,A,X,S,NRESERVED,MRESERVED) :-  vote(C,A,X,S,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
 prepared_prov22(C,A,X,Y,NRESERVED,MRESERVED) :-  prepared(C,A,X,Y,NRESERVED), clock(C,_,NRESERVED,MRESERVED) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

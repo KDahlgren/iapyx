@@ -360,8 +360,8 @@ def dump_crash( cursor ) :
 
   if len( crashFacts ) < 1 :
     #tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : crash table is empty." )
-    cursor.execute( "INSERT INTO Crash (src,dest,sndTime) VALUES ('NULL','NULL','99999999')" )
-    cursor.execute( "SELECT src, dest, sndTime FROM Crash" )
+    cursor.execute( "INSERT INTO Crash (src,dest,sndTime,NRESERVED) VALUES ('NULL','NULL','99999999','99999999')" )
+    cursor.execute( "SELECT src,dest,sndTime,NRESERVED FROM Crash" )
     crashFacts = cursor.fetchall()
     crashFacts = tools.toAscii_multiList( crashFacts )
     logging.debug( "crashFacts = " + str(crashFacts) )

@@ -34,7 +34,7 @@ define(c,{string,int,int});
 define(e,{string,int,int});
 define(f,{string,int,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 b("a",1);
 c("a",2,1);
 e("a",3,1);
@@ -87,7 +87,7 @@ dom_a_nreserved_prov20(NRESERVED) :-  clock(_,_,NRESERVED,_),notin b(_,NRESERVED
 not_a_prov21(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin b(X,NRESERVED) ;
 not_a_prov22(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin c(X,Y,NRESERVED) ;
 not_a_prov23(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin clock(X,_,NRESERVED,MRESERVED) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

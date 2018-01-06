@@ -78,7 +78,7 @@ define(not_node_prov59,{string,string,int,int});
 define(not_node_prov60,{string,string,int,int});
 define(bcast,{string,string,int});
 define(clock,{string,string,int,int});
-define(crash,{string,string,int});
+define(crash,{string,string,int,int});
 node("a","b",1);
 node("a","c",1);
 node("b","a",1);
@@ -208,7 +208,7 @@ dom_node_nreserved_prov57(NRESERVED) :-  node(_,_,NRESERVED),notin clock(_,_,NRE
 dom_node_nreserved_prov58(NRESERVED) :-  not_node(_,_,NRESERVED), clock(_,_,NRESERVED,_) ;
 not_node_prov59(Node,Neighbor,NRESERVED,MRESERVED) :-  dom_node_nreserved(NRESERVED), not_node(Node,Neighbor,NRESERVED), domcomp_node(Node,Neighbor,MRESERVED) ;
 not_node_prov60(Node,Neighbor,NRESERVED,MRESERVED) :-  dom_node_nreserved(NRESERVED), domcomp_node(Node,Neighbor,MRESERVED),notin clock(Node,_,NRESERVED,MRESERVED) ;
-crash("NULL","NULL",99999999);
+crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
 clock("a","c",1,2);

@@ -101,8 +101,8 @@ def setTypes( cursor ) :
 
       # if subgoal is crash, then schema is trivial
       elif subgoalName == "crash" :
-        attIDList   = [ 0, 1, 2 ]
-        attTypeList = [ "string", "string", "int" ]
+        attIDList   = [ 0, 1, 2, 3 ]
+        attTypeList = [ "string", "string", "int", "int" ]
         for i in range( 0, len( attIDList ) ) :
           attID   = attIDList[i]
           attType = attTypeList[i]
