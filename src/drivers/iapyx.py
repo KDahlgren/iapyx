@@ -75,7 +75,15 @@ def iapyx() :
   # exits here if user provides invalid inputs.
   argDict = parseCommandLineInput.parseCommandLineInput( )  # get dictionary of arguments.
 
-  iapyx_driver( argDict )
+  data = iapyx_driver( argDict )
+
+  # output program to file for sanity check
+  program_array = data[0]
+  tables_array  = data[1]
+  fo = open( "iapyx_prog_from_driver.olg", "w")
+  for line in program_array :
+    fo.write( line + "\n" )
+  fo.close()
 
 
 #########################
