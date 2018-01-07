@@ -1,0 +1,9 @@
+b("a")@1 ;
+c("a",2)@1 ;
+e("a",3)@1 ;
+f("a",4)@1 ;
+g("a",1)@1 ;
+g("a",4)@1 ;
+g("a",6)@1 ;
+a(X,Y,avg<Z>)@next :- b(X), c(X,Y), g(X,Z), Z>2 ;
+d(X,Y)@next :- e(X,Y), notin a(X,Y) ;

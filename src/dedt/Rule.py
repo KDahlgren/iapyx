@@ -292,7 +292,12 @@ class Rule :
   #             'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] } }
   def saveEquations( self ) :
 
+    logging.debug( "  SAVE EQUATIONS : running process..." )
+
     # delete all data for this id in the relevant tables, if applicable
+    logging.debug( "DELETE FROM Equation WHERE rid='%s'" % str( self.rid ) )
+    logging.debug( "DELETE FROM EquationVars WHERE rid='%s'" % str( self.rid ) )
+
     self.cursor.execute( "DELETE FROM Equation WHERE rid='%s'" % str( self.rid ) )
     self.cursor.execute( "DELETE FROM EquationVars WHERE rid='%s'" % str( self.rid ) )
 
@@ -323,6 +328,10 @@ class Rule :
   # Equation( rid text, eid text, eqn text )
   def saveToEquation( self, eid, eqnStr ) :
 
+    logging.debug( "INSERT INTO Equation VALUES ('" + str( self.rid ) + "','" \
+                                                    + str( eid )      + "','" \
+                                                    + eqnStr + "')" )
+
     self.cursor.execute( "INSERT INTO Equation VALUES ('" + str( self.rid ) + "','" \
                                                           + str( eid )      + "','" \
                                                           + eqnStr + "')" )
@@ -337,6 +346,11 @@ class Rule :
 
     varID = 0
     for var in variableList :
+
+      logging.debug( "INSERT INTO EquationVars VALUES ('" + str( self.rid )     + "','" \
+                                                          + str( eid )          + "','" \
+                                                          + str( varID )        + "','" \
+                                                          + var + "')" )
 
       self.cursor.execute( "INSERT INTO EquationVars VALUES ('" + str( self.rid )     + "','" \
                                                                 + str( eid )          + "','" \

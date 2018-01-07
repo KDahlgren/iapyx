@@ -33,6 +33,60 @@ class Test_dedt( unittest.TestCase ) :
 
   PRINT_STOP = False
 
+  ########################
+  #  TOY 4 AGG WITH EQN  #
+  ########################
+  # tests building agg rule provenance with an eqn
+  #@unittest.skip( "working on different example" )
+  def test_toy4_agg_with_eqn( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+    #runs through function to make sure it finishes with expected error
+
+    # specify input file path
+    inputfile = "./testFiles/toy4_agg_with_eqn.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/toy4_agg_with_eqn.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
   ##############################
   #  TOY 2 USE NEXT CLOCK DML  #
   ##############################

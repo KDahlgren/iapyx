@@ -195,15 +195,22 @@ def aggProv( aggRule, provid, cursor ) :
   # ------------------------------------------------------ #
 
   # ------------------------------------------------------ #
-  # update rule meta with the new bindings subgoal
 
+  # update rule meta with the new bindings subgoal
   aggRule.ruleData[ "subgoalListOfDicts" ] = aggprovmeta_rule.ruleData[ "subgoalListOfDicts" ]
-  aggRule.subgoalListOfDicts = aggRule.ruleData[ "subgoalListOfDicts" ]
+  aggRule.subgoalListOfDicts               = aggRule.ruleData[ "subgoalListOfDicts" ]
+
+  # save new subgoal data
+  aggRule.saveSubgoals()
 
   # ------------------------------------------------------ #
-  # save new subgoal data
 
-  aggRule.saveSubgoals()
+  # update rule meta with the new empty eqn dict
+  aggRule.ruleData[ "eqnDict" ] = aggprovmeta_rule.ruleData[ "eqnDict" ]
+  aggRule.eqnDict               = aggRule.ruleData[ "eqnDict" ]
+
+  # save new subgoal data
+  aggRule.saveEquations()
 
   return [ bindings_rule, aggprovmeta_rule ]
 
