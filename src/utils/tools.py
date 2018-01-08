@@ -558,7 +558,7 @@ def isFact_only( goalName, cursor ) :
     isIDB = False
     isEDB = False
 
-    print "Running tools.isFact_only on goalName '" + goalName + "'"
+    logging.debug( "Running tools.isFact_only on goalName '" + goalName + "'" )
 
     # --------------------------------------------------------------- #
     # first check if the relation name corresponds to an IDB name
@@ -597,7 +597,7 @@ def isFact( goalName, cursor ) :
     isIDB = False
     isEDB = False
 
-    print "Running tools.isFact on goalName '" + goalName + "'"
+    logging.debug( "Running tools.isFact on goalName '" + goalName + "'" )
 
     # --------------------------------------------------------------- #
     # first check if the relation name corresponds to an IDB name
