@@ -45,6 +45,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
   for piece in ruleData:
     neg_piece = copy.deepcopy(piece)
     neg_piece.relationName = new_name
+    neg_piece.ruleData['relationName'] = new_name
     numGoals = len(neg_piece.subgoalListOfDicts)
     numRules = pow(2, numGoals)
     rules = []
@@ -55,11 +56,14 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
           neg_piece = flip_negation(cursor, neg_piece, j, parsedResults)
       rules.append(copy.deepcopy(neg_piece))
     negated_pieces.append(rules)
-  negated_pieces = concate_neg_rules(negated_pieces)
+  headRule, negated_pieces = concate_neg_rules(cursor, negated_pieces)
+
+  if headRule != None:
+    ruleMeta.append(headRule)
 
   for negRule in negated_pieces:
     # append the domain information
-    negRule = domain.concateDomain(cursor, negRule, old_rid)
+    negRule = domain.concateDomain(cursor, negRule, old_rid, new_name)
     #insert new rule
     neg_rid = tools.getIDFromCounters( "rid" )
     negRule.cursor = cursor
@@ -67,30 +71,52 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
     negRule = goalData.saveRule(negRule)
     ruleMeta.append(negRule)
     # update goalAtts
-    # goalData.update_goalAtts(cursor, rule, neg_rid)
+    goalData.update_goalAtts(cursor, rule, neg_rid)
   ruleMeta = replaceAllNotins(cursor, old_name, new_name, ruleMeta)
   return ruleMeta, factMeta
 
-def concate_neg_rules(neg_rules):
+def concate_neg_rules(cursor, neg_rules):
   ''' Loops through all the negated rules and concatinates them together, performs the and '''
-  if len(neg_rules) == 1:
-    return neg_rules[0]
+  # This is legacy code, changing the fomualtion of this to support a form of multi level aggrigation
+  if len(neg_rules) <= 1:
+    return None, neg_rules[0]
+
   rules = []
+  # create the head rule that we will add e ach rule too.
+  headRuleData = createRuleData( neg_rules[0][0].relationName, '', neg_rules[0][0].goalAttList )
   # match each rule with every other rule
   for i in range(0, len(neg_rules)):
-    for j in range(0, len(neg_rules)):
-      # if they are the same rule skip it
-      if i == j:
-        break
-      for neg_rule in neg_rules[i]:
-        # loop through each version of the given rule
-        subgoals = neg_rule.subgoalListOfDicts
-        for second_neg_rule in neg_rules[j]:
-          # concatinate with each negated version of every other rule
-          new_neg_rule = copy.deepcopy(neg_rule)
-          new_neg_rule.subgoalListOfDicts = subgoals + second_neg_rule.subgoalListOfDicts
-          rules.append(new_neg_rule)
-  return rules
+    # first rename each rule to be 'not_{relationName}_{i}'
+    for j in range(0, len(neg_rules[i])):
+      new_neg_rule = copy.deepcopy(neg_rules[i][j])
+      new_neg_rule.relationName = new_neg_rule.relationName + "_" + str(i)
+      new_neg_rule.ruleData['relationName'] = new_neg_rule.relationName
+      rules.append(new_neg_rule)
+    headRuleData = createSubgoal(headRuleData, new_neg_rule.relationName)
+
+  head_rid = tools.getIDFromCounters( "rid" )
+  newRule = Rule.Rule( head_rid, headRuleData, cursor )
+  return newRule, rules
+
+
+def createRuleData(name, timeargs, atts):
+  ruleData = {}
+  ruleData['relationName'] = name
+  ruleData['goalAttList'] = atts
+  ruleData['goalTimeArg'] = timeargs
+  ruleData['subgoalListOfDicts'] = []
+  ruleData['eqnDict'] = {}
+  return ruleData
+
+
+def createSubgoal(rule, subgoalName):
+  goalDict = {}
+  goalDict['subgoalName'] = subgoalName
+  goalDict['subgoalAttList'] = rule['goalAttList']
+  goalDict['polarity'] = ''
+  goalDict['subgoalTimeArg'] = ''
+  rule['subgoalListOfDicts'].append(goalDict)
+  return rule
 
 
 def replaceAllNotins(cursor, old_name, new_name, ruleMeta):
