@@ -26,7 +26,7 @@ class C4Wrapper( object ) :
   ##########
   def __init__( self ) :
 
-    c4_lib_loc                     = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
+    c4_lib_loc                     = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.so' )
     self.lib                       = cdll.LoadLibrary( c4_lib_loc )
     self.lib.c4_make.restype       = POINTER(c_char)
     self.lib.c4_dump_table.restype = c_char_p   # c4_dump_table returns a char*
