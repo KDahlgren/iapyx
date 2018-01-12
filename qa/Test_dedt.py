@@ -52,7 +52,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy4_agg_with_eqn.ded"
@@ -106,7 +105,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -160,7 +158,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -214,7 +211,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -268,7 +264,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -322,7 +317,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -376,7 +370,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/toy2.ded"
@@ -432,7 +425,6 @@ class Test_dedt( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     inputfile = "./testFiles/example16.ded"
