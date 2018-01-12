@@ -40,8 +40,8 @@ def experiment_driver( molly_path ) :
   if ORIGINAL_TESTS :
 
     original_tests.original_simplog( molly_path, table_path, type_path )
-    original_tests.original_rdlog()
-    original_tests.original_replog()
+    original_tests.original_rdlog( molly_path, table_path, type_path )
+    original_tests.original_replog( molly_path, table_path, type_path )
 
   # ---------------------- #
   #        DM TESTS        #
