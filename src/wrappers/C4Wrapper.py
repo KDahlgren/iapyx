@@ -19,9 +19,6 @@ from utils import tools
 # ------------------------------------------------------ #
 
 
-DEBUG = False
-
-
 class C4Wrapper( object ) :
 
   ##########

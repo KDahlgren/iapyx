@@ -87,11 +87,11 @@ class Test_dedt( unittest.TestCase ) :
 
 
   ##############################
-  #  TOY 2 USE NEXT CLOCK DML  #
+  #  TOY 2 USE NEXT CLOCK DM  #
   ##############################
-  # tests next rule hanlding using the next clock and dml
+  # tests next rule hanlding using the next clock and dm
   #@unittest.skip( "working on different example" )
-  def test_toy2_use_next_clock_dml( self ) :
+  def test_toy2_use_next_clock_dm( self ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -113,7 +113,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_next_clock_dml.ini"
+    argDict[ "settings" ] = "./settings_use_next_clock_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -126,7 +126,7 @@ class Test_dedt( unittest.TestCase ) :
       sys.exit( "print stop." )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/toy2_use_next_clock_dml.olg"
+    expected_results_path = "./testFiles/toy2_use_next_clock_dm.olg"
     expected_results      = None
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()
@@ -193,11 +193,11 @@ class Test_dedt( unittest.TestCase ) :
 
 
   ###############################
-  #  TOY 2 SYNC ASSUMPTION DML  #
+  #  TOY 2 SYNC ASSUMPTION DM  #
   ###############################
-  # tests next rule hanlding assuming a synchronous communication model and using dml
+  # tests next rule hanlding assuming a synchronous communication model and using dm
   #@unittest.skip( "working on different example" )
-  def test_toy2_sync_assumption_dml( self ) :
+  def test_toy2_sync_assumption_dm( self ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -219,7 +219,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_sync_assumption_dml.ini"
+    argDict[ "settings" ] = "./settings_sync_assumption_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -232,7 +232,7 @@ class Test_dedt( unittest.TestCase ) :
       sys.exit( "print stop." )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/toy2_sync_assumption_dml.olg"
+    expected_results_path = "./testFiles/toy2_sync_assumption_dm.olg"
     expected_results      = None
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()
@@ -299,11 +299,11 @@ class Test_dedt( unittest.TestCase ) :
 
 
   ########################
-  #  TOY 2 USE AGGS DML  #
+  #  TOY 2 USE AGGS DM  #
   ########################
-  # tests next rule hanlding using agg rewrites and dml
+  # tests next rule hanlding using agg rewrites and dm
   #@unittest.skip( "working on different example" )
-  def test_toy2_use_aggs_dml( self ) :
+  def test_toy2_use_aggs_dm( self ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -325,7 +325,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_aggs_dml.ini"
+    argDict[ "settings" ] = "./settings_use_aggs_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -338,7 +338,7 @@ class Test_dedt( unittest.TestCase ) :
       sys.exit( "print stop." )
 
     # grab expected output results as a string
-    expected_results_path = "./testFiles/toy2_use_aggs_dml.olg"
+    expected_results_path = "./testFiles/toy2_use_aggs_dm.olg"
     expected_results      = None
     with open( expected_results_path, 'r' ) as expectedFile :
       expected_results = expectedFile.read()

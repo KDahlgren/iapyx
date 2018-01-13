@@ -18,7 +18,7 @@ TODO:
   How to collect metric from molly?
 '''
 
-ORIGINAL_TESTS = True
+ORIGINAL_TESTS = False
 DM_TESTS       = True
 COMBO_TESTS    = False
 SC_TESTS       = False

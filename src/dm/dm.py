@@ -1,7 +1,7 @@
 #/usr/bin/env python
 
 '''
-dml.py
+dm.py
    Define the functionality for collecting the provenance of negative subgoals
    using the DeMorgan's Law method for negative rewrites..
 '''
@@ -36,14 +36,14 @@ arithOps = [ "+", "-", "*", "/" ]
 
 
 #########
-#  DML  #
+#  DM  #
 #########
-# generate the new set of rules provided by the DML method for negative rewrites.
+# generate the new set of rules provided by the DM method for negative rewrites.
 # factMeta := a list of Fact objects
 # ruleMeta := a list of Rule objects
-def dml( factMeta, ruleMeta, cursor ) :
+def dm( factMeta, ruleMeta, cursor ) :
 
-  logging.debug( "  DML : running process..." )
+  logging.debug( "  DM : running process..." )
 
   # ----------------------------------------- #
   # rewrite rules with aggregate functions
@@ -56,10 +56,10 @@ def dml( factMeta, ruleMeta, cursor ) :
     
   ruleMeta = setUniformAttList( ruleMeta, cursor )
 
-  logging.debug( "  DML : len( ruleMeta ) after setUniformAttList = " + str( len( ruleMeta ) ) )
+  logging.debug( "  DM : len( ruleMeta ) after setUniformAttList = " + str( len( ruleMeta ) ) )
 
   for rule in ruleMeta :
-    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
+    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
     
   # ----------------------------------------- #
   # enforce unique existential attributes
@@ -67,10 +67,10 @@ def dml( factMeta, ruleMeta, cursor ) :
     
   ruleMeta = setUniqueExistentialVars( ruleMeta )
 
-  logging.debug( "  DML : len( ruleMeta ) after setUniqueExistentialVars = " + str( len( ruleMeta ) ) )
+  logging.debug( "  DM : len( ruleMeta ) after setUniqueExistentialVars = " + str( len( ruleMeta ) ) )
 
   for rule in ruleMeta :
-    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
+    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
     
   # ----------------------------------------- #
   # build all de morgan's rules
@@ -78,16 +78,16 @@ def dml( factMeta, ruleMeta, cursor ) :
   COUNTER = 0
   while stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
-    logging.debug( "  DML : COUNTER = " + str( COUNTER ) )
+    logging.debug( "  DM : COUNTER = " + str( COUNTER ) )
 
     #if COUNTER==2 :
     #  for rule in ruleMeta :
-    #    logging.debug( "  DML : " + dumpers.reconstructRule( rule.rid, cursor ) )
+    #    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
 
-    #  logging.debug( "  DML : still contains negated idbs = " + str( stillContainsNegatedIDBs( ruleMeta, cursor ) ) )
-    #  logging.debug( "  DML : remaining negated idbs : " )
+    #  logging.debug( "  DM : still contains negated idbs = " + str( stillContainsNegatedIDBs( ruleMeta, cursor ) ) )
+    #  logging.debug( "  DM : remaining negated idbs : " )
     #  for r in remainingIDBs( ruleMeta, cursor ) :
-    #    logging.debug( "  DML : contains negated idb : " + r )
+    #    logging.debug( "  DM : contains negated idb : " + r )
     #  sys.exit( "blah" )
 
     # ----------------------------------------- #
@@ -119,7 +119,7 @@ def dml( factMeta, ruleMeta, cursor ) :
     
     for s in targetRuleMetaSets :
       for r in s :
-        logging.debug( "  DML : r.ruleData = " + str( r.ruleData ) )
+        logging.debug( "  DM : r.ruleData = " + str( r.ruleData ) )
 
     # ----------------------------------------- #  
     # build and add the new de morgan's rules
@@ -131,7 +131,7 @@ def dml( factMeta, ruleMeta, cursor ) :
 
     COUNTER += 1
 
-  logging.debug( "  DML : ...done." )
+  logging.debug( "  DM : ...done." )
   return ruleMeta
 
 
@@ -1121,9 +1121,9 @@ def replaceSubgoalNegations( ruleMeta ) :
         # replace negatives
 
         if subgoal[ "subgoalName" ] == "missing_log" and subgoal[ "polarity" ] == "notin" :
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : hasDML missing_log = " + str( hasDML( "missing_log", ruleMeta ) ) )
+          logging.debug( "  REPLACE SUBGOAL NEGATIONS : hasDM missing_log = " + str( hasDM( "missing_log", ruleMeta ) ) )
 
-        if hasDML( subgoal[ "subgoalName" ], ruleMeta ) and subgoal[ "polarity" ] == "notin" :
+        if hasDM( subgoal[ "subgoalName" ], ruleMeta ) and subgoal[ "polarity" ] == "notin" :
 
           logging.debug( "  REPLACE SUBGOAL NEGATIONS : original subgoal = " + str( subgoal ) )
 
@@ -1157,10 +1157,10 @@ def replaceSubgoalNegations( ruleMeta ) :
 
 
 #############
-#  HAS DML  #
+#  HAS DM  #
 #############
 # check if the subgoal has a corresponding not_ rule
-def hasDML( subgoalName, ruleMeta ) :
+def hasDM( subgoalName, ruleMeta ) :
 
   for rule in ruleMeta :
     if rule.relationName == "not_" + subgoalName :
@@ -1550,7 +1550,7 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule,
   # ----------------------------------------- #
   # generate combined equation list
   # collect eqns from all rules and append to
-  # all dml rules.
+  # all dm rules.
 
   eqnDict_combined = {}
   for rule in ruleSet :

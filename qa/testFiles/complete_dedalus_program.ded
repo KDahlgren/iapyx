@@ -1,13 +1,36 @@
-b("a",1)@1 ;
-c("a",2)@1 ;
-d("a",3)@1 ;
-e("a",4)@1 ;
-f("a",5)@1 ;
-m("a",6)@1 ;
-n(6,7)@1 ;
+include "./examples_ft/delivery/rdlog.ded" ;
+include "./examples_ft/delivery/deliv_assert.ded" ;
+missing_log(A, Pl) :- log(X, Pl), node(X, A), notin log(A, Pl);//, notin crash(_, A, _);
 
-a(X,Y,Y) :- b(X,Y) ;
-a(P,Q+1,Q) :- c(P,Q),m(P,Z),n(Z,Q) ;
-a(R,S+1,S) :- d(R,S),m(R,Z),n(Z,S) ;
-a(B,C+1,C) :- e(B,C) ;
-a(I,C+1,J+1) :- e(_,C),f(I,J) ;
+pre(X, Pl) :- log(X, Pl), notin bcast(X, Pl)@1 ; //, notin crash(X, X, _);
+post(X, Pl) :- log(X, Pl), notin missing_log(_, Pl);
+
+include "./bcast_edb.ded";
+include "./simplog.ded";
+
+
+bcast(N, P)@next :- bcast(N, P);
+
+include "./bcast_edb.ded";
+
+node(Node, Neighbor)@next :- node(Node, Neighbor);
+log(Node, Pload)@next :- log(Node, Pload);
+
+log(Node2, Pload)@async :- bcast(Node1, Pload), node(Node1, Node2);
+log(Node, Pload) :- bcast(Node, Pload);
+node("a", "b")@1;
+node("a", "c")@1;
+node("b", "a")@1;
+node("b", "c")@1;
+node("c", "a")@1;
+node("c", "b")@1;
+
+bcast("a", "hello")@1;
+node("a", "b")@1;
+node("a", "c")@1;
+node("b", "a")@1;
+node("b", "c")@1;
+node("c", "a")@1;
+node("c", "b")@1;
+
+bcast("a", "hello")@1;

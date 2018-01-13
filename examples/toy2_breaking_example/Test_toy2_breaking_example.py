@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_dml.py
+Test_dm.py
 '''
 
 #############
@@ -19,7 +19,7 @@ from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRe
 from utils      import dumpers, globalCounters, tools
 from evaluators import c4_evaluator
 
-import dml
+import dm
 import log_settings
 
 # ------------------------------------------------------ #
@@ -48,64 +48,64 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
   COMPARE_PROGS = True
 
   ##############################
-  #  DML TOY 2 USE NEXT CLOCK  #
+  #  DM TOY 2 USE NEXT CLOCK  #
   ##############################
   # tests rewriting the second toy program using next_clock
   #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
-  def test_dml_toy2_use_next_clock( self ) :
+  def test_dm_toy2_use_next_clock( self ) :
 
     # specify input and output paths
     inputfile               = "./toy2.ded"
-    expected_iapyx_dml_path = "./toy2_breaking_example_use_next_clock.olg"
+    expected_iapyx_dm_path = "./toy2_breaking_example_use_next_clock.olg"
 
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_use_next_clock.ini"
 
-    self.comparison_workflow( argDict, inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None )
 
 
   ###############################
-  #  DML TOY 2 SYNC ASSUMPTION  #
+  #  DM TOY 2 SYNC ASSUMPTION  #
   ###############################
   # tests rewriting the second toy program using the synchronous assumption
   #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
-  def test_dml_toy2_sync_assumption( self ) :
+  def test_dm_toy2_sync_assumption( self ) :
 
     # specify input and output paths
     inputfile               = "./toy2.ded"
-    expected_iapyx_dml_path = "./toy2_breaking_example_sync_assumption.olg"
+    expected_iapyx_dm_path = "./toy2_breaking_example_sync_assumption.olg"
 
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_sync_assumption.ini"
 
-    self.comparison_workflow( argDict, inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None )
 
 
   ########################
-  #  DML TOY 2 USE AGGS  #
+  #  DM TOY 2 USE AGGS  #
   ########################
   # tests rewriting the second toy program using agg rewrites
   #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
-  def test_dml_toy2_use_aggs( self ) :
+  def test_dm_toy2_use_aggs( self ) :
 
     # specify input and output paths
     inputfile               = "./toy2.ded"
-    expected_iapyx_dml_path = "./toy2_breaking_example_use_aggs.olg"
+    expected_iapyx_dm_path = "./toy2_breaking_example_use_aggs.olg"
 
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_use_aggs.ini"
 
-    self.comparison_workflow( argDict, inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
-  # defines iapyx dml comparison workflow
-  def comparison_workflow( self, argDict, inputfile, expected_iapyx_dml_path, expected_eval_path ) :
+  # defines iapyx dm comparison workflow
+  def comparison_workflow( self, argDict, inputfile, expected_iapyx_dm_path, expected_eval_path ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -143,7 +143,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
 
     if self.COMPARE_PROGS :
       expected_iapyx_results = None
-      with open( expected_iapyx_dml_path, 'r' ) as expectedFile :
+      with open( expected_iapyx_dm_path, 'r' ) as expectedFile :
         expected_iapyx_results = expectedFile.read()
 
       self.assertEqual( iapyx_results, expected_iapyx_results )
@@ -189,7 +189,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
     self.assertFalse( self.hasOverlap( rule_pairs, eval_results_dict ) )
 
     # ----------------------------------------------------------------- #
-    # make sure dml positive relation results are identical to molly
+    # make sure dm positive relation results are identical to molly
     # relation results
 
     if expected_eval_path :
@@ -716,7 +716,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_dml.ini"
+    argDict[ 'settings' ]                 = "./settings_dm.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile

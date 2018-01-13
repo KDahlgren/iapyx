@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_dml.py
+Test_dm.py
 '''
 
 #############
@@ -19,15 +19,15 @@ from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRe
 from utils      import dumpers, globalCounters, tools
 from evaluators import c4_evaluator
 
-import dml
+import dm
 
 # ------------------------------------------------------ #
 
 
 ##############
-#  TEST DML  #
+#  TEST DM  #
 ##############
-class Test_dml( unittest.TestCase ) :
+class Test_dm( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
@@ -37,97 +37,97 @@ class Test_dml( unittest.TestCase ) :
   COMPARE_PROGS = True
 
   ################
-  #  DML REPLOG  #
+  #  DM REPLOG  #
   ################
   # tests rewriting replog
   #@unittest.skip( "working on different example" )
-  def test_dml_replog( self ) :
+  def test_dm_replog( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
-    expected_iapyx_dml_path = "./testFiles/replog_iapyx_dml.olg"
+    expected_iapyx_dm_path = "./testFiles/replog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/replog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
 
 
   ###############
-  #  DML RDLOG  #
+  #  DM RDLOG  #
   ###############
   # tests rewriting rdlog
   #@unittest.skip( "working on different example" )
-  def test_dml_rdlog( self ) :
+  def test_dm_rdlog( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
-    expected_iapyx_dml_path = "./testFiles/rdlog_iapyx_dml.olg"
+    expected_iapyx_dm_path = "./testFiles/rdlog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
 
 
   #################
-  #  DML SIMPLOG  #
+  #  DM SIMPLOG  #
   #################
   # tests rewriting simplog
   #@unittest.skip( "working on different example" )
-  def test_dml_simplog( self ) :
+  def test_dm_simplog( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
-    expected_iapyx_dml_path = "./testFiles/simplog_iapyx_dml.olg"
+    expected_iapyx_dm_path = "./testFiles/simplog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
 
 
   ############################
-  #  DML TOY 3 AGG REWRITES  #
+  #  DM TOY 3 AGG REWRITES  #
   ############################
   # tests rewriting the second toy program
   #@unittest.skip( "working on different example" )
-  def test_dml_toy3_aggRewrites( self ) :
+  def test_dm_toy3_aggRewrites( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
-    expected_iapyx_dml_path = "./testFiles/toy3_aggRewrites.olg"
+    expected_iapyx_dm_path = "./testFiles/toy3_aggRewrites.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
 
 
   ###############
-  #  DML TOY 2  #
+  #  DM TOY 2  #
   ###############
   # tests rewriting the second toy program
   @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
-  def test_dml_toy2( self ) :
+  def test_dm_toy2( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy2.ded"
-    expected_iapyx_dml_path = "./testFiles/toy2.olg"
+    expected_iapyx_dm_path = "./testFiles/toy2.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
 
 
   #############
-  #  DML TOY  #
+  #  DM TOY  #
   #############
   # tests rewriting the toy program
   #@unittest.skip( "working on different example" )
-  def test_dml_toy( self ) :
+  def test_dm_toy( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy.ded"
-    expected_iapyx_dml_path = "./testFiles/toy.olg"
+    expected_iapyx_dm_path = "./testFiles/toy.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
-  # defines iapyx dml comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_dml_path, expected_eval_path ) :
+  # defines iapyx dm comparison workflow
+  def comparison_workflow( self, inputfile, expected_iapyx_dm_path, expected_eval_path ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -168,7 +168,7 @@ class Test_dml( unittest.TestCase ) :
 
     if self.COMPARE_PROGS :
       expected_iapyx_results = None
-      with open( expected_iapyx_dml_path, 'r' ) as expectedFile :
+      with open( expected_iapyx_dm_path, 'r' ) as expectedFile :
         expected_iapyx_results = expectedFile.read()
 
       self.assertEqual( iapyx_results, expected_iapyx_results )
@@ -214,7 +214,7 @@ class Test_dml( unittest.TestCase ) :
     self.assertFalse( self.hasOverlap( rule_pairs, eval_results_dict ) )
 
     # ----------------------------------------------------------------- #
-    # make sure dml positive relation results are identical to molly
+    # make sure dm positive relation results are identical to molly
     # relation results
 
     if expected_eval_path :
@@ -741,7 +741,7 @@ class Test_dml( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_dml.ini"
+    argDict[ 'settings' ]                 = "./settings_dm.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -824,7 +824,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.replaceSubgoalNegations( ruleMeta )
+    targetRuleMeta = dm.replaceSubgoalNegations( ruleMeta )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -965,7 +965,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.setUniqueExistentialVars( ruleMeta )
+    targetRuleMeta = dm.setUniqueExistentialVars( ruleMeta )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -1126,7 +1126,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.setUniformAttList( ruleMeta, cursor )
+    targetRuleMeta = dm.setUniformAttList( ruleMeta, cursor )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -1269,7 +1269,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actual_existentialVarsRules_ruleData = []
     for ruleSet in targetRuleMeta :
@@ -1285,10 +1285,10 @@ class Test_dml( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dml.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
 
       # build existential vars rules
-      existentialVarsRules = dml.buildExistentialVarsRules( ruleSet, cursor )
+      existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # collect ruleData for test
       for rule in existentialVarsRules :
@@ -1459,7 +1459,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actual_domcompRules_ruleData = []
     for ruleSet in targetRuleMeta :
@@ -1475,7 +1475,7 @@ class Test_dml( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dml.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
 
       # collect ruleData for test
       actual_domcompRules_ruleData.append( domcompRule.ruleData )
@@ -1605,7 +1605,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actual_newDMRules_ruleData = []
     for ruleSet in targetRuleMeta :
@@ -1621,15 +1621,15 @@ class Test_dml( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dml.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
 
       # build existential vars rules
-      existentialVarsRules = dml.buildExistentialVarsRules( ruleSet, cursor )
+      existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      negated_dnf_fmla = dml.generateBooleanFormula( ruleSet )
-      pos_dnf_fmla     = str( dml.simplifyToDNF( negated_dnf_fmla ) )
-      newDMRules       = dml.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
+      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
+      pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
+      newDMRules       = dm.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
 
       # collect ruleData for test
       for rule in newDMRules :
@@ -1807,7 +1807,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actual_newDMRules_ruleData = []
     for ruleSet in targetRuleMeta :
@@ -1823,15 +1823,15 @@ class Test_dml( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dml.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
 
       # build existential vars rules
-      existentialVarsRules = dml.buildExistentialVarsRules( ruleSet, cursor )
+      existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      negated_dnf_fmla = dml.generateBooleanFormula( ruleSet )
-      pos_dnf_fmla     = str( dml.simplifyToDNF( negated_dnf_fmla ) )
-      newDMRules       = dml.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
+      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
+      pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
+      newDMRules       = dm.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
 
       # collect ruleData for test
       for rule in newDMRules :
@@ -2009,12 +2009,12 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actual_pos_dnf_fmlas = []
     for ruleSet in targetRuleMeta :
-      negated_dnf_fmla = dml.generateBooleanFormula( ruleSet )
-      actual_pos_dnf_fmlas.append( str( dml.simplifyToDNF( negated_dnf_fmla ) ) )
+      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
+      actual_pos_dnf_fmlas.append( str( dm.simplifyToDNF( negated_dnf_fmla ) ) )
 
     # --------------------------------------------------------------- #
     # check assertion
@@ -2109,11 +2109,11 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actualFmlas = []
     for ruleSet in targetRuleMeta :
-      actualFmlas.append( dml.generateBooleanFormula( ruleSet ) )
+      actualFmlas.append( dm.generateBooleanFormula( ruleSet ) )
 
     # --------------------------------------------------------------- #
     # check assertion
@@ -2209,7 +2209,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actualTargetRuleData = []
     for ruleSet in targetRuleMeta :
@@ -2284,7 +2284,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dml.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
     actualTargetRuleData = targetRuleMeta[0][0].ruleData # should yield only one rule in one rule set
 
@@ -2335,7 +2335,7 @@ class Test_dml( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # create adom rules
 
-    adomRules = dml.buildAdom( factMeta, cursor )
+    adomRules = dm.buildAdom( factMeta, cursor )
 
     actualAdomRuleData = []
     for rule in adomRules :
@@ -2458,7 +2458,7 @@ class Test_dml( unittest.TestCase ) :
 #    argDict[ 'crashes' ]                  = 0
 #    argDict[ 'solver' ]                   = None
 #    argDict[ 'disable_dot_rendering' ]    = False
-#    argDict[ 'settings' ]                 = "./settings_dml.ini"
+#    argDict[ 'settings' ]                 = "./settings_dm.ini"
 #    argDict[ 'negative_support' ]         = False
 #    argDict[ 'strategy' ]                 = None
 #    argDict[ 'file' ]                     = inputfile

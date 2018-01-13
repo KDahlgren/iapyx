@@ -173,7 +173,7 @@ def rewriteInductive( argDict, metarule, cursor ) :
     NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    logging.info( "WARNING : no 'NEXT_RULE_HANDLING' defined in 'DEFAULT' section of settings file." )
     tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # sanity check next rule handling value

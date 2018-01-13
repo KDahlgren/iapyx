@@ -29,13 +29,13 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../translators" ) )
-if not os.path.abspath( __file__ + "/../../dml" ) in sys.path :
-  sys.path.append( os.path.abspath( __file__ + "/../../dml" ) )
+if not os.path.abspath( __file__ + "/../../dm" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../dm" ) )
 
 from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
 
-import dml, rewriteNegativeSubgoalsWithWildcards
+import dm, rewriteNegativeSubgoalsWithWildcards
 
 import clockRelation
 import dedalusParser
@@ -1152,19 +1152,19 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 #    pass
 
   # ----------------------------------------------------------------------------- #
-  # dml rewrites
+  # dm rewrites
 
   try :
-    RUN_DML = tools.getConfig( settings_path, "DEFAULT", "DML", bool )
-    if RUN_DML :
+    RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
+    if RUN_DM :
 
-      ruleMeta = dml.dml( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+      ruleMeta = dm.dm( factMeta, ruleMeta, cursor ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
       setTypes.setTypes( cursor )
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    logging.info( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
     pass
 
   # ----------------------------------------------------------------------------- #
@@ -1192,22 +1192,22 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   return [ factMeta, ruleMeta ]
 
 
-#################
-#  REWRITE DML  #
-#################
-# apply the dml rewriting procedure
-def rewrite_dml( argDict, factMeta, ruleMeta, cursor ) :
+################
+#  REWRITE DM  #
+################
+# apply the dm rewriting procedure
+def rewrite_dm( argDict, factMeta, ruleMeta, cursor ) :
 
-  logging.debug( "  REWRITE DML : running process..." )
+  logging.debug( "  REWRITE DM : running process..." )
 
   settings_path = argDict[ "settings" ]
   evaluator     = argDict[ "evaluator" ]
 
   try :
-    RUN_DML = tools.getConfig( settings_path, "DEFAULT", "DML", bool )
-    if RUN_DML :
+    RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
+    if RUN_DM :
 
-      ruleMeta = dml.dml( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+      ruleMeta = dm.dm( factMeta, ruleMeta, cursor ) # returns new ruleMeta
 
       # ------------------------------------------- #
       #                 DERIVE TYPES                #
@@ -1223,22 +1223,22 @@ def rewrite_dml( argDict, factMeta, ruleMeta, cursor ) :
 
       if evaluator == "c4" :
 
-        logging.debug( "  REWRITE DML : launching c4 evaluation..." )
+        logging.debug( "  REWRITE DM : launching c4 evaluation..." )
 
         allProgramLines = c4_translator.c4datalog( argDict, cursor )
 
-        logging.debug( "  REWRITE DML : ...done with c4 evaluation." )
+        logging.debug( "  REWRITE DM : ...done with c4 evaluation." )
 
       elif evaluator == "pyDatalog" :
         allProgramLines = pydatalog_translator.getPyDatalogProg( cursor )
 
       # ------------------------------------------------------------- #
 
-      logging.debug( "  REWRITE DML : returning allProgramLines = " + str( allProgramLines ) )
+      logging.debug( "  REWRITE DM : returning allProgramLines = " + str( allProgramLines ) )
       return [ allProgramLines, factMeta, ruleMeta ]
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'DML' defined in 'DEFAULT' section of settings file ...running without dml rewrites" )
+    logging.info( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
     pass
 
 
