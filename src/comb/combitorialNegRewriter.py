@@ -24,17 +24,12 @@ def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
 
-  while True:
-
-    original_prog = c4_translator.c4datalog( cursor )
+  original_prog = c4_translator.c4datalog( cursor )
     for line in original_prog[0]:
       print line
-    # for line in original_prog[1]:
-    #   print line
-    # for line in original_prog[2]:
-    #   print line
-    # run the program to get the new domains.
-    # TODO: make this unnecessary, can be done if we just take in the 
+
+  while True:
+
     # original inputs maybe even better
     rulesToNegate = findNegativeRules(cursor, ruleMeta)
     rulesToNegateList = rulesToNegate.keys()
@@ -44,7 +39,12 @@ def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
 
     # Negate the rules in the list
     ruleMeta, factMeta = negateRules(cursor, ruleMeta, factMeta, rulesToNegate, parsedResults)
-    # setTypes.setTypes( cursor )
+    setTypes.setTypes( cursor )
+
+    original_prog = c4_translator.c4datalog( cursor )
+    for line in original_prog[0]:
+      print line
+    
   print len(ruleMeta), len(factMeta)
   return ruleMeta, factMeta
 
