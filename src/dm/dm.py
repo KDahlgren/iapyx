@@ -35,7 +35,7 @@ import rewriteNegativeSubgoalsWithWildcards
 arithOps = [ "+", "-", "*", "/" ]
 
 
-#########
+########
 #  DM  #
 #########
 # generate the new set of rules provided by the DM method for negative rewrites.
