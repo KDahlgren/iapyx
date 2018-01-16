@@ -598,7 +598,7 @@ class Test_dedt( unittest.TestCase ) :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SET TYPES : arity error in rule 'pre(X,Pl) <=  log(X,Pl),notin bcast(X),notin crash(X,X,_) ;' in subgoal 'bcast'"
+    expected_error = "  SET TYPES : arity error in rule 'pre(X,Pl) <=  log(X,Pl),notin bcast(X),notin crash(X,X,_) ;' in subgoal 'bcast'. len(attIDList)==1, len(attTypeList)==2"
 
     self.assertEqual( actual_results, expected_error )
 

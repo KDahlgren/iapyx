@@ -19,22 +19,24 @@ from utils import tools
 
 class Fact :
 
-  ################
-  #  ATTRIBUTES  #
-  ################
-  fid               = ""
-  cursor            = None
-  factData          = None
-  relationName      = ""
-  factTimeArg       = None
-  dataListWithTypes = []
-
 
   #################
   #  CONSTRUCTOR  #
   #################
   # factData = { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> }
   def __init__( self, fid, factData, cursor ) :
+
+    ########################
+    #  ATTRIBUTE DEFAULTS  #
+    ########################
+    self.fid               = ""
+    self.cursor            = None
+    self.factData          = None
+    self.relationName      = ""
+    self.factTimeArg       = None
+    self.dataListWithTypes = []
+
+    # =========================================== #
 
     self.fid      = fid
     self.cursor   = cursor

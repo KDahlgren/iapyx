@@ -154,7 +154,7 @@ def setTypes( cursor ) :
           subgoalName = tools.toAscii_str( subgoalName )
 
           # output error message
-          sys.exit( "  SET TYPES : arity error in rule '" + dumpers.reconstructRule( rid, cursor ) + "' in subgoal '" + subgoalName + "'" )
+          sys.exit( "  SET TYPES : arity error in rule '" + dumpers.reconstructRule( rid, cursor ) + "' in subgoal '" + subgoalName + "'. len(attIDList)==" + str( len( attIDList ) ) + ", len(attTypeList)==" + str( len( attTypeList ) ) )
 
         for i in range( 0, len( attIDList ) ) :
           attID   = attIDList[i][0]

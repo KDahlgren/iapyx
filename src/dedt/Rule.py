@@ -46,19 +46,6 @@ from utils import dumpers, extractors, tools
 
 class Rule :
 
-  ################
-  #  ATTRIBUTES  #
-  ################
-  rid                = ""
-  cursor             = None
-  relationName       = ""
-  goalAttList        = []
-  goalTimeArg        = None
-  subgoalListOfDicts = []
-  eqnDict            = {}
-  ruleData           = {}
-
-
   #################
   #  CONSTRUCTOR  #
   #################
@@ -75,6 +62,20 @@ class Rule :
   #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
   #
   def __init__( self, rid, ruleData, cursor ) :
+
+    ########################
+    #  ATTRIBUTE DEFAULTS  #
+    ########################
+    self.rid                = ""
+    self.cursor             = None
+    self.relationName       = ""
+    self.goalAttList        = []
+    self.goalTimeArg        = None
+    self.subgoalListOfDicts = []
+    self.eqnDict            = {}
+    self.ruleData           = {}
+
+    # =========================================== #
 
     self.rid      = rid
     self.cursor   = cursor

@@ -31,11 +31,13 @@ if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../translators" ) )
 if not os.path.abspath( __file__ + "/../../dm" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dm" ) )
+if not os.path.abspath( __file__ + "/../../iedb_rewrites" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../iedb_rewrites" ) )
 
 from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
 
-import dm, rewriteNegativeSubgoalsWithWildcards
+import dm, iedb_rewrites, rewriteNegativeSubgoalsWithWildcards
 
 import clockRelation
 import dedalusParser
@@ -1150,6 +1152,22 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 #  except ConfigParser.NoOptionError :
 #    print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
 #    pass
+
+  # ----------------------------------------------------------------------------- #
+  # iedb rewrites
+
+  try :
+    RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
+    if RUN_IEDB_REWRITES :
+
+      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+
+      # be sure to fill in all the type info for the new rule definitions
+      setTypes.setTypes( cursor )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
+    pass
 
   # ----------------------------------------------------------------------------- #
   # dm rewrites
