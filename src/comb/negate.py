@@ -66,7 +66,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
     negRule = goalData.saveRule(negRule)
     ruleMeta.append(negRule)
     # update goalAtts
-    goalData.update_goalAtts(cursor, rule, neg_rid)
+    # goalData.update_goalAtts(cursor, rule, neg_rid)
   return ruleMeta, factMeta
 
 def concate_neg_rules(neg_rules):
