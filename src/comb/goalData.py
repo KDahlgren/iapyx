@@ -43,6 +43,13 @@ def update_goalAtts(cursor, rule, neg_rid):
       AND rid = '%s'
       ''' %(goalAtt[neg_att[0]], neg_att[0], neg_rid))
 
+def saveRule(rule):
+  rule.saveToRule()
+  rule.saveToGoalAtt()
+  rule.saveSubgoals()
+  rule.saveEquations()
+  return rule
+
 def getGoallAtts(cursor, rid):
   ''' collects goalAtts '''
   cursor.execute(

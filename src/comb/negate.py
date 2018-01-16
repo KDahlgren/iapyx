@@ -18,49 +18,56 @@ from evaluators  import c4_evaluator
 import domain
 import goalData
 
-def negateRule(cursor, rule, parsedResults):
+def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
   ''' 
     Takes in a list of rules that all correspond to the same rule,
     performs a form of demorgans in which each negated version of the rule
     is performed and then they are anded together
   '''
-  print "***"
-  print "Negating", rule
-  print "***"
+  parRule = None
+  for r in ruleMeta:
+    if r.relationName == rule[0]:
+      parRule = r
+      break
 
-  cursor.execute("select * from Rule where goalName='" + rule[0] + "'")
-  f = cursor.fetchone()
-  ruleData = goalData.getRuleData(cursor, rule[0])
-  if (ruleData is None) or len(ruleData) == 0:
-    return []
-  domain.insertDomainFact(cursor, rule, parsedResults)
+  if (parRule is None):
+    return ruleMeta, factMeta
+  ruleMeta, factMeta = domain.insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults)
   rule = rule[0]
+  ruleData = []
+  for r in ruleMeta:
+    if r.relationName == rule:
+      ruleData.append(r)
   negated_pieces = []
-  old_name = ruleData[0]['relationName']
-  new_name = 'not_' + ruleData[0]['relationName']
+  old_name = ruleData[0].relationName
+  new_name = 'not_' + ruleData[0].relationName
   for piece in ruleData:
-    piece['relationName'] = new_name
-    numGoals = len(piece['subgoalListOfDicts'])
+    neg_piece = copy.deepcopy(piece)
+    neg_piece.relationName = new_name
+    numGoals = len(neg_piece.subgoalListOfDicts)
     numRules = pow(2, numGoals)
     rules = []
     for i in range (1, numRules):
       for j in range (0, numRules):
         power = pow(2, j)
         if i%power == 0:
-          piece = flip_negation(cursor, piece, j, parsedResults)
-      rules.append(copy.deepcopy(piece))
+          neg_piece = flip_negation(cursor, neg_piece, j, parsedResults)
+      rules.append(copy.deepcopy(neg_piece))
     negated_pieces.append(rules)
   negated_pieces = concate_neg_rules(negated_pieces)
-  replaceAllNotins(cursor, old_name, new_name)
+  ruleMeta = replaceAllNotins(cursor, old_name, new_name, ruleMeta)
   for negRule in negated_pieces:
     # append the domain information
     negRule = domain.concateDomain(cursor, negRule)
     #insert new rule
     neg_rid = tools.getIDFromCounters( "rid" )
-    newRule = Rule.Rule( neg_rid, negRule, cursor )
+    negRule.cursor = cursor
+    negRule.rid = neg_rid
+    negRule = goalData.saveRule(negRule)
+    ruleMeta.append(negRule)
     # update goalAtts
     goalData.update_goalAtts(cursor, rule, neg_rid)
-  print "***"
+  return ruleMeta, factMeta
 
 def concate_neg_rules(neg_rules):
   ''' Loops through all the negated rules and concatinates them together, performs the and '''
@@ -75,48 +82,47 @@ def concate_neg_rules(neg_rules):
         break
       for neg_rule in neg_rules[i]:
         # loop through each version of the given rule
-        subgoals = neg_rule['subgoalListOfDicts']
+        subgoals = neg_rule.subgoalListOfDicts
         for second_neg_rule in neg_rules[j]:
           # concatinate with each negated version of every other rule
           new_neg_rule = copy.deepcopy(neg_rule)
-          new_neg_rule['subgoalListOfDicts'] = subgoals + second_neg_rule['subgoalListOfDicts']
+          new_neg_rule.subgoalListOfDicts = subgoals + second_neg_rule.subgoalListOfDicts
           rules.append(new_neg_rule)
   return rules
 
 
-def replaceAllNotins(cursor, old_name, new_name):
+def replaceAllNotins(cursor, old_name, new_name, ruleMeta):
   ''' Looks for all notins of a given name and replaces them with not_rule'''
-  cursor.execute('''
-          UPDATE Subgoals
-          SET
-            subgoalName = "''' + new_name + '''",
-            subgoalPolarity = ''
-          WHERE
-            rid IN (SELECT rid FROM Rule WHERE goalName NOT LIKE "dom%")
-            AND subgoalName = "''' + old_name + '''"
-            AND subgoalPolarity = 'notin'
-    ''')
+  for rule in ruleMeta:
+    if rule.relationName.startswith('dom'):
+      continue
+    for subgoal in rule.subgoalListOfDicts:
+      if subgoal['subgoalName'] == old_name and subgoal['polarity'] == 'notin':
+        subgoal['subgoalName'] = new_name
+        subgoal['polarity'] = ''
+    goalData.saveRule(rule)
+  return ruleMeta
 
 def flip_negation(cursor, rule, slot,parsedResults):
   ''' 
     Flips a given slot in the subgoal list from negative to positive
     or positive to negative.
   '''
-  name  = rule["subgoalListOfDicts"][slot]['subgoalName']
+  name  = rule.subgoalListOfDicts[slot]['subgoalName']
   negate_rules = {}
-  if rule['subgoalListOfDicts'][slot]['polarity'] == 'notin':
+  if rule.subgoalListOfDicts[slot]['polarity'] == 'notin':
     # if it was negated, change it to positive
-    rule['subgoalListOfDicts'][slot]['polarity'] = ''
-  elif rule['subgoalListOfDicts'][slot]['subgoalName'].startswith('not_'):
+    rule.subgoalListOfDicts[slot]['polarity'] = ''
+  elif rule.subgoalListOfDicts[slot]['subgoalName'].startswith('not_'):
     # if it was not_ then it was negated, change it to positive
-    rule['subgoalListOfDicts'][slot]['polarity'].replace('not_', '')
+    rule.subgoalListOfDicts[slot]['polarity'].replace('not_', '')
   else:
     # change it to notin since it was a positive goal. TODO: add it to the
     # inverting rules lists
     neg_name = 'not_' + name
     if goalData.check_for_rule_id(cursor, neg_name):
-      rule['subgoalListOfDicts'][slot]['subgoalName'] = neg_name
+      rule.subgoalListOfDicts[slot]['subgoalName'] = neg_name
     else:
-      rule['subgoalListOfDicts'][slot]['polarity'] = 'notin'
-    negate_rules[name] = rule['relationName']
+      rule.subgoalListOfDicts[slot]['polarity'] = 'notin'
+    negate_rules[name] = rule.relationName
   return rule

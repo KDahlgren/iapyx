@@ -17,39 +17,23 @@ from evaluators  import c4_evaluator
 
 import goalData
 
-def getActiveDomain(cursor, parsedResults):
+def getActiveDomain(cursor, factMeta, parsedResults):
   ''' Adds in a domain fact for each value in the active domain '''
-  cursor.execute('''
-    SELECT fd.data
-    FROM Fact f
-    LEFT JOIN FactData fd ON fd.fid = f.fid
-    WHERE f.name = "dom_int"
-    OR f.name = "dom_str"''')
-  domExists = cursor.fetchall()
-  domExists =  tools.toAscii_list( domExists )
-  ret = {}
-  for key, value in parsedResults.iteritems():
-    if key == "clock" or key == "crash":
-      continue
-    for i in value:
-      for j in i:
-        ret[j] = True
-  for i in ret.keys():
-    if str(i) in domExists or i == "_":
-      continue
-    if is_int(i):
-      i = int(i)
-      rel_name = "dom_int"
-    else:
-      i = '"' + i + '"'
-      rel_name = "dom_str"
-    factData = {}
-    factData['relationName'] = rel_name
-    factData['dataList'] = [i]
-    factData["factTimeArg"] = ''
-    fid = tools.getIDFromCounters( "fid" )
-    Fact.Fact(fid, factData, cursor)
-  return ret.keys()
+  dom_facts = []
+  str_exists = {}
+  int_exists = {}
+  newfactMeta = []
+  for fact in factMeta:
+    for item in fact.dataListWithTypes:
+      if item[1] == "string":
+        if item[0] not in str_exists.keys():
+          str_exists[item[0]] = True
+          newfactMeta.append(createDomFact(cursor, "dom_str", [item[0]]))
+      elif item[1] == "int":
+        if item[0] not in int_exists.keys():
+          int_exists[item[0]] = True
+          newfactMeta.append(createDomFact(cursor, "dom_int", [item[0]]))
+  return factMeta + newfactMeta
 
 # ruleData = {}
 # ruleData['relationName'] = ruleEntry[0]
@@ -58,53 +42,47 @@ def getActiveDomain(cursor, parsedResults):
 # ruleData['subgoalListOfDicts'] = getSubgoalListOfDicts(cursor, rid)
 # ruleData['eqnDict'] = {}
 
-def insertDomainFact(cursor, rule, parsedResults):
-  print "*************************************************************"
-  print "insertDomainFact called on", rule
-  print "*************************************************************"
+def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
+  # print "-----------------------------------------------------------------------"
+  # print "insertDomainFact"
+  # print "-----------------------------------------------------------------------"
+  parRule = None
+  childRule = None
+  for r in ruleMeta:
+    if r.relationName == rule[1]:
+      parRule = r
+    if r.relationName == rule[0]:
+      childRule = r
 
-  cursor.execute("SELECT ga.* From GoalAtt ga LEFT JOIN Rule r ON  r.rid = ga.rid  WHERE r.goalName = '" + rule[1] + "'")
-  parGoalAtts = cursor.fetchall()
+  childVars = getAllVarTypes(cursor, childRule)
+  newRules = []
+  newFacts = []
   if goalData.check_for_id(cursor, 'dom_'+rule[1]+'_0'):
     # in this case  we want to base it on the previous iteration of the goal.
-    childRule = goalData.getRuleData(cursor, rule[0])
-    parRule = goalData.getRuleData(cursor, rule[1])
-    childVars = getAllVarTypes(cursor, childRule[0])
-    for subgoal in parRule[0]['subgoalListOfDicts']:
+    for subgoal in parRule.subgoalListOfDicts:
       if subgoal['subgoalName'] == rule[0]:
         for attIndex in range (0, len(subgoal['subgoalAttList'])):
           att = subgoal['subgoalAttList'][attIndex]
-          ruleData = {}
-          ruleData['relationName'] = 'dom_not_'+rule[0]+'_'+str(attIndex)
-          ruleData['goalAttList'] = [att]
-          ruleData['goalTimeArg'] = childRule[0]['goalTimeArg']
-          ruleData['subgoalListOfDicts'] = []
-          ruleData['eqnDict'] = {}
+          ruleData = createDomRule(rule[0], attIndex, childRule.goalTimeArg, att)
 
           # add in the adom
           dom_name = "dom_str"
-          if childVars[att] == 'int':
+          if childVars[childRule.goalAttList[attIndex]] == 'int':
             dom_name = "dom_int"
 
-          goalDict = {}
-          goalDict['subgoalName'] = dom_name
-          goalDict['subgoalAttList'] = [att]
-          goalDict['polarity'] = ''
-          goalDict['subgoalTimeArg'] = childRule[0]['goalTimeArg']
+          goalDict = createSubgoalDict(dom_name, [att], '', childRule.goalTimeArg)
           ruleData['subgoalListOfDicts'].append(goalDict)
-          for parAttIndex in range(0, len(parRule[0]['goalAttList'])):
-            parAtt = parRule[0]['goalAttList'][parAttIndex]
+          done = False
+          for parAttIndex in range(0, len(parRule.goalAttList)):
+            parAtt = parRule.goalAttList[parAttIndex]
             if parAtt == att:
               # in here we define the new rule based on this parent index.
-              goalDict = {}
-              goalDict['subgoalName'] = 'dom_'+str(parRule[0]['relationName'])+'_'+str(parAttIndex)
-              goalDict['subgoalAttList'] = [att]
-              goalDict['polarity'] = ''
-              goalDict['subgoalTimeArg'] = childRule[0]['goalTimeArg']
+              goalDict = createSubgoalDict('dom_'+str(parRule.relationName)+'_'+str(parAttIndex),
+                [att], '', childRule.goalTimeArg)
               ruleData['subgoalListOfDicts'].append(goalDict)
-              print ruleData
               domrid = tools.getIDFromCounters( "rid" )
               newRule = Rule.Rule( domrid, ruleData, cursor )
+              newRules.append(newRule)
               done = True
               break
 
@@ -113,56 +91,117 @@ def insertDomainFact(cursor, rule, parsedResults):
             continue
           # if we get here we need to some sideways information passing with magic set ish stuff
           # add in the originial rule!
-          goalDict = {}
-          goalDict['subgoalName'] = childRule[0]['relationName']
-          goalDict['subgoalAttList'] = childRule[0]['goalAttList']
-          goalDict['polarity'] = 'notin'
-          goalDict['subgoalTimeArg'] = childRule[0]['goalTimeArg']
+          goalDict = createSubgoalDict(childRule.relationName, childRule.goalAttList, 'notin', childRule.goalTimeArg)
           ruleData['subgoalListOfDicts'].append(goalDict)
 
-          for index in range(0, len(childRule[0]['goalAttList'])):
+          for index in range(0, len(childRule.goalAttList)):
             if index == attIndex:
               continue
-            goalDict = {}
-            goalDict['subgoalName'] = 'dom_not_' + rule[0] + '_' + str(index)
-            goalDict['subgoalAttList'] = [childRule[0]['goalAttList'][index]]
-            goalDict['polarity'] = ''
-            goalDict['subgoalTimeArg'] = childRule[0]['goalTimeArg']
+            goalDict = createSubgoalDict('dom_not_' + rule[0] + '_' + str(index),
+             [childRule.goalAttList[index]], '', childRule.goalTimeArg)
             ruleData['subgoalListOfDicts'].append(goalDict)
-          print ruleData
           domrid = tools.getIDFromCounters( "rid" )
           newRule = Rule.Rule( domrid, ruleData, cursor )
-    return
+          newRules.append(newRule)
+    ruleMeta = ruleMeta + newRules
+    factMeta = factMeta + newFacts
+    # print "-----------------------------------------------------------------------"
+    return ruleMeta, factMeta
   # ---------------------------------------------------------------------------------
   # This section is for when we do not have the parent calling function domain. Therefore
   # we must determine the domain based on the parsed results.
   # ---------------------------------------------------------------------------------
-  # grab all subgoalAttributes
-  subGoals = goalData.getSubgoalListOfDicts(cursor, parGoalAtts[0][0])
-  for subgoal in subGoals:
-    if subgoal['subgoalName'] != rule[0]:
-      continue
-    for i in range (0,len(subgoal['subgoalAttList'])):
-      if i >= len(parsedResults[rule[1]][0]):
-        break
-      for val in parsedResults[rule[1]]:
-        for i in range(0, len(val)):
-          if not is_int(val[i]):
-            val[i] = '"' + val[i] + '"'
-        factData = {}
-        factData['relationName'] = 'dom_not_'+rule[0]+'_'+str(i)
-        factData['dataList'] = val
-        factData["factTimeArg"] = ''
-        fid = tools.getIDFromCounters( "fid" )
-        Fact.Fact(fid, factData, cursor)
-  # ---------------------------------------------------------------------------------
-  print "-----------------------------------------------------------"
+  for subgoal in parRule.subgoalListOfDicts:
+    if subgoal['subgoalName'] == childRule.relationName:
+      # we found the matching subgoal
+      for attIndex in range(0, len(childRule.goalAttList)):
+        att = childRule.goalAttList[attIndex]
+        found = False
+        for parAttIndex in range(0, len(parRule.goalAttList)):
+          parAtt = parRule.goalAttList[parAttIndex]
+          if parAtt == att:
+            found = True
+            # found this attribute in the parent.
+            # therefore can define based off this value in the parents slot
+            if len(parsedResults[rule[1]])==0:
+              val = '"not_exist"'
+              if childVars[att] == "int":
+                val = 10
+              factData = {}
+              factData['relationName'] = 'dom_not_'+rule[0]+'_'+str(attIndex)
+              factData['dataList'] = [val]
+              factData["factTimeArg"] = ''
+              fid = tools.getIDFromCounters( "fid" )
+              newFact = Fact.Fact(fid, factData, cursor)
+              newFacts.append(newFact)
 
+            for val in parsedResults[rule[1]]:
+              # this case is wrong, awkward. What is happening is that its matching the slot in the subgoal
+              # not the slot in the goalAtt. which is awkward and not how things work.
+              data = val[parAttIndex]
+              newFact = createDomFact(cursor, "dom_not_" + rule[0] + "_" + str(attIndex), [data])
+              newFacts.append(newFact)
+        if not found:
+          # we have not found it therefore must go off the active domain.
+          dom_name = 'dom_int'
+          val = att
+          if childVars[att] == 'string':
+            dom_name = 'dom_str'
+
+          ruleData = createDomRule(rule[0], attIndex, childRule.goalTimeArg, val)
+
+          # add in the adom
+          dom_name = "dom_str"
+          if childVars[att] == 'int':
+            dom_name = "dom_int"
+          goalDict = createSubgoalDict(dom_name, [val], '', childRule.goalTimeArg)
+          ruleData['subgoalListOfDicts'].append(goalDict)
+
+          domrid = tools.getIDFromCounters( "rid" )
+          newRule = Rule.Rule( domrid, ruleData, cursor )
+          newRules.append(newRule)
+  ruleMeta = ruleMeta + newRules
+  factMeta = factMeta + newFacts
+  # print "-----------------------------------------------------------------------"
+  return ruleMeta, factMeta
+
+
+def createDomFact(cursor, name, data):
+  # print "createDomFact", name
+  for i in range(0, len(data)):
+    if not is_int(data[i]):
+      if not data[i].startswith('"'):
+        data[i] = '"' +  data[i] + '"'
+  factData = {}
+  factData['relationName'] = name
+  factData['dataList'] = data
+  factData["factTimeArg"] = ''
+  fid = tools.getIDFromCounters( "fid" )
+  return Fact.Fact(fid, factData, cursor)
+
+def createDomRule(name, index, timeargs, att):
+  # print "createDomRule", name
+  ruleData = {}
+  ruleData['relationName'] = 'dom_not_'+name+'_'+str(index)
+  ruleData['goalAttList'] = [att]
+  ruleData['goalTimeArg'] = timeargs
+  ruleData['subgoalListOfDicts'] = []
+  ruleData['eqnDict'] = {}
+  return ruleData
+
+def createSubgoalDict(name, attList, polarity, timeargs):
+  # print "createSubgoalDict", name
+  goalDict = {}
+  goalDict['subgoalName'] = name
+  goalDict['subgoalAttList'] = attList
+  goalDict['polarity'] = polarity
+  goalDict['subgoalTimeArg'] = timeargs
+  return goalDict
 
 def concateDomain(cursor, negRule):
-  vars = getAllVars(cursor, negRule)
-  for var in vars:
-    if var == "_" or var == "NRESERVED":
+  varss = getAllVars(cursor, negRule)
+  for var in varss:
+    if var[0] == "_" or '+' in var[0]:
       continue
     if var[1] == 'int':
       rel_name = "dom_int"
@@ -173,19 +212,21 @@ def concateDomain(cursor, negRule):
     goalDict['subgoalAttList'] = [var[0]]
     goalDict['polarity'] = ''
     goalDict['subgoalTimeArg'] = ''
-    negRule['subgoalListOfDicts'].append(goalDict)
+    negRule.subgoalListOfDicts.append(goalDict)
   negRule = appendDomainArgs(negRule)
   return negRule
 
 def appendDomainArgs(negRule):
-  ruleName = negRule['relationName']
-  for i in  range (0, len(negRule['goalAttList'])):
+  ruleName = negRule.relationName
+  for i in  range (0, len(negRule.goalAttList)):
+    if negRule.goalAttList[i] == '_' or '+' in negRule.goalAttList[i]:
+      continue
     domainDict = {}
     domainDict['subgoalName'] = 'dom_'+ruleName+'_'+str(i)
-    domainDict['subgoalAttList'] = [negRule['goalAttList'][i]]
+    domainDict['subgoalAttList'] = [negRule.goalAttList[i]]
     domainDict['polarity'] = ''
     domainDict['subgoalTimeArg'] = ''
-    negRule['subgoalListOfDicts'].append(domainDict)
+    negRule.subgoalListOfDicts.append(domainDict)
   return negRule
 
 def getAllVars(cursor, rule):
@@ -193,7 +234,7 @@ def getAllVars(cursor, rule):
 
 def getAllVarTypes(cursor, rule):
   vars = {}
-  for subgoal in rule['subgoalListOfDicts']:
+  for subgoal in rule.subgoalListOfDicts:
     for att in subgoal['subgoalAttList']:
       cursor.execute('''
         SELECT
@@ -210,6 +251,22 @@ def getAllVarTypes(cursor, rule):
       for a in atts:
         if a[1] != "UNDEFINEDTYPE":
           vars[a[0]] = a[1]
+  for att in rule.goalAttList:
+    cursor.execute('''
+      SELECT
+        ga.attName,
+        ga.attType
+      FROM
+        GoalAtt ga
+        LEFT JOIN Rule r ON r.rid = ga.rid
+      WHERE
+        ga.attName = "''' + att + '''"
+        AND r.goalName = "'''+rule.relationName + '''"
+    ''')
+    atts = cursor.fetchall()
+    for a in atts:
+      if a[1] != "UNDEFINEDTYPE":
+        vars[a[0]] = a[1]
   return vars
 
 def is_int(x):
