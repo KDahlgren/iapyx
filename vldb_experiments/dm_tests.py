@@ -31,7 +31,7 @@ def dm_simplog( molly_path, table_path, type_path ) :
   eot           = "4"
   eff           = "2"
   evaluator     = "c4"
-  settings_path = "./settings_files/settings_dml.ini"
+  settings_path = "./settings_files/settings_dm.ini"
 
   argDict = {  "file"      : driver_path, \
                "crashes"   : crashes, \

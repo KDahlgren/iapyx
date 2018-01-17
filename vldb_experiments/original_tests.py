@@ -68,8 +68,17 @@ def original_rdlog( molly_path, table_path, type_path ) :
   experiment_workflow.clean_dirs()
 
   program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+  if os.path.exists( program_path ) :
+    os.remove( program_path )
+
   metrics_path  = "./metrics_data/metrics.data"
+  if os.path.exists( metrics_path ) :
+    os.remove( metrics_path )
+
   tmp_path      = "./tmp_data/"
+  if os.path.exists( tmp_path ) :
+    os.system( "rm -rf " + tmp_path )
+    os.system( "mkdir " + tmp_path )
 
   # define parameters
   driver_path   = "./dedalus_drivers/rdlog_driver.ded"
