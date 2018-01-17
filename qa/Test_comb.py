@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_dml.py
+Test_comb.py
 '''
 
 #############
@@ -19,8 +19,6 @@ if not os.path.abspath( __file__ + "/../../src" ) in sys.path :
 from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRewriter
 from utils      import dumpers, globalCounters, tools
 from evaluators import c4_evaluator
-
-import dml
 
 # ------------------------------------------------------ #
 
@@ -42,7 +40,7 @@ class Test_comb( unittest.TestCase ) :
   ################
   # tests rewriting replog
   @unittest.skip( "working on different example" )
-  def test_dml_replog( self ) :
+  def test_comb_replog( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
@@ -55,13 +53,13 @@ class Test_comb( unittest.TestCase ) :
   ################
   # tests rewriting simplog
   # @unittest.skip( "working on different example" )
-  def test_dml_simplog( self ) :
+  def test_comb_simplog( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
-    expected_iapyx_dml_path = "./testFiles/simplog_iapyx_dml.olg"
+    expected_iapyx_comb_path = "./testFiles/simplog_iapyx_dml.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
 
   ###############
@@ -73,9 +71,9 @@ class Test_comb( unittest.TestCase ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
-    expected_iapyx_dml_path = "./testFiles/rdlog_iapyx_dml.olg"
+    expected_iapyx_comb_path = "./testFiles/rdlog_iapyx_dml.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
   # ############################
   # #  COMB TOY 3 AGG REWRITES  #
@@ -86,9 +84,9 @@ class Test_comb( unittest.TestCase ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
-    expected_iapyx_dml_path = "./testFiles/toy3_aggRewrites.olg"
+    expected_iapyx_comb_path = "./testFiles/toy3_aggRewrites.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
   ###############
   #  COMB TOY 2  #
@@ -99,9 +97,9 @@ class Test_comb( unittest.TestCase ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy2.ded"
-    expected_iapyx_dml_path = "./testFiles/toy2_comb.olg"
+    expected_iapyx_comb_path = "./testFiles/toy2_comb.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
 
   #############
@@ -113,14 +111,14 @@ class Test_comb( unittest.TestCase ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy.ded"
-    expected_iapyx_dml_path = "./testFiles/toy_comb.olg"
+    expected_iapyx_comb_path = "./testFiles/toy_comb.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dml_path )
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
-  # defines iapyx dml comparison workflow
+  # defines iapyx comb comparison workflow
   def comparison_workflow( self, inputfile, expected_iapyx_comb_path ) :
 
     # --------------------------------------------------------------- #
@@ -234,7 +232,7 @@ class Test_comb( unittest.TestCase ) :
     self.assertFalse( self.hasOverlap( rule_pairs, eval_results_dict ) )
 
     # ----------------------------------------------------------------- #
-    # make sure dml positive relation results are identical to molly
+    # make sure comb positive relation results are identical to molly
     # relation results
 
     #
