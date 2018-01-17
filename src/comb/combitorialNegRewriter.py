@@ -17,19 +17,18 @@ from evaluators  import c4_evaluator
 
 import domain
 from negate import  negateRule
+import dml
 
 def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
   ''' Performs the negative rewrite of the dedalus program. '''
 
+  ruleMeta = dml.aggRewrites( ruleMeta )
+
+
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
 
-  original_prog = c4_translator.c4datalog( cursor )
-    for line in original_prog[0]:
-      print line
-
   while True:
-
     # original inputs maybe even better
     rulesToNegate = findNegativeRules(cursor, ruleMeta)
     rulesToNegateList = rulesToNegate.keys()
@@ -39,13 +38,7 @@ def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
 
     # Negate the rules in the list
     ruleMeta, factMeta = negateRules(cursor, ruleMeta, factMeta, rulesToNegate, parsedResults)
-    setTypes.setTypes( cursor )
 
-    original_prog = c4_translator.c4datalog( cursor )
-    for line in original_prog[0]:
-      print line
-    
-  print len(ruleMeta), len(factMeta)
   return ruleMeta, factMeta
 
 
