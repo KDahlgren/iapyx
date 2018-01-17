@@ -4,7 +4,10 @@ a(X) :- h(X);
 d(X,Y) :- e(X), h(Y);
 h(X) :- f(X);
 h(X) :- e(X);
+<<<<<<< Updated upstream
 x("hello")@1;
+=======
+>>>>>>> Stashed changes
 b(2)@1;
 b(3)@1;
 c(1)@1;
