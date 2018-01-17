@@ -81,6 +81,20 @@ class Test_dm( unittest.TestCase ) :
     self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
 
 
+  ###############
+  #  DM DEMO 1  #
+  ###############
+  # tests rewriting the demo 1 program
+  #@unittest.skip( "working on different example" )
+  def test_dm_demo_1( self ) :
+
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/demo_1.ded"
+    expected_iapyx_dm_path = "./testFiles/demo_1.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+
+
   ############################
   #  DM TOY 3 AGG REWRITES  #
   ############################
