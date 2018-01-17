@@ -1,7 +1,11 @@
+#!/usr/bin/env python
+
+# **************************************** #
+
 # experiment_driver.py
 
 import logging, os, sys
-import original_tests, dm_tests, combo_tests, sc_tests
+import demos, original_tests, dm_tests, combo_tests, sc_tests
 
 # ------------------------------------------------------ #
 # import iapyx packages HERE!!!
@@ -18,8 +22,9 @@ TODO:
   How to collect metric from molly?
 '''
 
+DEMOS          = True
 ORIGINAL_TESTS = False
-DM_TESTS       = True
+DM_TESTS       = False
 COMBO_TESTS    = False
 SC_TESTS       = False
 
@@ -32,6 +37,14 @@ def experiment_driver( molly_path ) :
 
   table_path    = os.getcwd() + "/tmp_data/iapyx_tables.data" # filename hard-coded in molly
   type_path     = os.getcwd() + "/tmp_data/iapyx_types.data"  # filename hard-coded in molly
+
+  # ------------------- #
+  #        DEMOS        #
+  # ------------------- #
+
+  if DEMOS :
+
+    demos.dm_demo_1( molly_path, table_path, type_path )
 
   # ---------------------------- #
   #        ORIGINAL TESTS        #
