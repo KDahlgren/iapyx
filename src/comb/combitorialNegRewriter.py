@@ -24,7 +24,6 @@ def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
 
   ruleMeta = dml.aggRewrites( ruleMeta )
 
-
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
 
