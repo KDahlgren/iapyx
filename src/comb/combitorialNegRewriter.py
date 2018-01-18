@@ -17,12 +17,12 @@ from evaluators  import c4_evaluator
 
 import domain
 from negate import  negateRule
-import dml
+import dm
 
 def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
   ''' Performs the negative rewrite of the dedalus program. '''
 
-  ruleMeta = dml.aggRewrites( ruleMeta )
+  ruleMeta = dm.aggRewrites( ruleMeta )
 
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
