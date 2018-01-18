@@ -74,7 +74,7 @@ pre_prov0(X,NRESERVED) :-  l(X,NRESERVED), clock(X,X,NRESERVED,_) ;
 m_prov1(X,NRESERVED) :-  n(X,NRESERVED), not_o(X,NRESERVED), clock(X,X,NRESERVED,_) ;
 o_prov2(X,NRESERVED) :-  p(X,NRESERVED), not_q(X,NRESERVED), clock(X,X,NRESERVED,_) ;
 q_prov3(X,NRESERVED) :-  r(X,NRESERVED), clock(X,X,NRESERVED,_) ;
-t_prov4(Att0,NRESERVED,Att1) :-  t(Att0,NRESERVED), clock(Att0,_,NRESERVED,Att1) ;
+t_prov4(Att0,Att1,NRESERVED) :-  t(Att0,NRESERVED), clock(Att0,_,NRESERVED,Att1) ;
 t_prov5(Att0,Att1) :-  m(Att0,Att1), clock(Att0,Att0,Att1,_) ;
 post_prov6(X,NRESERVED) :-  t(X,NRESERVED), clock(X,X,NRESERVED,_) ;
 adom_string_prov7(T) :-  n(T,_) ;

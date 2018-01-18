@@ -63,8 +63,8 @@ dom_a_nreserved(NRESERVED) :-  clock(_,_,NRESERVED,_),notin b(_,NRESERVED),notin
 not_a(X,Y,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin b(X,NRESERVED) ;
 not_a(X,Y,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin c(X,Y,NRESERVED) ;
 not_a(X,Y,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin clock(X,_,NRESERVED,MRESERVED) ;
-a_prov0(X,Y,NRESERVED,MRESERVED) :-  b(X,NRESERVED), c(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED) ;
-d_prov1(X,Y,NRESERVED,MRESERVED) :-  e(X,Y,NRESERVED), not_a(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED) ;
+a_prov0(X,Y,MRESERVED,NRESERVED) :-  b(X,NRESERVED), c(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED) ;
+d_prov1(X,Y,MRESERVED,NRESERVED) :-  e(X,Y,NRESERVED), not_a(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED) ;
 adom_string_prov2(T) :-  b(T,_) ;
 adom_int_prov3(T) :-  b(_,T) ;
 adom_string_prov4(T) :-  c(T,_,_) ;
@@ -84,9 +84,9 @@ dom_a_nreserved_prov17(NRESERVED) :-  b(_,NRESERVED),notin c(_,_,NRESERVED),noti
 dom_a_nreserved_prov18(NRESERVED) :-  c(_,_,NRESERVED), clock(_,_,NRESERVED,_),notin b(_,NRESERVED) ;
 dom_a_nreserved_prov19(NRESERVED) :-  c(_,_,NRESERVED),notin b(_,NRESERVED),notin clock(_,_,NRESERVED,_) ;
 dom_a_nreserved_prov20(NRESERVED) :-  clock(_,_,NRESERVED,_),notin b(_,NRESERVED),notin c(_,_,NRESERVED) ;
-not_a_prov21(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin b(X,NRESERVED) ;
-not_a_prov22(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin c(X,Y,NRESERVED) ;
-not_a_prov23(X,Y,NRESERVED,MRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin clock(X,_,NRESERVED,MRESERVED) ;
+not_a_prov21(X,Y,MRESERVED,NRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin b(X,NRESERVED) ;
+not_a_prov22(X,Y,MRESERVED,NRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin c(X,Y,NRESERVED) ;
+not_a_prov23(X,Y,MRESERVED,NRESERVED) :-  dom_a_nreserved(NRESERVED), domcomp_a(X,Y,MRESERVED),notin clock(X,_,NRESERVED,MRESERVED) ;
 crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);

@@ -42,7 +42,6 @@ class Test_vs_molly( unittest.TestCase ) :
 
   PRINT_STOP = False
 
-
   ####################
   #  EXAMPLE TOKENS  #
   ####################

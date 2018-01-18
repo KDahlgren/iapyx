@@ -438,6 +438,10 @@ class Test_dedt( unittest.TestCase ) :
     # portray actual output program lines as a single string
     actual_results = self.getActualResults( programData[0] )
 
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
     # grab expected output results as a string
     expected_results_path = "./testFiles/example16.olg"
     expected_results      = None
@@ -1263,6 +1267,10 @@ class Test_dedt( unittest.TestCase ) :
     # portray actual output program lines as a single string
     actual_results = self.getActualResults( programData[0] )
 
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
     # grab expected output results as a string
     expected_results_path = "./testFiles/example6c.olg"
     expected_results      = None
@@ -1312,6 +1320,10 @@ class Test_dedt( unittest.TestCase ) :
     # portray actual output program lines as a single string
     actual_results = self.getActualResults( programData[0] )
 
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
     # grab expected output results as a string
     expected_results_path = "./testFiles/example6b.olg"
     expected_results      = None
@@ -1360,6 +1372,10 @@ class Test_dedt( unittest.TestCase ) :
 
     # portray actual output program lines as a single string
     actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example6a.olg"

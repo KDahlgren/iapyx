@@ -280,12 +280,16 @@ def regProv( regRule, nameAppend, cursor ) :
   # grab all goal atts
   goalAttList = new_provmeta_ruleData[ "goalAttList" ]
 
+#  if new_provmeta_ruleData[ "relationName" ] == "log_prov4" :
+#    logging.debug( "goalAttList = " + str( goalAttList ) )
+#    sys.exit( "blah" )
+
   # save to provenance rule goal attribute list
   provGoalAttList.extend( goalAttList )
 
   # extract and save the time argument as the last element in the attribute list
-  provGoalAttList_last = provGoalAttList[-1]
-  provGoalAttList      = provGoalAttList[:-1]
+#  provGoalAttList_last = provGoalAttList[-1]
+#  provGoalAttList      = provGoalAttList[:-1]
 
   # grab all subgoal atts
   subgoalListOfDicts = new_provmeta_ruleData[ "subgoalListOfDicts" ]
@@ -304,8 +308,8 @@ def regProv( regRule, nameAppend, cursor ) :
             provGoalAttList.append( att )
 
   # add the time argument last
-  if not provGoalAttList_last in provGoalAttList :
-    provGoalAttList.append( provGoalAttList_last )
+#  if not provGoalAttList_last in provGoalAttList :
+#    provGoalAttList.append( provGoalAttList_last )
 
   # save to rule data
   new_provmeta_ruleData[ "goalAttList" ] = provGoalAttList

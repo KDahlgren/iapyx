@@ -21,7 +21,7 @@ a(X,Y,avg<Z>,MRESERVED) :-  a_vars(X,Y,Z,_,MRESERVED) ;
 d(X,Y,MRESERVED) :-  e(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED),notin a(X,Y,NRESERVED) ;
 a_vars(X,Y,Z,NRESERVED,MRESERVED) :-  b(X,NRESERVED), c(X,Y,NRESERVED), g(X,Z,NRESERVED), clock(X,_,NRESERVED,MRESERVED),Z>2 ;
 a_prov0(X,Y,avg<Z>,MRESERVED) :-  a_vars(X,Y,Z,_,MRESERVED) ;
-d_prov1(X,Y,NRESERVED,MRESERVED) :-  e(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED),notin a(X,Y,NRESERVED) ;
+d_prov1(X,Y,MRESERVED,NRESERVED) :-  e(X,Y,NRESERVED), clock(X,_,NRESERVED,MRESERVED),notin a(X,Y,NRESERVED) ;
 crash("NULL","NULL",99999999,99999999);
 clock("a","a",1,2);
 clock("a","b",1,2);
