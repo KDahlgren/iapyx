@@ -77,7 +77,7 @@ class Core :
     # ----------------------------------------------- #
 
     # use c4 wrapper 
-    #parsedResults = self.evaluate( self.argDict, allProgramData )
+    parsedResults = self.evaluate( self.argDict, allProgramData )
 
 
   ########################
