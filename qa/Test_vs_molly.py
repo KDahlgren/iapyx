@@ -775,7 +775,6 @@ class Test_vs_molly( unittest.TestCase ) :
     dedt.globalCounterReset()
 
     # --------------------------------------------------------------- #
-    #runs through function to make sure it finishes with expected error
 
     # specify input file path
     #inputfile = os.getcwd() + "/testFiles/simplog_driver.ded"
