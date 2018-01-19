@@ -35,13 +35,6 @@ def getActiveDomain(cursor, factMeta, parsedResults):
           newfactMeta.append(createDomFact(cursor, "dom_int", [item[0]]))
   return factMeta + newfactMeta
 
-# ruleData = {}
-# ruleData['relationName'] = ruleEntry[0]
-# ruleData['goalAttList'] = getGoallAtts(cursor, rid)
-# ruleData['goalTimeArg'] = ruleEntry[1]
-# ruleData['subgoalListOfDicts'] = getSubgoalListOfDicts(cursor, rid)
-# ruleData['eqnDict'] = {}
-
 def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
   # print "-----------------------------------------------------------------------"
   # print "insertDomainFact"
@@ -198,8 +191,10 @@ def createSubgoalDict(name, attList, polarity, timeargs):
   goalDict['subgoalTimeArg'] = timeargs
   return goalDict
 
-def concateDomain(cursor, negRule):
-  varss = getAllVars(cursor, negRule)
+def concateDomain(cursor, negRule, posRid):
+  
+  varss = getAllVars(cursor, negRule, posRid=posRid)
+
   for var in varss:
     if var[0] == "_" or '+' in var[0]:
       continue
@@ -229,44 +224,20 @@ def appendDomainArgs(negRule):
     negRule.subgoalListOfDicts.append(domainDict)
   return negRule
 
-def getAllVars(cursor, rule):
-  return getAllVarTypes(cursor, rule).iteritems()
+def getAllVars(cursor, rule, posRid=None):
+  return getAllVarTypes(cursor, rule, posRid=posRid).iteritems()
 
-def getAllVarTypes(cursor, rule):
+def getAllVarTypes(cursor, rule, posRid=None):
+  rid = rule.rid
+  if posRid:
+    rid = posRid
+  atts = dumpers.singleRuleAttDump( str(rule.rid), cursor )
   vars = {}
-  for subgoal in rule.subgoalListOfDicts:
-    for att in subgoal['subgoalAttList']:
-      cursor.execute('''
-        SELECT
-          sga.attName,
-          sga.attType
-        FROM Subgoals sg
-        LEFT JOIN Rule r ON sg.rid = r.rid
-        LEFT JOIN SubgoalAtt sga ON sga.rid = sg.rid
-          AND sga.sid = sg.sid
-        WHERE
-          sga.attName = "''' + att + '"' + '''
-          AND sg.subgoalName = "''' + subgoal['subgoalName'] + '"')
-      atts = cursor.fetchall()
-      for a in atts:
-        if a[1] != "UNDEFINEDTYPE":
-          vars[a[0]] = a[1]
-  for att in rule.goalAttList:
-    cursor.execute('''
-      SELECT
-        ga.attName,
-        ga.attType
-      FROM
-        GoalAtt ga
-        LEFT JOIN Rule r ON r.rid = ga.rid
-      WHERE
-        ga.attName = "''' + att + '''"
-        AND r.goalName = "'''+rule.relationName + '''"
-    ''')
-    atts = cursor.fetchall()
-    for a in atts:
-      if a[1] != "UNDEFINEDTYPE":
-        vars[a[0]] = a[1]
+  for goalAtt in atts['goalAttData']:
+    vars[goalAtt[1]] = goalAtt[2]
+  for subgoal in atts['subgoalAttData']:
+    for subgoalAtt in subgoal[2]:
+      vars[subgoalAtt[1]] = subgoalAtt[2]
   return vars
 
 def is_int(x):

@@ -354,7 +354,7 @@ def dump_crash( cursor ) :
 
   formattedCrashFactsList = []
 
-  cursor.execute( "SELECT src, dest, sndTime FROM Crash" )
+  cursor.execute( "SELECT src, dest, sndTime, NRESERVED FROM Crash" )
   crashFacts = cursor.fetchall()
   crashFacts = tools.toAscii_multiList( crashFacts )
 
@@ -382,7 +382,6 @@ def dump_crash( cursor ) :
           crashF += ","
     crashF += ");" + "\n" # all crash facts end with a semicolon
     formattedCrashFactsList.append( crashF )
-
   return formattedCrashFactsList
 
 
