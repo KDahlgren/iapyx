@@ -69,7 +69,7 @@ def iapyx_driver( argDict ) :
 ###########
 def iapyx() :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   # get dictionary of commandline arguments.
   # exits here if user provides invalid inputs.
