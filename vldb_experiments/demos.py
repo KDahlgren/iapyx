@@ -28,8 +28,8 @@ def dm_demo_1( molly_path, table_path, type_path ) :
   driver_path   = "./demo_1.ded"
   crashes       = "0"
   node_list_str = [ "a", "b", "c" ]
-  eot           = "4"
-  eff           = "2"
+  eot           = "2"
+  eff           = "1"
   evaluator     = "c4"
   settings_path = "./settings_files/settings_dm.ini"
 

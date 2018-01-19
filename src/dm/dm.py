@@ -18,13 +18,9 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
-from dedt        import Rule
-from evaluators  import c4_evaluator
-#from translators import c4_translator
-from utils       import clockTools, tools, dumpers, setTypes
-
-import deMorgans
-import rewriteNegativeSubgoalsWithWildcards
+from dedt       import Rule
+from evaluators import c4_evaluator
+from utils      import clockTools, tools, dumpers, setTypes
 
 # ------------------------------------------------------ #
 

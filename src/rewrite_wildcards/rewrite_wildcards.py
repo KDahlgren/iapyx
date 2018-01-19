@@ -1,7 +1,7 @@
 #/usr/bin/env python
 
 '''
-rewriteNegativeSubgoalsWithWildcards.py
+rewrite_wildcards.py
 '''
 
 import inspect, os, string, sys
@@ -29,10 +29,16 @@ from utils       import clockTools, tools, dumpers
 arithOps = [ "+", "-", "*", "/" ]
 
 
-##############################################
-#  REWRITE NEGATIVE SUBGOALS WITH WILDCARDS  #
-##############################################
-def rewriteNegativeSubgoalsWithWildcards( cursor ) :
+#######################
+#  REWRITE WILDCARDS  #
+#######################
+# rewrite all rules predicated on negated subgoals containing wilcards
+def rewrite_wildcards( ruleMeta, cursor ) :
+
+  logging.debug( "  REWRITE WILDCARDS : running process..." )
+  logging.debug( "  REWRITE WILDCARDS : ...done." )
+
+  return None
 
   newRuleMeta = []
 

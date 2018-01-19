@@ -33,11 +33,13 @@ if not os.path.abspath( __file__ + "/../../dm" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dm" ) )
 if not os.path.abspath( __file__ + "/../../iedb_rewrites" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../iedb_rewrites" ) )
+if not os.path.abspath( __file__ + "/../../rewrite_wildcards" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../rewrite_wildcards" ) )
 
 from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
 
-import dm, iedb_rewrites, rewriteNegativeSubgoalsWithWildcards
+import dm, iedb_rewrites, rewrite_wildcards
 
 import clockRelation
 import dedalusParser
@@ -1142,16 +1144,16 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   # ----------------------------------------------------------------------------- #
   # wilcard rewrites
 
-#  logging.debug( "  REWRITE : calling wildcard rewrites..." )
-#
-#  try :
-#    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "REWRITE_WILDCARDS", bool )
-#    if rewriteWildcards :
-#      rewriteNegativeSubgoalsWithWildcards.rewriteNegativeSubgoalsWithWildcards( cursor )
-#
-#  except ConfigParser.NoOptionError :
-#    print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
-#    pass
+  logging.debug( "  REWRITE : calling wildcard rewrites..." )
+
+  try :
+    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "REWRITE_WILDCARDS", bool )
+    if rewriteWildcards :
+      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
+
+  except ConfigParser.NoOptionError :
+    print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
+    pass
 
   # ----------------------------------------------------------------------------- #
   # dm rewrites
