@@ -32,7 +32,7 @@ class Test_comb( unittest.TestCase ) :
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = True
+  PRINT_STOP = False
 
 
   ################
@@ -52,7 +52,7 @@ class Test_comb( unittest.TestCase ) :
   # COMB SIMPLOG  #
   ################
   # tests rewriting simplog
-  # @unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_comb_simplog( self ) :
 
     # specify input and output paths
@@ -78,7 +78,7 @@ class Test_comb( unittest.TestCase ) :
   # ############################
   # #  COMB TOY 3 AGG REWRITES  #
   # ############################
-  # # tests rewriting the second toy program
+  # tests rewriting the second toy program
   @unittest.skip( "working on different example" )
   def test_comb_toy3_aggRewrites( self ) :
 
@@ -92,7 +92,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB TOY 2  #
   ###############
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy2( self ) :
 
     # specify input and output paths
@@ -106,7 +106,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB TOY  #
   #############
   # tests rewriting the toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy( self ) :
 
     # specify input and output paths
@@ -162,7 +162,7 @@ class Test_comb( unittest.TestCase ) :
     expected_iapyx_results = None
     with open( expected_iapyx_comb_path, 'r' ) as expectedFile :
       expected_iapyx_results = expectedFile.read()
-    # self.assertEqual( iapyx_results, expected_iapyx_results )
+    self.assertEqual( iapyx_results, expected_iapyx_results )
 
     # ========================================================== #
     # EVALUATION COMPARISON
