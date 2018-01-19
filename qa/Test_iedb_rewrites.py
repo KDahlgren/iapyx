@@ -29,12 +29,69 @@ import iedb_rewrites
 ########################
 class Test_iedb_rewrites( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
+
+  #############################
+  #  IEDB REWRITES REPLOG DM  #
+  #############################
+  # tests rewriting replog on dm
+  #@unittest.skip( "working on different example" )
+  def test_iedb_rewrites_replog_dm( self ) :
+
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
+    expected_iapyx_iedb_rewrites_path = "./testFiles/replog_iapyx_iedb_rewrites_dm.olg"
+    expected_eval_path      = "./testFiles/replog_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+
+
+  ############################
+  #  IEDB REWRITES RDLOG DM  #
+  ############################
+  # tests rewriting rdlog on dm
+  #@unittest.skip( "working on different example" )
+  def test_iedb_rewrites_rdlog_dm( self ) :
+
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
+    expected_iapyx_iedb_rewrites_path = "./testFiles/rdlog_iapyx_iedb_rewrites_dm.olg"
+    expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+
+
+  ##############################
+  #  IEDB REWRITES SIMPLOG DM  #
+  ##############################
+  # tests rewriting simplog on dm
+  #@unittest.skip( "working on different example" )
+  def test_iedb_rewrites_simplog_dm( self ) :
+
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
+    expected_iapyx_iedb_rewrites_path = "./testFiles/simplog_iapyx_iedb_rewrites_dm.olg"
+    expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+
 
   ##########################
   #  IEDB REWRITES REPLOG  #
@@ -48,7 +105,10 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     expected_iapyx_iedb_rewrites_path = "./testFiles/replog_iapyx_iedb_rewrites.olg"
     expected_eval_path      = "./testFiles/replog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
 
 
   #########################
@@ -63,7 +123,10 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     expected_iapyx_iedb_rewrites_path = "./testFiles/rdlog_iapyx_iedb_rewrites.olg"
     expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
 
 
   ###########################
@@ -78,7 +141,10 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     expected_iapyx_iedb_rewrites_path = "./testFiles/simplog_iapyx_iedb_rewrites.olg"
     expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
 
 
   #############################
@@ -92,14 +158,17 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/example_1.ded"
     expected_iapyx_iedb_rewrites_path = "./testFiles/example_1.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_iedb_rewrites_path, None )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, None )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx iedb_rewrites comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_iedb_rewrites_path, expected_eval_path ) :
+  def comparison_workflow( self, argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -119,9 +188,6 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
     # --------------------------------------------------------------- #
     # runs through function to make sure it finishes with expected error
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )

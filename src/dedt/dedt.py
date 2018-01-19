@@ -1154,22 +1154,6 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 #    pass
 
   # ----------------------------------------------------------------------------- #
-  # iedb rewrites
-
-  try :
-    RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
-    if RUN_IEDB_REWRITES :
-
-      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor ) # returns new ruleMeta
-
-      # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor )
-
-  except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
-    pass
-
-  # ----------------------------------------------------------------------------- #
   # dm rewrites
 
   try :
@@ -1183,6 +1167,24 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
+    pass
+
+  # ----------------------------------------------------------------------------- #
+  # iedb rewrites 
+  # ^ need to happen AFTER dm rewrites or else get wierd c4 eval results???
+  #   weird, dude.
+
+  try :
+    RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
+    if RUN_IEDB_REWRITES :
+
+      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+
+      # be sure to fill in all the type info for the new rule definitions
+      setTypes.setTypes( cursor )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
     pass
 
   # ----------------------------------------------------------------------------- #
