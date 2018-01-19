@@ -22,22 +22,26 @@ import dm
 def neg_rewrite(cursor, ruleMeta, factMeta, parsedResults):
   ''' Performs the negative rewrite of the dedalus program. '''
 
+  # use the aggregate rewrite from the dm module, avoids issues with
+  # aggregate rules.
   ruleMeta = dm.aggRewrites( ruleMeta )
 
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
+  setTypes.setTypes( cursor )
 
   while True:
-    # original inputs maybe even better
     rulesToNegate = findNegativeRules(cursor, ruleMeta)
     rulesToNegateList = rulesToNegate.keys()
+
     # if there are no rules to negate, exit
     if len(rulesToNegateList) == 0:
       break
 
     # Negate the rules in the list
     ruleMeta, factMeta = negateRules(cursor, ruleMeta, factMeta, rulesToNegate, parsedResults)
-
+    # setTypes.setTypes( cursor )
+    
   return ruleMeta, factMeta
 
 
@@ -65,24 +69,3 @@ def negateRules(cursor, ruleMeta, factMeta, rulesToNegate, parsedResults):
     # for each rule, negate it.
     ruleMeta, factMeta = negateRule(cursor, rule, ruleMeta, factMeta, parsedResults)
   return ruleMeta, factMeta
-
-def printRuleMeta(ruleMeta):
-  print "Rules"
-  for rule in ruleMeta:
-    print "***"
-    print rule.rid
-    print rule.relationName
-    print rule.goalAttList
-    print rule.goalTimeArg
-    print "subgoals"
-    for subgoal in rule.subgoalListOfDicts:
-      print subgoal
-
-def printFactMeta(factMeta):
-  print "Facts"
-  for fact in factMeta:
-    print "***"
-    print fact.fid 
-    print fact.relationName
-    print fact.factTimeArg
-    print fact.dataListWithTypes

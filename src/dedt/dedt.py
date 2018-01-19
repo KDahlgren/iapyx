@@ -777,7 +777,7 @@ def getFullyTypedRIDList( ridList, cursor ) :
 # iteratively use "fully typed" rules to type all subgoals per rule
 def setSubgoalTypes( ridList, cursor ) :
 
-  logging.debug( "  SET SUBGOAL TYPES : running process..." )
+  logging.warning( "  SET SUBGOAL TYPES : running process..." )
 
   # ===================================================== #
   # grab the list of all currently fully typed rules
@@ -789,9 +789,9 @@ def setSubgoalTypes( ridList, cursor ) :
   # in terms of edbs.
 
   fullyTyped_list = getFullyTypedRIDList( ridList, cursor )
-  logging.debug( "  SET SUBGOAL TYPES : fullyTyped_list = " + str( fullyTyped_list ) )
+  logging.warning( "  SET SUBGOAL TYPES : fullyTyped_list = " + str( fullyTyped_list ) )
   for ft in fullyTyped_list :
-    logging.debug( "  SET SUBGOAL TYPES : ft = " + printRuleWithTypes( ft[0], cursor ) )
+    logging.warning( "  SET SUBGOAL TYPES : ft = " + printRuleWithTypes( ft[0], cursor ) )
 
   # ===================================================== #
   # use the fully typed rules to type subgoals 
@@ -799,9 +799,9 @@ def setSubgoalTypes( ridList, cursor ) :
 
   for rid in ridList :
 
-    logging.debug( "-------------------------------------------------------" )
-    logging.debug( "  SET SUBGOAL TYPES : rid           = " + rid )
-    logging.debug( "  SET SUBGOAL TYPES : original rule = " + printRuleWithTypes( rid, cursor ) )
+    logging.warning( "-------------------------------------------------------" )
+    logging.warning( "  SET SUBGOAL TYPES : rid           = " + rid )
+    logging.warning( "  SET SUBGOAL TYPES : original rule = " + printRuleWithTypes( rid, cursor ) )
 
     # ===================================================== #
     # grab the rule dump
@@ -811,14 +811,14 @@ def setSubgoalTypes( ridList, cursor ) :
     goalAttData    = ruleAttDump[ "goalAttData" ]
     subgoalAttData = ruleAttDump[ "subgoalAttData" ]
 
-    logging.debug( "  SET SUBGOAL TYPES : goalName = " + goalName )
+    logging.warning( "  SET SUBGOAL TYPES : goalName = " + goalName )
 
     # ===================================================== #
     # iterate over subgoals
 
     for sub in subgoalAttData :
 
-      logging.debug( "    SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS" )
+      logging.warning( "    SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS" )
       logging.debug( "    SET SUBGOAL TYPES : sub = " + str( sub ) )
 
       subID      = sub[0]
@@ -1217,7 +1217,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   # add the provenance rules to the existing rule set
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
-
+  
   for rule in ruleMeta :
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 

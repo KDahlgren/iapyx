@@ -39,6 +39,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
     if r.relationName == rule:
       ruleData.append(r)
   negated_pieces = []
+  old_rid = ruleData[0].rid
   old_name = ruleData[0].relationName
   new_name = 'not_' + ruleData[0].relationName
   for piece in ruleData:
@@ -55,10 +56,10 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
       rules.append(copy.deepcopy(neg_piece))
     negated_pieces.append(rules)
   negated_pieces = concate_neg_rules(negated_pieces)
-  ruleMeta = replaceAllNotins(cursor, old_name, new_name, ruleMeta)
+
   for negRule in negated_pieces:
     # append the domain information
-    negRule = domain.concateDomain(cursor, negRule)
+    negRule = domain.concateDomain(cursor, negRule, old_rid)
     #insert new rule
     neg_rid = tools.getIDFromCounters( "rid" )
     negRule.cursor = cursor
@@ -67,6 +68,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
     ruleMeta.append(negRule)
     # update goalAtts
     # goalData.update_goalAtts(cursor, rule, neg_rid)
+  ruleMeta = replaceAllNotins(cursor, old_name, new_name, ruleMeta)
   return ruleMeta, factMeta
 
 def concate_neg_rules(neg_rules):

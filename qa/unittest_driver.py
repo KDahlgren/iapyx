@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import logging, os, string, sys, unittest
-import Test_dedt, Test_dm, Test_iedb_rewrites, Test_vs_molly
+import Test_dedt, Test_dm, Test_iedb_rewrites, Test_vs_molly, Test_comb
 
 #####################
 #  UNITTEST DRIVER  #
@@ -36,6 +36,10 @@ def unittest_driver() :
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_iedb_rewrites.Test_iedb_rewrites)
   unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
+
+  # run Test_comb tests
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_comb.Test_comb )
+  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
 #########################
 #  THREAD OF EXECUTION  #
