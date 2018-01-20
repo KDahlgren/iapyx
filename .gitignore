@@ -1,5 +1,6 @@
 vldb_experiments/dedalus_drivers/complete_dedalus_program.ded
 vldb_experiments/tmp_data*
+vldb_experiments/data*
 **/iapyx_prog_from_driver.olg
 **/complete_dedalus_program.ded
 examples/**/data/*
