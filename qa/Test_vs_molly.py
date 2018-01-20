@@ -36,9 +36,9 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 ###################
 class Test_vs_molly( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
 
@@ -819,9 +819,10 @@ class Test_vs_molly( unittest.TestCase ) :
     print "molly_results"
     print molly_results
 
-    expected_results = self.compareIapyxAndMolly( iapyx_results, molly_results )
+    match_elements_flag_iapyx, match_elements_flag_molly = self.compareIapyxAndMolly( iapyx_results, molly_results )
 
-    self.assertEqual( True, expected_results )
+    self.assertEqual( True, match_elements_flag_iapyx )
+    self.assertEqual( True, match_elements_flag_molly )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -880,12 +881,16 @@ class Test_vs_molly( unittest.TestCase ) :
       if iapyx_line.startswith( 'crash("' ) :
         pass
 
+      # skip all next_clock facts from iapyx.
+      elif iapyx_line.startswith( 'next_clock("' ) :
+        pass
+
       # skip all defines since molly's using some weird rule to 
       # order goal atts in prov rules.
       elif iapyx_line.startswith( "define(" ) and iapyx_line.endswith( "})" ) :
         pass
 
-      else : # next question : does a matching line exist in the molly table?
+      else : # next question : does a matching line exist in the molly program?
 
         # if line is a rule, need a smarter comparison method
         if self.isRule( iapyx_line ) :
@@ -915,7 +920,7 @@ class Test_vs_molly( unittest.TestCase ) :
       if molly_line.startswith( "define(" ) and molly_line.endswith( "})" ) :
         pass
 
-      else : # next question : does a matching line exist in the molly table?
+      else : # next question : does a matching line exist in the iapyx program?
 
         # if line is a rule, need a smarter comparison method
         if self.isRule( molly_line ) :
@@ -933,15 +938,9 @@ class Test_vs_molly( unittest.TestCase ) :
             logging.debug( "  COMPARE IAPYX AND MOLLY (2) : molly_line '" + molly_line+ "' not found in iapyx program." )
             match_elements_flag_molly = False
 
-    if match_elements_flag_iapyx and match_elements_flag_molly :
-      logging.debug( "  COMPARE IAPYX AND MOLLY : returning True" )
-      return True
-
-    else :
-      logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_iapyx = " + str( match_elements_flag_iapyx ) )
-      logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_molly = " + str( match_elements_flag_molly ) )
-      logging.debug( "  COMPARE IAPYX AND MOLLY : returning False" )
-      return False
+    logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_iapyx = " + str( match_elements_flag_iapyx ) )
+    logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_molly = " + str( match_elements_flag_molly ) )
+    return match_elements_flag_iapyx, match_elements_flag_molly
 
 
   ##################
