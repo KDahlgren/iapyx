@@ -33,6 +33,60 @@ class Test_dedt( unittest.TestCase ) :
 
   PRINT_STOP = False
 
+  ##############################
+  #  FIXED DATA 2 (FROM ORIK)  #
+  ##############################
+  # tests translation of a small program containing 
+  # a subgoal with a fixed string data input.
+  #@unittest.skip( "working on different example" )
+  def test_fixed_data_2( self ) :
+
+    # --------------------------------------------------------------- #
+    # testing set up.
+    testDB = "./IR.db"
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
+
+    # --------------------------------------------------------------- #
+    #dependency
+    #dedt.createDedalusIRTables(cursor)
+    dedt.globalCounterReset()
+
+    # --------------------------------------------------------------- #
+
+    # specify input file path
+    inputfile = "./testFiles/fixed_data_2.ded"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # specify settings file
+    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+
+    # run translator
+    programData = dedt.translateDedalus( argDict, cursor )
+
+    # portray actual output program lines as a single string
+    actual_results = self.getActualResults( programData[0] )
+
+    if self.PRINT_STOP :
+      print actual_results
+      sys.exit( "print stop." )
+
+    # grab expected output results as a string
+    expected_results_path = "./testFiles/fixed_data_2.olg"
+    expected_results      = None
+    with open( expected_results_path, 'r' ) as expectedFile :
+      expected_results = expectedFile.read()
+
+    self.assertEqual( actual_results, expected_results )
+
+    # --------------------------------------------------------------- #
+    #clean up testing
+    IRDB.close()
+    os.remove( testDB )
+
+
   ########################
   #  TOY 4 AGG WITH EQN  #
   ########################
@@ -43,8 +97,8 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
-    IRDB    = sqlite3.connect( testDB )
-    cursor  = IRDB.cursor()
+    IRDB   = sqlite3.connect( testDB )
+    cursor = IRDB.cursor()
 
     # --------------------------------------------------------------- #
     #dependency
