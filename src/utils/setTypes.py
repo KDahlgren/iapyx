@@ -409,7 +409,7 @@ def generateDatalogDependencyGraph( cursor ) :
   for e in edges :
     graph.add_edge( e )
 
-  logging.info( "Saving prov tree render to " + str(path) )
+  logging.info( "Saving dependency graph render to " + str(path) )
   graph.write_png( path )
 
 
