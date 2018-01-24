@@ -80,7 +80,7 @@ def globalCounterReset() :
 # input raw ded file
 # store intermediate representation in SQL database
 # output nothing
-def dedToIR( filename, cursor ) :
+def dedToIR( filename, cursor, settings_path ) :
 
   parsedLines = []
   parsedLines = dedalusParser.parseDedalus( filename ) # program exits here if file cannot be opened.
@@ -147,15 +147,6 @@ def dedToIR( filename, cursor ) :
       # save rule metadata (aka object)
       ruleMeta.append( newRule )
 
-  # ------------------------------------------- #
-  #                 DERIVE TYPES                #
-  # ------------------------------------------- #
-  # all rules now exist in the IR database.
-  # fire the logic for deriving data types for all
-  # goals and subgoals per rule.
-
-  setTypes.setTypes( cursor )
-
   return [ factMeta, ruleMeta ]
 
 
@@ -181,6 +172,16 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   settings_path = argDict[ "settings" ]
   EOT           = argDict[ "EOT" ]
 
+  for rule in ruleMeta :
+    rid = rule.rid
+    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+    goal_atts = cursor.fetchall()
+    logging.debug( "  DEDT : len( goal_atts ) = " + str( len( goal_atts )) )
+    goal_atts = tools.toAscii_multiList( goal_atts )
+    logging.debug( "  DEDT : len( goal_atts ) = " + str( len( goal_atts )) )
+    logging.debug( "  DEDT : goal_atts (0) = " + str( goal_atts ) )
+    logging.debug( "  DEDT : r = " + dumpers.reconstructRule( rid, cursor ) )
+
   # ----------------------------------------------------------------------------- #
   # dedalus rewrite
 
@@ -191,7 +192,14 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta = allMeta[1]
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor )
+  setTypes.setTypes( cursor, settings_path )
+
+  for rule in ruleMeta :
+    rid = rule.rid
+    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+    goal_atts = cursor.fetchall()
+    goal_atts = tools.toAscii_multiList( goal_atts )
+    logging.debug( "  DEDT : goal_atts (1) = " + str( goal_atts ) )
 
   # ----------------------------------------------------------------------------- #
   # wilcard rewrites
@@ -204,7 +212,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
       ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
 
   except ConfigParser.NoOptionError :
-    print "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites."
+    logging.warning( "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
     pass
 
   # ----------------------------------------------------------------------------- #
@@ -214,14 +222,21 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
     if RUN_DM :
 
-      ruleMeta = dm.dm( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+      ruleMeta = dm.dm( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor )
+      setTypes.setTypes( cursor, settings_path )
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
+    logging.warning( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
     pass
+
+  for rule in ruleMeta :
+    rid = rule.rid
+    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+    goal_atts = cursor.fetchall()
+    goal_atts = tools.toAscii_multiList( goal_atts )
+    logging.debug( "  DEDT : goal_atts (2) = " + str( goal_atts ) )
 
   # ----------------------------------------------------------------------------- #
   # iedb rewrites 
@@ -232,10 +247,17 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
     if RUN_IEDB_REWRITES :
 
-      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor ) # returns new ruleMeta
+      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
+
+      for rule in ruleMeta :
+        rid = rule.rid
+        cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+        goal_atts = cursor.fetchall()
+        goal_atts = tools.toAscii_multiList( goal_atts )
+        logging.debug( "  DEDT : goal_atts (3) = " + str( goal_atts ) )
 
       # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor )
+      setTypes.setTypes( cursor, settings_path )
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
@@ -257,7 +279,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor )
+  setTypes.setTypes( cursor, settings_path )
 
   # ----------------------------------------------------------------------------- #
 
@@ -282,7 +304,7 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
   # ------------------------------------------------------------- #
   # ded to IR
 
-  meta     = dedToIR( dedFile, cursor )
+  meta     = dedToIR( dedFile, cursor, argDict[ "settings" ] )
   factMeta = meta[0]
   ruleMeta = meta[1]
 
@@ -322,6 +344,17 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
   # ------------------------------------------------------------- #
 
   #print allProgramLines
+
+  # save all program lines to file
+  try :
+    if argDict[ "data_save_path" ] :
+      fo = open( argDict[ "save_path" ] + "final_initial_program.olg", "w" )
+      program = allProgramLines[0]
+      for line in program :
+        fo.write( line + "\n" )
+      fo.close()
+  except KeyError :
+    logging.debug( "  RUN TRANSLATOR : no data_save_path specified. skipping writing final olg program to file." )
 
   logging.debug( "  RUN TRANSLATOR : returning allProgramLines = " + str( allProgramLines ) )
   return [ allProgramLines, factMeta, ruleMeta ]

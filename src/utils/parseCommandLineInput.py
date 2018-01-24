@@ -31,6 +31,7 @@ def parseCommandLineInput( ) :
   parser.add_argument("--disable-dot-rendering", help="disable automatic rendering of `dot` diagrams", action="store_true")
   parser.add_argument("--find-all-counterexamples", help="continue after finding the first counterexample", action="store_true")
   parser.add_argument("--negative-support", help="Negative support.  Slow, but necessary for completeness", action="store_true")
+  parser.add_argument("--data_save_path", help="Data save path.  directory for saving data produced by iapyx (optional)." )
 
   args = parser.parse_args()
 

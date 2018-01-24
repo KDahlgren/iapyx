@@ -261,6 +261,48 @@ class C4Wrapper( object ) :
 
     return finalProg
 
+  ##############
+  #  RUN PURE  #
+  ##############
+  # fullprog is a string of concatenated overlog commands.
+  def run_pure( self, allProgramData ) :
+
+    allProgramLines = allProgramData[0] # := list of every code line in the generated C4 program.
+    tableList       = allProgramData[1] # := list of all tables in generated C4 program.
+
+    # get full program
+    fullprog = "".join( allProgramLines )
+
+    # ----------------------------------------- #
+
+    # initialize c4 instance
+    self.lib.c4_initialize()
+    self.c4_obj = self.lib.c4_make( None, 0 )
+
+    # ---------------------------------------- #
+    # load program
+    logging.debug( "... loading prog ..." )
+
+    logging.debug( "SUBMITTING SUBPROG : " )
+    logging.debug( fullprog )
+    c_prog = bytes( fullprog )
+    self.lib.c4_install_str( self.c4_obj, c_prog )
+
+    # ---------------------------------------- #
+    # dump program results to file
+    logging.debug( "... dumping program ..." )
+
+    results_array = self.saveC4Results_toArray( tableList )
+
+    # ---------------------------------------- #
+    # close c4 program
+    logging.debug( "... closing C4 ..." )
+
+    self.lib.c4_destroy( self.c4_obj )
+    self.lib.c4_terminate( )
+
+    return results_array
+
 
   #########
   #  RUN  #

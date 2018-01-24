@@ -37,7 +37,7 @@ arithOps = [ "+", "-", "*", "/" ]
 # generate the new set of rules provided by the DM method for negative rewrites.
 # factMeta := a list of Fact objects
 # ruleMeta := a list of Rule objects
-def dm( factMeta, ruleMeta, cursor ) :
+def dm( factMeta, ruleMeta, cursor, settings_path ) :
 
   logging.debug( "  DM : running process..." )
 
@@ -45,7 +45,7 @@ def dm( factMeta, ruleMeta, cursor ) :
   # rewrite rules with aggregate functions
   # in the head
 
-  ruleMeta = aggRewrites( ruleMeta )
+  ruleMeta = aggRewrites( ruleMeta, settings_path )
 
   # ----------------------------------------- #
   # enforce a uniform goal attribute lists
@@ -135,7 +135,7 @@ def dm( factMeta, ruleMeta, cursor ) :
 #  AGG REWRITES  #
 ##################
 # perform aggregate rewrites
-def aggRewrites( ruleMeta ) :
+def aggRewrites( ruleMeta, settings_path ) :
 
   new_ruleMeta = []
   new_relationNames = []
@@ -246,7 +246,7 @@ def aggRewrites( ruleMeta ) :
       newRule.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
       new_ruleMeta.append( newRule )
 
-      setTypes.setTypes( rule.cursor )
+      setTypes.setTypes( rule.cursor, settings_path )
 
     else :
       new_ruleMeta.append( rule )

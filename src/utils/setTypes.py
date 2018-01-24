@@ -20,7 +20,7 @@ IR SCHEMA:
 
 '''
 
-import copy, inspect, logging, os, pydot, string, sqlite3, sys
+import ConfigParser, copy, inspect, logging, os, pydot, string, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -28,6 +28,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
 
 import dumpers, extractors, globalCounters, tools, parseCommandLineInput
+from wrappers import C4Wrapper
 
 # ------------------------------------------------------ #
 
@@ -45,9 +46,455 @@ arithOps = [ "+", "-", "/", "*" ]
 ###############
 #  SET TYPES  #
 ###############
+def setTypes( cursor, settings_path ) :
+
+  try :
+    SETTYPES_DATALOG = tools.getConfig( settings_path, "DEFAULT", "SETTYPES_DATALOG", bool )
+    if SETTYPES_DATALOG :
+      setTypes_datalog( cursor )
+    else :
+      setTypes_orig( cursor )
+
+  except ConfigParser.NoOptionError as e :
+    logging.info( "  FATAL ERROR : option 'SETTYPES_DATALOG' not set in settings file '" + settings_path + "'. aborting." )
+    raise e
+
+
+#######################
+#  SET TYPES DATALOG  #
+#######################
+# evaluate the datalog program rewritten from dedalus
+# with datatypes replacing actual data to
+# extract the types for all goals and subgoals in the
+# program.
+# assume use of the c4 datalog evaluator.
+def setTypes_datalog( cursor ) :
+
+  # ---------------------------------------------------- #
+  # generate the setTypes program
+  setTypes_program, setTypes_tables = get_setTypes_program_data( cursor )
+
+  logging.debug( "  SET TYPES DATALOG : setTypes_program :" )
+  for line in setTypes_program :
+    logging.debug( "    " + line )
+
+  logging.debug( "  SET TYPES DATALOG : setTypes_tables :" )
+  for table in setTypes_tables :
+    logging.debug( "    " + table )
+
+  # ---------------------------------------------------- #
+  # run the setTypes program using the c4 wrapper
+
+  w             = C4Wrapper.C4Wrapper( ) # initializes c4 wrapper instance
+  results_array = w.run_pure( [ setTypes_program, setTypes_tables ] )
+
+  # ---------------------------------------------------- #
+  # grab and save the type conclusions from the 
+  # evaluation results.
+
+  results_dict = tools.getEvalResults_dict_c4( results_array )
+
+  # sanity check : no relation should have more than one tuple result
+  for relation in results_dict :
+     if len( results_dict[ relation ] ) > 1 :
+       raise ValueError( "  FATAL ERROR : types for relation '" + \
+                            relation + "' are ambiguous:\n" + \
+                            str( results_dict[ relation ] ) )
+
+  # save type info
+  update_facts( results_dict, cursor )
+  update_rules( results_dict, cursor )
+
+
+##################
+#  UPDATE RULES  #
+##################
+def update_rules( results_dict, cursor ) :
+
+  logging.debug( "  UPDATE RULES : results_dict = " + str( results_dict ) )
+
+  for relation in results_dict :
+
+    logging.debug( "  UPDATE RULES : relation       = " + relation )
+
+    goal_type_list = results_dict[ relation ][0]
+
+    logging.debug( "  UPDATE RULES : goal_type_list = " + str( goal_type_list ) )
+
+    # grab all rids for that relation
+    cursor.execute( "SELECT rid FROM Rule WHERE goalName=='" + relation + "'" )
+    rids = cursor.fetchall()
+    rids = tools.toAscii_list( rids )
+
+    logging.debug( "  UPDATE RULES : rids = " + str( rids ) )
+
+    # update goal types
+    for rid in rids :
+      for attID in range( 0, len( goal_type_list ) ) :
+        logging.debug( "  UPDATE RULES : attID = " + str( attID ) )
+        dataType = goal_type_list[ attID ]
+        cursor.execute( "UPDATE GoalAtt SET attType='" + dataType.lower() + "' WHERE \
+                         rid=='" + rid + "' AND attID=='" + str( attID ) + "'" )
+
+      cursor.execute( "SELECT * FROM GoalAtt WHERE rid=='" + rid + "'" )
+      check_data = cursor.fetchall()
+      check_data = tools.toAscii_multiList( check_data )
+      logging.debug( "  UPDATE RULES : goal att check_data = " )
+      for data in check_data :
+        logging.debug( data )
+
+      # get sids
+      cursor.execute( "SELECT sid,subgoalName FROM Subgoals WHERE rid=='" + rid + "'" )
+      subs = cursor.fetchall()
+      subs = tools.toAscii_multiList( subs )
+
+      for sub in subs :
+        sid         = sub[0]
+        subgoalName = sub[1]
+
+        if subgoalName == "clock" or subgoalName == "next_clock" :
+          subgoal_type_list = [ "string", "string", "int", "int" ]
+
+        elif subgoalName == "crash" :
+          subgoal_type_list = [ "string", "string", "int", "int" ]
+
+        else :
+          subgoal_type_list = results_dict[ subgoalName ][0]
+
+        # update subgoal types
+        for sattID in range( 0, len( subgoal_type_list ) ) :
+          attType = subgoal_type_list[ sattID ]
+          logging.debug( "  UPDATE RULES : UPDATE SubgoalAtt SET attType='" + attType.lower() + 
+                                        "' WHERE rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
+          cursor.execute( "UPDATE SubgoalAtt SET attType='" + attType.lower() + "' WHERE \
+                           rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
+
+##################
+#  UPDATE FACTS  #
+##################
+def update_facts( results_dict, cursor ) :
+
+  for relation in results_dict :
+
+    if isFact( relation, cursor ) :
+
+      type_list = results_dict[ relation ][0]
+
+      logging.debug( "  UPDATE FACT : relation  = " + relation )
+      logging.debug( "  UPDATE FACT : type_list = " + str( type_list ) )
+    
+      # get all fids for this relation
+      cursor.execute( "SELECT fid FROM Fact WHERE name=='" + relation + "'" )
+      fids = cursor.fetchall()
+      fids = tools.toAscii_list( fids )
+    
+      for fid in fids :
+        for dataID in range( 0, len( type_list ) ) :
+          dataType = type_list[ dataID ]
+          cursor.execute( "UPDATE FactData SET dataType=='" + dataType.lower() +  "' WHERE \
+                           fid=='" + fid + "' AND dataID=='" + str( dataID ) + "'" )
+
+
+################################
+#  GET SET TYPES PROGRAM DATA  #
+################################
+def get_setTypes_program_data( cursor ) :
+
+  program_line_list = []
+  table_list        = []
+
+  # ---------------------------------------------------- #
+  # build define statements
+  # assumes everything is either idb and/or edb
+
+  # -------------------- #
+  # clock define
+
+  clock_define = "define(clock,{string,string,string,string});"
+  program_line_list.append( clock_define )
+
+  # -------------------- #
+  # next_clock define
+
+  next_clock_define = "define(next_clock,{string,string,string,string});"
+  program_line_list.append( next_clock_define )
+
+  # -------------------- #
+  # crash define
+
+  crash_define = "define(crash,{string,string,string,string});"
+  program_line_list.append( crash_define )
+
+  # -------------------- #
+  # goal defines
+
+  cursor.execute( "SELECT rid,goalName FROM Rule" )
+  goal_data = cursor.fetchall()
+  goal_data = tools.toAscii_multiList( goal_data )
+
+  goal_name_to_arity = {}
+  for goal in goal_data :
+    rid      = goal[0]
+    goalName = goal[1]
+    if not goalName in table_list :
+      table_list.append( goalName )
+    cursor.execute( "SELECT MAX(attID) FROM GoalAtt WHERE rid=='" + rid + "'" )
+    arity = cursor.fetchone() # returns type tuple
+    goal_name_to_arity[ goalName ] = arity[0] + 1
+
+  logging.debug( "  GET SET TYPES PROGRAM : goal_name_to_arity = " + str( goal_name_to_arity ) )
+
+  for goalName in goal_name_to_arity :
+    line = "define(" + goalName + ",{string"
+    for i in range( 1, goal_name_to_arity[ goalName ] ) :
+      line += ",string"
+    line += "});"
+    if not line in program_line_list : # avoid duplicates
+      program_line_list.append( line )
+
+  logging.debug( "  GET SET TYPES PROGRAM : program_line_list (1) : " )
+  for line in program_line_list :
+    logging.debug( "    " + line )
+
+  # -------------------- #
+  # fact defines
+
+  cursor.execute( "SELECT fid,name FROM Fact" )
+  fact_data = cursor.fetchall()
+  fact_data = tools.toAscii_multiList( fact_data )
+
+  fact_name_to_arity = {}
+  for fact in fact_data :
+    fid  = fact[0]
+    name = fact[1]
+    if not name in table_list :
+      table_list.append( name )
+    cursor.execute( "SELECT MAX(dataID) FROM FactData WHERE fid=='" + fid + "'" )
+    arity = cursor.fetchone()
+    fact_name_to_arity[ name ] = arity[0] + 1
+
+  logging.debug( "  GET SET TYPES PROGRAM : fact_name_to_arity = " + str( fact_name_to_arity ) )
+
+  for name in fact_name_to_arity :
+    line = "define(" + name + ",{string" 
+    for i in range( 1, fact_name_to_arity[ name ] ) :
+      line += ",string"
+    line += "});"
+    if not line in program_line_list :
+      program_line_list.append( line )
+
+  logging.debug( "  GET SET TYPES PROGRAM : program_line_list (2) : " )
+  for line in program_line_list :
+    logging.debug( "    " + line )
+
+  # ---------------------------------------------------- #
+  # build fact statements
+
+  fact_lines = []
+  for fact in fact_data :
+    fid  = fact[0]
+    name = fact[1]
+    cursor.execute( "SELECT data FROM FactData WHERE fid=='" + fid + "'" )
+    data_list = cursor.fetchall()
+    data_list = tools.toAscii_list( data_list )
+
+    fact = name + "("
+    for i in range( 0, len( data_list ) ) :
+      datum = data_list[i]
+
+      # string data
+      if ( datum.startswith( "'" ) and datum.endswith( "'" ) ) or \
+         ( datum.startswith( '"' ) and datum.endswith( '"' ) ) :
+        fact += '"STRING"'
+
+      # int data
+      elif datum.isdigit() :
+        fact += '"INT"'
+
+      # wtf???
+      else :
+        raise Exception( "  FATAL ERROR : datum '" + + "' in fact '" + name + "' is neither string nor integer. aborting."  )
+
+      if i < len( data_list ) - 1 :
+        fact += ","
+
+    fact += ");"
+    fact_lines.append( fact )
+
+  program_line_list.extend( fact_lines )
+
+  logging.debug( "  GET SET TYPES PROGRAM : program_line_list (3) : " )
+  for line in program_line_list :
+    logging.debug( "    " + line )
+
+  # ---------------------------------------------------- #
+  # rule statements
+
+  program_line_list.extend( get_rules( goal_data, cursor ) )
+
+  # ---------------------------------------------------- #
+  # build clock statement
+  # because the schema is fixed, only need one statement.
+
+  clock_line = 'clock("STRING","STRING","INT","INT");'
+  program_line_list.append( clock_line )
+
+  # ---------------------------------------------------- #
+  # build next_clock statement
+
+  next_clock_line = 'next_clock("STRING","STRING","INT","INT");'
+  program_line_list.append( next_clock_line )
+
+  # ---------------------------------------------------- #
+  # build crash statements
+
+  #fill in after supporting crash.
+
+  logging.debug( "  GET SET TYPES PROGRAM : program_line_list (4) : " )
+  for line in program_line_list :
+    logging.debug( "    " + line )
+
+  return program_line_list, table_list
+
+
+###############
+#  GET RULES  #
+###############
+def get_rules( goal_data, cursor ) :
+
+  rule_list = []
+
+  for goal in goal_data :
+
+    rid  = goal[0]
+    name = goal[1]
+
+    logging.debug( "  GET RULES : name = " + name )
+
+    # -------------------- #
+    # get goal atts
+
+    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + rid + "'" )
+    goal_atts = cursor.fetchall()
+    goal_atts = tools.toAscii_multiList( goal_atts )
+
+    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+
+    # clean agg functions
+    tmp = []
+    for att in goal_atts :
+      attID   = att[0]
+      attName = att[1]
+      for agg in aggOps :
+        if attName.startswith( agg + "<" ) and attName.endswith( ">" ) :
+          attName = attName.replace( agg + "<", "" )
+          attName = attName.replace( ">", "" )
+      tmp.append( [ attID, attName ] )
+    goal_atts = copy.copy( tmp )
+
+    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+
+    # clean agg ops
+    tmp = []
+    for gatt in goal_atts :
+      for i in range( 0, len( gatt ) ) :
+        curr_char = gatt[i]
+        if curr_char in arithOps :
+          gatt = gatt[:i]
+      tmp.append( gatt )
+    goal_atts = copy.copy( tmp )
+
+    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+
+    # -------------------- #
+    # get subgoal info
+
+    cursor.execute( "SELECT sid,subgoalName,subgoalPolarity FROM Subgoals WHERE rid=='" + rid + "'" )
+    subgoals_list = cursor.fetchall()
+    subgoals_list = tools.toAscii_multiList( subgoals_list )
+
+    cursor.execute( "SELECT sid,attID,attName FROM SubgoalAtt WHERE rid=='" + rid + "'" )
+    subgoal_atts_list = cursor.fetchall()
+    subgoal_atts_list = tools.toAscii_multiList( subgoal_atts_list )
+
+    # -------------------- #
+    # get equation info - not applicable.
+
+    #cursor.execute( "SELECT eid,eqn FROM Equation WHERE rid=='" + rid + "'" )
+    #eqn_list = cursor.fetchall()
+    #eqn_list = tools.toAscii_multiList( eqn_list )
+
+    # -------------------- #
+    # build and save rule
+
+    rule = name + "("
+
+    # add goal atts
+    for i in range( 0, len( goal_atts ) ) :
+      gatt  = goal_atts[i][1]
+
+      # handle fixed data
+      if ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
+         ( gatt.startswith( '"' ) and gatt.endswith( '"' ) ) :
+        gatt = '"STRING"'
+      elif gatt.isdigit() :
+        gatt = '"INT"'
+
+      rule += gatt
+      if i < len( goal_atts ) - 1 :
+        rule += ","
+
+    rule += "):-"
+
+    # add subgoals
+    for i in range( 0, len( subgoals_list ) ) :
+      sub             = subgoals_list[i]
+      sid             = sub[0]
+      subgoalName     = sub[1]
+      subgoalPolarity = sub[2]
+
+      if subgoalPolarity == "" : # only need positive subgoals because only using safe rules.
+
+        rule += " " + subgoalName + "("
+
+        for i in range( 0, len( subgoal_atts_list ) ) :
+          if subgoal_atts_list[i][0] == sid :
+            satt  = subgoal_atts_list[i][2]
+  
+            # handle fixed data
+            if ( satt.startswith( "'" ) and satt.endswith( "'" ) ) or \
+               ( satt.startswith( '"' ) and satt.endswith( '"' ) ) :
+              satt = '"STRING"'
+            elif satt.isdigit() :
+              satt = '"INT"'
+  
+            rule += satt
+            rule += ","
+  
+        rule  = rule[:-1] # remove trailing comma in subgoal att list
+        rule += "),"
+
+    rule  = rule[:-1] # remove trailing comma after subgoal list
+    rule += ";"
+
+    logging.debug( "  GET RULES : adding rule '" + rule + "'" )
+    rule_list.append( rule )
+
+  logging.debug( "  GET RULES : rule_list :" )
+  for rule in rule_list :
+    logging.debug( rule )
+
+  return rule_list
+
+
+####################
+#  SET TYPES ORIG  #
+####################
 # update the IR database to assign data types
 # to all goal and subgoal attrbutes in all rules.
-def setTypes( cursor ) :
+# performs type extrapolation over a series of iterations.
+# very time-consuming for large programs.
+def setTypes_orig( cursor ) :
 
   logging.debug( "  SET TYPES : running process..." )
 

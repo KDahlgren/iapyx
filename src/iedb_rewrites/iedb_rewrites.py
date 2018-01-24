@@ -44,7 +44,7 @@ arithOps = [ "+", "-", "*", "/" ]
 # generate the new set of rules provided by the DM method for negative rewrites.
 # factMeta := a list of Fact objects
 # ruleMeta := a list of Rule objects
-def iedb_rewrites( factMeta, ruleMeta, cursor ) :
+def iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) :
 
   logging.debug( "  IEDB REWRITES : running process..." )
 
@@ -56,21 +56,21 @@ def iedb_rewrites( factMeta, ruleMeta, cursor ) :
   idb_rel_list = cursor.fetchall()
   idb_rel_list = tools.toAscii_list( idb_rel_list )
 
-  logging.debug( "idb_rel_list = " + str( idb_rel_list ) )
+  logging.debug( "  IEDB REWRITES : idb_rel_list = " + str( idb_rel_list ) )
 
   # initialize dictionary
   rel_name_to_fact_obj_map = {}
   for rel_name in idb_rel_list :
     rel_name_to_fact_obj_map[ rel_name ] = []
 
-  logging.debug( "rel_name_to_fact_obj_map = " + str( rel_name_to_fact_obj_map ) )
+  logging.debug( "  IEDB REWRITES : rel_name_to_fact_obj_map = " + str( rel_name_to_fact_obj_map ) )
 
   # collect fids
   for f in factMeta :
     if f.relationName in idb_rel_list :
       rel_name_to_fact_obj_map[ f.relationName ].append( f )
 
-  logging.debug( "rel_name_to_fact_obj_map = " + str( rel_name_to_fact_obj_map ) )
+  logging.debug( "  IEDB REWRITES : rel_name_to_fact_obj_map = " + str( rel_name_to_fact_obj_map ) )
 
   # ----------------------------------------- #
   # append "_edb" to all fact names
@@ -84,15 +84,19 @@ def iedb_rewrites( factMeta, ruleMeta, cursor ) :
       fact_obj.saveFactInfo()
 
       cursor.execute( "SELECT name FROM Fact WHERE fid=='" + str( fact_obj.fid ) + "'" )
-      thing = cursor.fetchone()
-      thing = tools.toAscii_str( thing )
-      logging.debug( "thing = " + str( thing ) )
+      name = cursor.fetchone()
+      name = tools.toAscii_str( name )
+      logging.debug( "  IEBD REWRITES : name = " + str( name ) )
 
   # ----------------------------------------- #
   # add a new rule with the original goal
   # predicated on the new _edb goal name
 
   for rel_name in rel_name_to_fact_obj_map :
+
+    logging.debug( "  IEDB REWRITES : rel_name = " + rel_name )
+    logging.debug( "  IEDB REWRITEs : len( rel_name_to_fact_obj_map[ " + rel_name + " ] ) = " + \
+                      str( len( rel_name_to_fact_obj_map[ rel_name ] ) ) )
 
     if len( rel_name_to_fact_obj_map[ rel_name ] ) > 0 : 
 
@@ -127,14 +131,18 @@ def iedb_rewrites( factMeta, ruleMeta, cursor ) :
   
       # generate a new rid
       rid = tools.getIDFromCounters( "rid" )
-  
+ 
+      logging.debug( "  IEDB REWRITES : new_ruleData = " + str( new_ruleData ) )
+ 
       # save the new rule
       new_rule        = copy.deepcopy( Rule.Rule( rid, new_ruleData, cursor ) )
       new_rule.cursor = cursor # need to do this again for some reason???
       ruleMeta.append( new_rule )
   
       # set the types!
-      setTypes.setTypes( cursor )
+      #setTypes.setTypes( cursor, settings_path )
+
+    logging.debug( "  IEDB REWRITES : done on rel_name = " + rel_name )
 
   # ----------------------------------------- #
 
