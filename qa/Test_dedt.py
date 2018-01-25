@@ -532,13 +532,14 @@ class Test_dedt( unittest.TestCase ) :
     # test rule saves
 
     inputfile = "./testFiles/example15.ded"
-    dedt.dedToIR( inputfile, cursor )
+    argDict   = self.getArgDict( inputfile )
+    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
 
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int']], 'subgoalAttData': [['2', 'term', [[0, 'N', 'string'], [1, 'T', 'int']]], ['3', 'stall', [[0, 'N', 'string'], [1, 'T', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int']], 'subgoalAttData': [['0', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string']]], ['1', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int']], 'subgoalAttData': [['4', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int']]]]}}
+    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['8', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['9', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['17', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '3': {'goalName': 'role_x_vars', 'goalAttData': [[0, 'N', 'string'], [1, 'I', 'int'], [2, 'R', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['13', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int'], [3, 'NRESERVED', 'int']]], ['15', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['11', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['12', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'new_term_prov1', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int'], [3, 'T', 'int']], 'subgoalAttData': [['18', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'role_x_prov0', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['16', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '6': {'goalName': 'lclock_register_prov2', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['22', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -572,7 +573,8 @@ class Test_dedt( unittest.TestCase ) :
     # run program and catch error
     try :
       inputfile = "./testFiles/example14.ded"
-      dedt.dedToIR( inputfile, cursor )
+      argDict   = self.getArgDict( inputfile )
+      dedt.runTranslator( cursor, inputfile, argDict, "c4" )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -609,7 +611,8 @@ class Test_dedt( unittest.TestCase ) :
     # test rule saves
 
     inputfile = "./testFiles/example13.ded"
-    dedt.dedToIR( inputfile, cursor )
+    argDict   = self.getArgDict( inputfile )
+    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
@@ -617,7 +620,7 @@ class Test_dedt( unittest.TestCase ) :
     #print actual_ruleData
 
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['2', 'a', [[0, 'X', 'string'], [1, 'Z', 'int']]], ['3', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['0', 'a', [[0, 'X', 'string'], [1, '_', 'int']]], ['1', 'd', [[0, '_', 'string'], [1, 'Y', 'string']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string']], 'subgoalAttData': [['4', 'c', [[0, 'X', 'string'], [1, 'Z', 'string']]], ['5', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string']]]]}}
+    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['9', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['11', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['6', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['7', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['8', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '3': {'goalName': 'c_prov0', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['15', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['16', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['17', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['12', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['13', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'e_prov2', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int'], [3, 'Z', 'string']], 'subgoalAttData': [['21', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['22', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['23', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'd_prov1', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int'], [3, 'Z', 'int']], 'subgoalAttData': [['18', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -651,12 +654,16 @@ class Test_dedt( unittest.TestCase ) :
     # run program and catch error
     try :
       inputfile = "./testFiles/example12b.ded"
-      dedt.dedToIR( inputfile, cursor )
+
+      # get argDict
+      argDict = self.getArgDict( inputfile )
+
+      dedt.runTranslator( cursor, inputfile, argDict, "c4" )
     except :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SET TYPES : arity error in rule 'pre(X,Pl) <=  log(X,Pl),notin bcast(X),notin crash(X,X,_) ;' in subgoal 'bcast'. len(attIDList)==1, len(attTypeList)==2"
+    expected_error = "  SET TYPES : arity error in rule 'pre(X,Pl,NRESERVED) <=  log(X,Pl,NRESERVED),notin bcast(X,1),notin crash(X,X,_,NRESERVED), clock(X,X,NRESERVED,_) ;' in subgoal 'bcast'. len(attIDList)==2, len(attTypeList)==3"
 
     self.assertEqual( actual_results, expected_error )
 
@@ -688,7 +695,7 @@ class Test_dedt( unittest.TestCase ) :
     # test rule saves
 
     inputfile = "./testFiles/example12a.ded"
-    dedt.dedToIR( inputfile, cursor )
+    dedt.dedToIR( inputfile, cursor, "./settings.ini" )
 
     # dump rules
     actual_rules = dumpers.ruleDump( cursor )
@@ -735,7 +742,7 @@ class Test_dedt( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     inputfile = "./testFiles/examples_ft/delivery/bcast_edb.ded"
-    dedt.dedToIR( inputfile, cursor )
+    dedt.dedToIR( inputfile, cursor, "./settings.ini" )
 
     # dump facts
     actual_facts = dumpers.factDump( cursor )
@@ -1842,6 +1849,9 @@ class Test_dedt( unittest.TestCase ) :
 
     return argDict
 
+
+if __name__ == "__main__" :
+  unittest.main()
 
 #########
 #  EOF  #

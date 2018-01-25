@@ -3,7 +3,7 @@
 log( "blah", "blee" )@1 ;
 node( "blah", "blee" )@1 ;
 bcast( "blah", "blee" )@1 ;
-crash( "blah", "blee", "blee" )@1 ;
+crash( "blah", "blee", 123 )@1 ;
 b( "laa", "dee", "doo" )@1 ;
 c( "laa", "dee" )@1 ;
 

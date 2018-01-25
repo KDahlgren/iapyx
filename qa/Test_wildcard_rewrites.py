@@ -425,6 +425,10 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     return argDict
 
 
+if __name__ == "__main__" :
+  unittest.main()
+
+
 #########
 #  EOF  #
 #########

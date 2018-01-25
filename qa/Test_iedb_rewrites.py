@@ -29,9 +29,9 @@ import iedb_rewrites
 ########################
 class Test_iedb_rewrites( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
@@ -423,6 +423,10 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict[ 'EFF' ]                      = 2
 
     return argDict
+
+
+if __name__ == "__main__" :
+  unittest.main()
 
 
 #########

@@ -1355,6 +1355,9 @@ class Test_vs_molly( unittest.TestCase ) :
     return argDict
 
 
+if __name__ == "__main__" :
+  unittest.main()
+
 #########
 #  EOF  #
 #########
