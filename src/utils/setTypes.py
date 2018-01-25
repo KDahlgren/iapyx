@@ -348,7 +348,8 @@ def get_setTypes_program_data( cursor ) :
   # ---------------------------------------------------- #
   # build crash statements
 
-  #fill in after supporting crash.
+  crash_line = 'crash("STRING","STRING","INT","INT");'
+  program_line_list.append( crash_line )
 
   logging.debug( "  GET SET TYPES PROGRAM : program_line_list (4) : " )
   for line in program_line_list :
@@ -378,7 +379,7 @@ def get_rules( goal_data, cursor ) :
     goal_atts = cursor.fetchall()
     goal_atts = tools.toAscii_multiList( goal_atts )
 
-    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+    logging.debug( "  GET RULES : goal_atts (0) = " + str( goal_atts ) )
 
     # clean agg functions
     tmp = []
@@ -392,19 +393,21 @@ def get_rules( goal_data, cursor ) :
       tmp.append( [ attID, attName ] )
     goal_atts = copy.copy( tmp )
 
-    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+    logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
 
     # clean agg ops
     tmp = []
-    for gatt in goal_atts :
+    for goal_att in goal_atts :
+      gatt = goal_att[1]
       for i in range( 0, len( gatt ) ) :
         curr_char = gatt[i]
         if curr_char in arithOps :
           gatt = gatt[:i]
+          break
       tmp.append( gatt )
     goal_atts = copy.copy( tmp )
 
-    logging.debug( "  GET RULES : goal_atts = " + str( goal_atts ) )
+    logging.debug( "  GET RULES : goal_atts (2) = " + str( goal_atts ) )
 
     # -------------------- #
     # get subgoal info
@@ -431,7 +434,7 @@ def get_rules( goal_data, cursor ) :
 
     # add goal atts
     for i in range( 0, len( goal_atts ) ) :
-      gatt  = goal_atts[i][1]
+      gatt  = goal_atts[i]
 
       # handle fixed data
       if ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
