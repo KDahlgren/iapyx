@@ -22,7 +22,7 @@ def unittest_driver() :
 
   # run Test_dedt tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dedt.Test_dedt )
-  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
+  # unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
   # run Test_vs_molly tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_vs_molly.Test_vs_molly )
@@ -43,7 +43,7 @@ def unittest_driver() :
 
   # run Test_comb tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_comb.Test_comb )
-  # unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
 
 #########################

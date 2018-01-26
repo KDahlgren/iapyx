@@ -102,6 +102,7 @@ def setTypes_datalog( cursor ) :
                             str( results_dict[ relation ] ) )
 
   # save type info
+  print results_dict
   update_facts( results_dict, cursor )
   update_rules( results_dict, cursor )
 
