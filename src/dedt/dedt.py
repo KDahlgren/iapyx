@@ -1224,10 +1224,8 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
       original_prog = c4_translator.c4datalog( argDict, cursor )
       results_array = c4_evaluator.runC4_wrapper( original_prog )
       parsedResults = tools.getEvalResults_dict_c4( results_array )
-      print parsedResults
       # run the neg rewrite for combinatorial approach
-      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, argDict, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
-      # setTypes.setTypes( cursor, settings_path )
+      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
@@ -1236,20 +1234,20 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   # ----------------------------------------------------------------------------- #
   # provenance rewrites
 
-  # logging.debug( "  REWRITE : before prov dump :" )
-  # for rule in ruleMeta :
-  #   logging.debug( "  REWRITE : r = " + printRuleWithTypes( rule.rid, cursor ) )
+  logging.debug( "  REWRITE : before prov dump :" )
+  for rule in ruleMeta :
+    logging.debug( "  REWRITE : r = " + printRuleWithTypes( rule.rid, cursor ) )
 
-  # logging.debug( "  REWRITE : calling provenance rewrites..." )
+  logging.debug( "  REWRITE : calling provenance rewrites..." )
 
-  # # add the provenance rules to the existing rule set
-  # ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
+  # add the provenance rules to the existing rule set
+  ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
   
-  # for rule in ruleMeta :
-  #   logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+  for rule in ruleMeta :
+    logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 
-  # # be sure to fill in all the type info for the new rule definitions
-  # setTypes.setTypes( cursor )
+  # be sure to fill in all the type info for the new rule definitions
+  setTypes.setTypes( cursor, settings_path )
 
   # ----------------------------------------------------------------------------- #
 

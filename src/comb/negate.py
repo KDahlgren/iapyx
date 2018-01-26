@@ -45,6 +45,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
   for piece in ruleData:
     neg_piece = copy.deepcopy(piece)
     neg_piece.relationName = new_name
+    neg_piece.ruleData['relationName'] = new_name
     numGoals = len(neg_piece.subgoalListOfDicts)
     numRules = pow(2, numGoals)
     rules = []

@@ -115,6 +115,7 @@ class Test_comb( unittest.TestCase ) :
 
     self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
+
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
@@ -153,10 +154,6 @@ class Test_comb( unittest.TestCase ) :
       print iapyx_results
       expected_iapyx_results = None
       sys.exit( "print stop." )
-
-    print "post"
-    print iapyx_results
-    print "---"
 
     # ========================================================== #
     # IAPYX COMPARISON
@@ -222,7 +219,7 @@ class Test_comb( unittest.TestCase ) :
     # convert results array into dictionary
 
     eval_results_dict = tools.getEvalResults_dict_c4( results_array )
-    print eval_results_dict
+    # print eval_results_dict
     # ----------------------------------------------------------------- #
     # collect all pos/not_ rule pairs
 
