@@ -102,6 +102,7 @@ def setTypes_datalog( cursor ) :
                             str( results_dict[ relation ] ) )
 
   # save type info
+  print results_dict
   update_facts( results_dict, cursor )
   update_rules( results_dict, cursor )
 
@@ -167,7 +168,7 @@ def update_rules( results_dict, cursor ) :
           logging.debug( "  UPDATE RULES : UPDATE SubgoalAtt SET attType='" + attType.lower() + 
                                         "' WHERE rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
           cursor.execute( "UPDATE SubgoalAtt SET attType='" + attType.lower() + "' WHERE \
-                           rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
+                           rid=='" + rid + "' AND attID=='" + str( sattID ) + "' AND sid = '" + str(sid) + "'"  )
 
 ##################
 #  UPDATE FACTS  #

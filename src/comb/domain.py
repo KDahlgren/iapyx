@@ -36,9 +36,9 @@ def getActiveDomain(cursor, factMeta, parsedResults):
   return factMeta + newfactMeta
 
 def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
-  # print "-----------------------------------------------------------------------"
-  # print "insertDomainFact"
-  # print "-----------------------------------------------------------------------"
+  print "-----------------------------------------------------------------------"
+  print "insertDomainFact"
+  print "-----------------------------------------------------------------------"
   parRule = None
   childRule = None
   for r in ruleMeta:
@@ -46,11 +46,15 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
       parRule = r
     if r.relationName == rule[0]:
       childRule = r
-
+  print parRule.relationName
+  print childRule.relationName
   childVars = getAllVarTypes(cursor, childRule)
   newRules = []
   newFacts = []
   if goalData.check_for_id(cursor, 'dom_'+rule[1]+'_0'):
+    print "this case?"
+    print childVars
+    print childRule.goalAttList
     # in this case  we want to base it on the previous iteration of the goal.
     for subgoal in parRule.subgoalListOfDicts:
       if subgoal['subgoalName'] == rule[0]:
@@ -96,6 +100,13 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
           domrid = tools.getIDFromCounters( "rid" )
           newRule = Rule.Rule( domrid, ruleData, cursor )
           newRules.append(newRule)
+    print "rules"
+    for rule in newRules:
+      print rule.relationName
+      print rule.subgoalListOfDicts
+    print "facts"
+    for fact in newFacts:
+      print fact.relationName
     ruleMeta = ruleMeta + newRules
     factMeta = factMeta + newFacts
     # print "-----------------------------------------------------------------------"
@@ -104,6 +115,7 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
   # This section is for when we do not have the parent calling function domain. Therefore
   # we must determine the domain based on the parsed results.
   # ---------------------------------------------------------------------------------
+  # print "that case"
   for subgoal in parRule.subgoalListOfDicts:
     if subgoal['subgoalName'] == childRule.relationName:
       # we found the matching subgoal
@@ -153,9 +165,17 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
           domrid = tools.getIDFromCounters( "rid" )
           newRule = Rule.Rule( domrid, ruleData, cursor )
           newRules.append(newRule)
+  print "rules"
+  for rule in newRules:
+    print rule.relationName
+    print rule.subgoalListOfDicts
+  print "facts"
+  for fact in newFacts:
+    print fact.relationName
+    print fact.dataListWithTypes
   ruleMeta = ruleMeta + newRules
   factMeta = factMeta + newFacts
-  # print "-----------------------------------------------------------------------"
+  print "-----------------------------------------------------------------------"
   return ruleMeta, factMeta
 
 
@@ -194,8 +214,12 @@ def createSubgoalDict(name, attList, polarity, timeargs):
 def concateDomain(cursor, negRule, posRid):
   
   varss = getAllVars(cursor, negRule, posRid=posRid)
-
+  print "&&&"
+  print "concateDomain"
+  print "&&&"
+  print negRule.subgoalListOfDicts
   for var in varss:
+    print var
     if var[0] == "_" or '+' in var[0]:
       continue
     if var[1] == 'int':
@@ -209,6 +233,7 @@ def concateDomain(cursor, negRule, posRid):
     goalDict['subgoalTimeArg'] = ''
     negRule.subgoalListOfDicts.append(goalDict)
   negRule = appendDomainArgs(negRule)
+  print "&&&"
   return negRule
 
 def appendDomainArgs(negRule):
@@ -234,10 +259,16 @@ def getAllVarTypes(cursor, rule, posRid=None):
   atts = dumpers.singleRuleAttDump( str(rule.rid), cursor )
   vars = {}
   for goalAtt in atts['goalAttData']:
+    if goalAtt[1] in vars.keys() and goalAtt == 'UNDEFINEDTYPE':
+      continue 
     vars[goalAtt[1]] = goalAtt[2]
   for subgoal in atts['subgoalAttData']:
-    for subgoalAtt in subgoal[2]:
+      for subgoalAtt in subgoal[2]:
+        if goalAtt[1] in vars.keys() and goalAtt == 'UNDEFINEDTYPE':
+          continue 
       vars[subgoalAtt[1]] = subgoalAtt[2]
+  print atts
+  print vars
   return vars
 
 def is_int(x):

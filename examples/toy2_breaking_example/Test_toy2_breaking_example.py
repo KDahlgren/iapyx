@@ -51,7 +51,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
   #  DM TOY 2 USE NEXT CLOCK  #
   ##############################
   # tests rewriting the second toy program using next_clock
-  #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
+  @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
   def test_dm_toy2_use_next_clock( self ) :
 
     # specify input and output paths
@@ -69,7 +69,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
   #  DM TOY 2 SYNC ASSUMPTION  #
   ###############################
   # tests rewriting the second toy program using the synchronous assumption
-  #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
+  @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
   def test_dm_toy2_sync_assumption( self ) :
 
     # specify input and output paths
@@ -87,7 +87,7 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
   #  DM TOY 2 USE AGGS  #
   ########################
   # tests rewriting the second toy program using agg rewrites
-  #@unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
+  @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
   def test_dm_toy2_use_aggs( self ) :
 
     # specify input and output paths
@@ -97,6 +97,18 @@ class Test_toy2_breaking_example( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_use_aggs.ini"
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None )
+
+
+  def test_combo_toy2( self ):
+    # specify input and output paths
+    inputfile               = "./toy2.ded"
+    expected_iapyx_dm_path = "./toy2_breaking_example_use_aggs.olg"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_combo.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None )
 
