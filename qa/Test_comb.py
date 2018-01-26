@@ -52,7 +52,7 @@ class Test_comb( unittest.TestCase ) :
   # COMB SIMPLOG  #
   ################
   # tests rewriting simplog
-  # @unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_comb_simplog( self ) :
 
     # specify input and output paths
@@ -79,7 +79,7 @@ class Test_comb( unittest.TestCase ) :
   # #  COMB TOY 3 AGG REWRITES  #
   # ############################
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy3_aggRewrites( self ) :
 
     # specify input and output paths
@@ -92,7 +92,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB TOY 2  #
   ###############
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy2( self ) :
 
     # specify input and output paths
@@ -106,7 +106,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB TOY  #
   #############
   # tests rewriting the toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy( self ) :
 
     # specify input and output paths
@@ -218,7 +218,6 @@ class Test_comb( unittest.TestCase ) :
     noOverlap = False
 
     results_array = c4_evaluator.runC4_wrapper( programData )
-    print results_array
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
 

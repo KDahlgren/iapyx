@@ -64,7 +64,7 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
 
           # add in the adom
           dom_name = "dom_str"
-          if childVars[childRule.goalAttList[attIndex]] == 'int':
+          if childVars[childRule.goalAttList[attIndex]].lower() == 'int':
             dom_name = "dom_int"
 
           goalDict = createSubgoalDict(dom_name, [att], '', childRule.goalTimeArg)
@@ -157,7 +157,7 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
 
           # add in the adom
           dom_name = "dom_str"
-          if childVars[att] == 'int':
+          if childVars[att].lower() == 'int':
             dom_name = "dom_int"
           goalDict = createSubgoalDict(dom_name, [val], '', childRule.goalTimeArg)
           ruleData['subgoalListOfDicts'].append(goalDict)
@@ -218,11 +218,12 @@ def concateDomain(cursor, negRule, posRid):
   print "concateDomain"
   print "&&&"
   print negRule.subgoalListOfDicts
+  print posRid
   for var in varss:
     print var
     if var[0] == "_" or '+' in var[0]:
       continue
-    if var[1] == 'int':
+    if var[1].lower() == 'int':
       rel_name = "dom_int"
     else:
       rel_name = "dom_str"
