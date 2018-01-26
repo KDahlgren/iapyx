@@ -79,7 +79,7 @@ class Test_comb( unittest.TestCase ) :
   # #  COMB TOY 3 AGG REWRITES  #
   # ############################
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy3_aggRewrites( self ) :
 
     # specify input and output paths
