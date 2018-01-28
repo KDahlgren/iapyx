@@ -31,7 +31,7 @@ class Test_dm( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
@@ -93,6 +93,30 @@ class Test_dm( unittest.TestCase ) :
     expected_iapyx_dm_path = "./testFiles/demo_1.olg"
 
     self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_demo_1_" )
+
+
+  #####################
+  #  DM FIXED DATA 2  #
+  #####################
+  def test_dm_fixed_data_2( self ) :
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/dm_fixed_data_2.ded"
+    expected_iapyx_dm_path = "./testFiles/dm_fixed_data_2.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_fixed_data_2_" )
+
+
+  #####################
+  #  DM FIXED DATA 1  #
+  #####################
+  def test_dm_fixed_data_1( self ) :
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/dm_fixed_data_1.ded"
+    expected_iapyx_dm_path = "./testFiles/dm_fixed_data_1.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_fixed_data_1_" )
 
 
   ############################

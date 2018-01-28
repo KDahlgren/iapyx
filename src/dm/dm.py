@@ -1165,6 +1165,28 @@ def hasDM( subgoalName, ruleMeta ) :
   return False
 
 
+#####################
+#  IS FIXED STRING  #
+#####################
+def is_fixed_string( att ) :
+  if att.startswith( "'" ) and att.endswith( "'" ) :
+    return True
+  elif att.startswith( '"' ) and att.endswith( '"' ) :
+    return True
+  else :
+    return False
+
+
+##################
+#  IS FIXED INT  #
+##################
+def is_fixed_int( att ) :
+  if att.isdigit() :
+    return True
+  else :
+    return False
+
+
 ##################################
 #  BUILD EXISTENTIAL VARS RULES  #
 ##################################
@@ -1204,7 +1226,7 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
 
       # ----------------------------------------- #
       # iterate over rule subgoals to build a base 
-      # list of dictionaries
+      # list of dictionaries.
       # preserve existential vars, but replace
       # universal vars with wildcards
 
@@ -1218,7 +1240,9 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
 
         subgoalAttList = []
         for satt in subgoal[ "subgoalAttList" ] :
-          if satt in existentialAttList :
+          if satt in existentialAttList and \
+            not is_fixed_string( satt ) and \
+            not is_fixed_int( satt ) :
             subgoalAttList.append( satt )
           else :
             subgoalAttList.append( "_" )
@@ -1357,7 +1381,9 @@ def getExistentialVarList( rule ) :
   for subgoal in rule.subgoalListOfDicts :
     subgoalAttList = subgoal[ "subgoalAttList" ]
     for satt in subgoalAttList :
-      if not satt in universalAttList and not satt in existentialAttList and not satt == "_" :
+      if not satt in universalAttList and \
+         not satt in existentialAttList and \
+         not satt == "_" :
         existentialAttList.append( satt )
 
   return existentialAttList
