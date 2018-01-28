@@ -52,7 +52,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_replog_dm_" )
 
 
   ############################
@@ -71,7 +71,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_rdlog_dm_" )
 
 
   ##############################
@@ -90,7 +90,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "iedb_rewrites_simplog_dm_" )
 
 
   ##########################
@@ -108,7 +108,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_replog_" )
 
 
   #########################
@@ -126,7 +126,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_rdlog_" )
 
 
   ###########################
@@ -144,7 +144,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_simplog_" )
 
 
   #############################
@@ -161,23 +161,23 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, None )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, None, "_iedb_rewrites_example_1_" )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx iedb_rewrites comparison workflow
-  def comparison_workflow( self, argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path ) :
+  def comparison_workflow( self, argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* files." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -427,6 +427,8 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
 if __name__ == "__main__" :
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 
 #########

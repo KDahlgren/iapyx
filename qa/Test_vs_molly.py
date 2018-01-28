@@ -63,7 +63,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/tokens_iapyx.olg"
     molly_path          = "./testFiles/tokens_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_tokens_" )
 
 
   ########################
@@ -87,7 +87,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/test_deliv_iapyx.olg"
     molly_path          = "./testFiles/test_deliv_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_deliv_" )
 
 
   ######################
@@ -111,7 +111,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/test_ack_iapyx.olg"
     molly_path          = "./testFiles/test_ack_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_ack_" )
 
 
   ####################
@@ -135,7 +135,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/test2_iapyx.olg"
     molly_path          = "./testFiles/test2_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_test2_" )
 
 
   ########################
@@ -159,7 +159,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/register_iapyx.olg"
     molly_path          = "./testFiles/register__molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_register_" )
 
 
   ########################
@@ -183,7 +183,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/real_kafka_iapyx.olg"
     molly_path          = "./testFiles/real_kafka_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_real_kafka_" )
 
 
   ########################
@@ -207,7 +207,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/real_chord_iapyx.olg"
     molly_path          = "./testFiles/real_chord_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_real_chord_" )
 
 
   ######################
@@ -231,7 +231,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/pipeline_iapyx.olg"
     molly_path          = "./testFiles/pipeline_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_pipeline_" )
 
 
   #########################
@@ -255,7 +255,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/paxos_synod_iapyx.olg"
     molly_path          = "./testFiles/paxos_synod_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_paxos_synod_" )
 
 
   ###################
@@ -279,7 +279,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/orc2_iapyx.olg"
     molly_path          = "./testFiles/orc2_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_orc2_" )
 
 
   #################
@@ -303,7 +303,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/orc_iapyx.olg"
     molly_path          = "./testFiles/orc_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_orc_" )
 
 
   ###################################
@@ -327,7 +327,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/negative_support_test_iapyx.olg"
     molly_path          = "./testFiles/negative_support_test_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_negative_support_test_" )
 
 
   ###################
@@ -351,7 +351,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/kafka_iapyx.olg"
     molly_path          = "./testFiles/kafka_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_kafka_" )
 
 
   ###############################
@@ -375,7 +375,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/chain_replication_iapyx.olg"
     molly_path          = "./testFiles/chain_replication_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_chain_replication_" )
 
 
   ##########################
@@ -399,7 +399,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/barrier_test_iapyx.olg"
     molly_path          = "./testFiles/barrier_test_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_barrier_test_" )
 
 
   ##################
@@ -423,7 +423,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/ramp_iapyx.olg"
     molly_path          = "./testFiles/ramp_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_ramp_" )
 
 
   ##################
@@ -447,7 +447,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/raft_iapyx.olg"
     molly_path          = "./testFiles/raft_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_raft_" )
 
 
   ####################
@@ -471,13 +471,12 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/gstore_iapyx.olg"
     molly_path          = "./testFiles/gstore_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_gstore_" )
 
 
   ##################################
   #  EXAMPLE FLUX PARTITION PAIRS  #
   ##################################
-  # tests ded to c4 datalog for 3pc with optimistic assertions
   #
   # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
   # 	src/test/resources/examples_ft/flux/flux_partitionpairs.ded \
@@ -495,13 +494,12 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/flux_partitionpairs_iapyx.olg"
     molly_path          = "./testFiles/flux_partitionpairs_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_flux_partitionpairs_" )
 
 
   ################################
   #  EXAMPLE FLUX CLUSTER PAIRS  #
   ################################
-  # tests ded to c4 datalog for 3pc with optimistic assertions
   #
   # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
   # 	src/test/resources/examples_ft/flux/flux_clusterpairs.ded \
@@ -519,13 +517,12 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/flux_clusterpairs_iapyx.olg"
     molly_path          = "./testFiles/flux_clusterpairs_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_flux_clusterpairs_" )
 
 
   ###########################
   #  EXAMPLE 3 PC OPTIMIST  #
   ###########################
-  # tests ded to c4 datalog for 3pc with optimistic assertions
   #
   # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
   # 	src/test/resources/examples_ft/commit/3pc.ded \
@@ -544,7 +541,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/3pc_optimist_iapyx.olg"
     molly_path          = "./testFiles/3pc_optimist_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_3pc_optimist_" )
 
 
   ##################
@@ -569,7 +566,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/3pc_iapyx.olg"
     molly_path          = "./testFiles/3pc_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_3pc_" )
 
 
   ###############################
@@ -594,7 +591,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/2pc_ctp_optimist_iapyx.olg"
     molly_path          = "./testFiles/2pc_ctp_optimist_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_2pc_ctp_optimist_" )
 
 
   ######################
@@ -624,7 +621,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/2pc_ctp_iapyx.olg"
     molly_path          = "./testFiles/2pc_ctp_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_2pc_ctp_" )
 
 
   ###########################
@@ -649,7 +646,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/2pc_optimist_iapyx.olg"
     molly_path          = "./testFiles/2pc_optimist_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_2pc_optimist_" )
 
 
   ##################
@@ -674,7 +671,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/2pc_iapyx.olg"
     molly_path          = "./testFiles/2pc_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_2pc_" )
 
 
   ####################
@@ -689,7 +686,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/ack_rb_iapyx.olg"
     molly_path          = "./testFiles/ack_rb_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_ack_rb_" )
 
 
   ########################
@@ -704,7 +701,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/classic_rb_iapyx.olg"
     molly_path          = "./testFiles/classic_rb_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_classic_rb_" )
 
 
   ####################
@@ -719,7 +716,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/replog_iapyx.olg"
     molly_path          = "./testFiles/replog_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_replog_" )
 
 
   ####################
@@ -734,7 +731,7 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/rdlog_iapyx.olg"
     molly_path          = "./testFiles/rdlog_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_rdlog_" )
 
 
   #####################
@@ -749,23 +746,23 @@ class Test_vs_molly( unittest.TestCase ) :
     expected_iapyx_path = "./testFiles/simplog_iapyx.olg"
     molly_path          = "./testFiles/simplog_molly.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path )
+    self.comparison_workflow( inputfile, expected_iapyx_path, molly_path, "_simplog_" )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx vs molly comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_path, molly_path ) :
+  def comparison_workflow( self, inputfile, expected_iapyx_path, molly_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* files." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -814,10 +811,10 @@ class Test_vs_molly( unittest.TestCase ) :
     with open( molly_path, 'r' ) as mollyFile :
       molly_results = mollyFile.read()
 
-    print "iapyx_results"
-    print iapyx_results
-    print "molly_results"
-    print molly_results
+    #print "iapyx_results"
+    #print iapyx_results
+    #print "molly_results"
+    #print molly_results
 
     match_elements_flag_iapyx, match_elements_flag_molly = self.compareIapyxAndMolly( iapyx_results, molly_results )
 
@@ -1357,6 +1354,8 @@ class Test_vs_molly( unittest.TestCase ) :
 
 if __name__ == "__main__" :
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 #########
 #  EOF  #

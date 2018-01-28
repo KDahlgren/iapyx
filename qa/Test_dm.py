@@ -48,7 +48,7 @@ class Test_dm( unittest.TestCase ) :
     expected_iapyx_dm_path = "./testFiles/replog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/replog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path, "_dm_replog_" )
 
 
   ###############
@@ -63,7 +63,7 @@ class Test_dm( unittest.TestCase ) :
     expected_iapyx_dm_path = "./testFiles/rdlog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path, "_dm_rdlog__" )
 
 
   #################
@@ -78,7 +78,7 @@ class Test_dm( unittest.TestCase ) :
     expected_iapyx_dm_path = "./testFiles/simplog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path, "_dm_simplog_" )
 
 
   ###############
@@ -92,7 +92,7 @@ class Test_dm( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/demo_1.ded"
     expected_iapyx_dm_path = "./testFiles/demo_1.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_demo_1_" )
 
 
   ############################
@@ -106,7 +106,7 @@ class Test_dm( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
     expected_iapyx_dm_path = "./testFiles/toy3_aggRewrites.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_toy3_aggRewrites_" )
 
 
   ###############
@@ -120,7 +120,7 @@ class Test_dm( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/toy2.ded"
     expected_iapyx_dm_path = "./testFiles/toy2.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_toy_2_" )
 
 
   #############
@@ -134,23 +134,23 @@ class Test_dm( unittest.TestCase ) :
     inputfile               = os.getcwd() + "/testFiles/toy.ded"
     expected_iapyx_dm_path = "./testFiles/toy.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None, "_dm_toy_" )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx dm comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_dm_path, expected_eval_path ) :
+  def comparison_workflow( self, inputfile, expected_iapyx_dm_path, expected_eval_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* file." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -2488,6 +2488,8 @@ class Test_dm( unittest.TestCase ) :
 
 if __name__ == "__main__" :
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 
 #########
