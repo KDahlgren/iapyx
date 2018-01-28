@@ -31,7 +31,8 @@ def dm_demo_1( molly_path, table_path, type_path ) :
   eot           = "2"
   eff           = "1"
   evaluator     = "c4"
-  settings_path = "./settings_files/settings_dm.ini"
+  #settings_path = "./settings_files/settings_dm.ini"
+  settings_path = "./settings_files/settings_regular.ini"
 
   argDict = {  "file"      : driver_path, \
                "crashes"   : crashes, \
