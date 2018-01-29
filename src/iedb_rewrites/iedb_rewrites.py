@@ -79,7 +79,14 @@ def iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) :
 
     fact_obj_list = rel_name_to_fact_obj_map[ rel_name ]
 
+    logging.debug( "  IEDB REWRITES : rel_name      = " + rel_name )
+    logging.debug( "  IEDB REWRITES : fact_obj_list = " + str( fact_obj_list ) )
+
     for fact_obj in fact_obj_list :
+
+      logging.debug( "  IEDB REWRITES : fact_obj.cursor   = " + str( fact_obj.cursor ) )
+      logging.debug( "  IEDB REWRITES : fact_obj.factData = " + str( fact_obj.factData ) )
+
       fact_obj.relationName += "_edb"
       fact_obj.saveFactInfo()
 
