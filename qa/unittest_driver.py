@@ -15,9 +15,9 @@ def unittest_driver() :
   print
 
   # make absolutely sure no leftover IR files exist.
-  if os.path.exists( "./IR.db" ) :
-    os.system( "rm ./IR.db" )
-    logging.info( "  UNIT TEST DRIVER : deleted rogue IR.db file." )
+  if os.path.exists( "./IR*.db*" ) :
+    os.system( "rm ./IR*.db*" )
+    logging.info( "  UNIT TEST DRIVER : deleted rogue IR*.db* file." )
 
 
   # run Test_dedt tests
@@ -47,9 +47,9 @@ def unittest_driver() :
 unittest_driver()
 
 # make absolutely sure no leftover IR files exist.
-if os.path.exists( "./IR.db" ) :
-  os.system( "rm ./IR.db" )
-  logging.info( "  UNIT TEST DRIVER : deleted rogue IR.db file." )
+if os.path.exists( "./IR*.db*" ) :
+  os.system( "rm ./IR*.db*" )
+  logging.info( "  UNIT TEST DRIVER : deleted rogue IR*.db* files." )
 
 
 

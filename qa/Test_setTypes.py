@@ -27,9 +27,9 @@ from evaluators import c4_evaluator
 ####################
 class Test_setTypes( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
@@ -662,7 +662,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_3pc_" )
 
 
   ##################
@@ -693,7 +694,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_3pc_" )
 
 
   ###############################
@@ -791,7 +793,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_2pc_optimist_" )
 
 
   ##################
@@ -822,7 +825,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_2pc_" )
 
 
   ####################
@@ -843,7 +847,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_ack_rb_" )
 
 
   ########################
@@ -864,7 +869,8 @@ class Test_setTypes( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
-                              expected_eval_path )
+                              expected_eval_path, \
+                              "_setTypes_classic_rb_" )
 
 
   #########################
@@ -883,7 +889,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_setTypes_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_replog_dm_" )
 
 
   ########################
@@ -902,7 +908,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_setTypes_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_rdlog_dm_" )
 
 
   ##########################
@@ -921,7 +927,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_setTypes_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_simplog_dm_" )
 
 
   ######################
@@ -939,7 +945,7 @@ class Test_setTypes( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_replog_" )
 
 
   #####################
@@ -957,7 +963,7 @@ class Test_setTypes( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_rdlog_" )
 
 
   #######################
@@ -975,7 +981,7 @@ class Test_setTypes( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path )
+    self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_simplog_" )
 
 
   #########################
@@ -992,23 +998,23 @@ class Test_setTypes( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
-    self.comparison_workflow( argDict, expected_iapyx_settypes_path, None )
+    self.comparison_workflow( argDict, expected_iapyx_settypes_path, None, "_setTypes_example_1_" )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx program comparison workflow
-  def comparison_workflow( self, argDict, expected_iapyx_settypes_path, expected_eval_path ) :
+  def comparison_workflow( self, argDict, expected_iapyx_settypes_path, expected_eval_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* files." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -1280,6 +1286,8 @@ class Test_setTypes( unittest.TestCase ) :
 
 if __name__ == "__main__" :
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 #########
 #  EOF  #

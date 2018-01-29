@@ -22,8 +22,8 @@ TODO:
   How to collect metric from molly?
 '''
 
-DEMOS          = True
-ORIGINAL_TESTS = False
+DEMOS          = False
+ORIGINAL_TESTS = True
 DM_TESTS       = False
 COMBO_TESTS    = False
 SC_TESTS       = False
@@ -54,7 +54,7 @@ def experiment_driver( molly_path ) :
 
     original_tests.original_simplog( molly_path, table_path, type_path )
     #original_tests.original_rdlog( molly_path, table_path, type_path ) # need to implement crash table!
-    original_tests.original_replog( molly_path, table_path, type_path )
+    #original_tests.original_replog( molly_path, table_path, type_path )
 
   # ---------------------- #
   #        DM TESTS        #

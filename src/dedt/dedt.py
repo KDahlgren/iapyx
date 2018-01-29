@@ -222,7 +222,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
     if RUN_DM :
 
-      ruleMeta = dm.dm( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
+      factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
       setTypes.setTypes( cursor, settings_path )
@@ -348,7 +348,8 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
   # save all program lines to file
   try :
     if argDict[ "data_save_path" ] :
-      fo = open( argDict[ "save_path" ] + "final_initial_program.olg", "w" )
+      logging.debug( "  RUN TRANSLATOR : using data_save_path '" + argDict[ "data_save_path" ] + "'" )
+      fo = open( argDict[ "data_save_path" ] + "final_initial_program.olg", "w" )
       program = allProgramLines[0]
       for line in program :
         fo.write( line + "\n" )

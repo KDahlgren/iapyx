@@ -30,8 +30,8 @@ import dm
 class Test_dm( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
@@ -43,12 +43,18 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_replog( self ) :
 
+    test_id = "_dm_replog_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
     expected_iapyx_dm_path = "./testFiles/replog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/replog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
   ###############
@@ -58,12 +64,18 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_rdlog( self ) :
 
+    test_id = "_dm_rdlog_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
     expected_iapyx_dm_path = "./testFiles/rdlog_iapyx_dm.olg"
     expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
   #################
@@ -73,12 +85,18 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_simplog( self ) :
 
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
-    expected_iapyx_dm_path = "./testFiles/simplog_iapyx_dm.olg"
-    expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
+    test_id = "_dm_simplog_"
+    logging.info( "  TEST DM : running test" + test_id )
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, expected_eval_path )
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/simplog_driver.ded"
+    expected_iapyx_dm_path = "./testFiles/simplog_iapyx_dm.olg"
+    expected_eval_path     = "./testFiles/simplog_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
   ###############
@@ -88,11 +106,74 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_demo_1( self ) :
 
+    test_id = "_dm_demo_1_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/demo_1.ded"
+    inputfile              = os.getcwd() + "/testFiles/demo_1.ded"
     expected_iapyx_dm_path = "./testFiles/demo_1.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
+
+
+  #####################
+  #  DM FIXED DATA 3  #
+  #####################
+  def test_dm_fixed_data_3( self ) :
+
+    test_id = "_dm_fixed_data_3_"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/dm_fixed_data_3.ded"
+    expected_iapyx_dm_path = "./testFiles/dm_fixed_data_3.olg"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
+
+
+  #####################
+  #  DM FIXED DATA 2  #
+  #####################
+  def test_dm_fixed_data_2( self ) :
+
+    test_id = "_dm_fixed_data_2_"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/dm_fixed_data_2.ded"
+    expected_iapyx_dm_path = "./testFiles/dm_fixed_data_2.olg"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
+
+
+  #####################
+  #  DM FIXED DATA 1  #
+  #####################
+  def test_dm_fixed_data_1( self ) :
+
+    test_id = "_dm_fixed_data_1_"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/dm_fixed_data_1.ded"
+    expected_iapyx_dm_path = "./testFiles/dm_fixed_data_1.olg"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
   ############################
@@ -102,11 +183,17 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_toy3_aggRewrites( self ) :
 
+    test_id = "_dm_toy3_aggRewrites_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
+    inputfile              = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
     expected_iapyx_dm_path = "./testFiles/toy3_aggRewrites.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
   ###############
@@ -116,11 +203,17 @@ class Test_dm( unittest.TestCase ) :
   @unittest.skip( "c4 illogically calculates a('a',2,2) and domcomp_a('a',2,2). behavior did not occur when using aggregates in next rules." )
   def test_dm_toy2( self ) :
 
+    test_id = "_dm_toy2_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy2.ded"
     expected_iapyx_dm_path = "./testFiles/toy2.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
   #############
@@ -130,27 +223,33 @@ class Test_dm( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_dm_toy( self ) :
 
+    test_id = "_dm_toy_"
+    logging.info( "  TEST DM : running test" + test_id )
+
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy.ded"
     expected_iapyx_dm_path = "./testFiles/toy.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_dm_path, None )
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx dm comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_dm_path, expected_eval_path ) :
+  def comparison_workflow( self, argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* file." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -161,9 +260,6 @@ class Test_dm( unittest.TestCase ) :
 
     # --------------------------------------------------------------- #
     # runs through function to make sure it finishes with expected error
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -2488,6 +2584,8 @@ class Test_dm( unittest.TestCase ) :
 
 if __name__ == "__main__" :
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 
 #########

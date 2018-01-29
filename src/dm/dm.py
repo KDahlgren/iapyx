@@ -18,7 +18,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
-from dedt       import Rule
+from dedt       import Fact, Rule
 from evaluators import c4_evaluator
 from utils      import clockTools, tools, dumpers, setTypes
 
@@ -40,6 +40,12 @@ arithOps = [ "+", "-", "*", "/" ]
 def dm( factMeta, ruleMeta, cursor, settings_path ) :
 
   logging.debug( "  DM : running process..." )
+
+  # ----------------------------------------- #
+  # rewrite rules with fixed data 
+  # in the head
+
+  ruleMeta, factMeta = fixed_data_head_rewrites( ruleMeta, factMeta, settings_path )
 
   # ----------------------------------------- #
   # rewrite rules with aggregate functions
@@ -128,7 +134,146 @@ def dm( factMeta, ruleMeta, cursor, settings_path ) :
     COUNTER += 1
 
   logging.debug( "  DM : ...done." )
-  return ruleMeta
+  return factMeta, ruleMeta
+
+
+##############################
+#  HEAD CONTAINS FIXED DATA  #
+##############################
+def head_contains_fixed_data( rule ) :
+
+  for gatt in rule.goalAttList :
+    if is_fixed_string( gatt ) :
+      return True
+    elif is_fixed_int( gatt ) :
+      return True
+
+  return False
+
+
+##############################
+#  FIXED DATA HEAD REWRITES  #
+##############################
+# if head contains fixed data, replace with a new goal
+# att connected to a new edb subgoal defined 
+# using that piece of fixed data.
+#
+#    t( X, 4 ) :- m( X ) ;
+#
+# => t( X, Y ) :- m( X ), fdhr_4( Y ) ;
+#    fdhr_4( 4 ) ;
+#
+def fixed_data_head_rewrites( ruleMeta, factMeta, settings_path ) :
+
+  for rule in ruleMeta :
+
+    if head_contains_fixed_data( rule ) :
+
+      orig_name   = copy.copy( rule.relationName )
+      logging.debug( "  FIXED DATA HEAD REWRITES : rule.cursor = " + str( rule.cursor ) )
+
+      # ----------------------------------------- #
+      # normalize universal attributes
+
+      # get goal att list
+      goalAttList = copy.deepcopy( rule.goalAttList )
+
+      # build new goal att list
+      new_goalAttList = []
+      index           = 0
+      fixed_data_list = []
+      for gatt in goalAttList :
+
+        # replace fixed data with attribute variables
+        if is_fixed_string( gatt ) or is_fixed_int( gatt ) :
+          new_gatt = "FDHRAtt" + str( index )
+          fixed_data_list.append( [ new_gatt, gatt ] )
+
+        # otherwise, keep the old string
+        else :
+          new_gatt = gatt
+
+        new_goalAttList.append( new_gatt )
+        index += 1
+
+      logging.debug( "  FIXED DATA HEAD REWRITES : new_goalAttList = " + str( new_goalAttList ) )
+
+      # save new goal attribute list
+      rule.ruleData[ "goalAttList" ] = new_goalAttList
+      rule.goalAttList               = new_goalAttList
+      rule.saveToGoalAtt()
+
+      logging.debug( "  FIXED DATA HEAD REWRITES : rule.ruleData[ 'goalAttList' ] = " + str( rule.ruleData[ "goalAttList" ] ) )
+      logging.debug( "  FIXED DATA HEAD REWRITES : rule.goalAttList               = " + str( rule.goalAttList ) )
+
+      # add subgoals for fixed data
+      subgoalListOfDicts = rule.subgoalListOfDicts
+
+      # copy over all existing subgoals
+      new_subgoalListOfDicts = []
+      for sub in subgoalListOfDicts :
+        new_subgoalListOfDicts.append( copy.copy( sub ) )
+
+      for fdata in fixed_data_list :
+
+        new_att  = fdata[ 0 ]
+        raw_data = fdata[ 1 ]
+
+        if is_fixed_string( raw_data ) :
+          raw_data = raw_data.replace( "'", "" )
+          raw_data = raw_data.replace( '"', "" )
+          raw_data = raw_data.lower()
+
+        new_sub_dict = {}
+        new_sub_dict[ "subgoalName" ]    = "fdhr_" + str( raw_data )
+        new_sub_dict[ "subgoalAttList" ] = [ new_att ]
+        new_sub_dict[ "polarity" ]       = ""
+        new_sub_dict[ "subgoalTimeArg" ] = ""
+        new_subgoalListOfDicts.append( new_sub_dict )
+
+      logging.debug( "  FIXED DATA HEAD REWRITES : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+
+      # save new subgoals
+      rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
+      rule.subgoalListOfDicts               = new_subgoalListOfDicts
+      rule.saveSubgoals()
+
+      # ----------------------------------------- #
+      # add new corresponding facts
+      # factData = { relationName:'relationNameStr', dataList:[ data1, ... , dataN ], factTimeArg:<anInteger> }
+
+      for fdata in fixed_data_list :
+
+        logging.debug( "  FIXED DATA HEAD REWRITES : fdata = " + str( fdata ) )
+
+        new_att       = fdata[ 0 ]
+        raw_data_orig = fdata[ 1 ]
+
+        if is_fixed_string( raw_data_orig ) :
+          raw_data = raw_data_orig.replace( "'", "" )
+          raw_data = raw_data.replace( '"', "" )
+          raw_data = raw_data.lower()
+        else :
+          raw_data = raw_data_orig
+
+        newFactData = {}
+        newFactData[ "relationName" ] = "fdhr_" + str( raw_data )
+        newFactData[ "dataList" ]     = [ raw_data_orig ]
+        newFactData[ "factTimeArg" ]  = "" # n/a b/c datalog
+
+        logging.debug( "  FIXED DATA HEAD REWRITES : newFactData = " + str( newFactData ) )
+
+        fid = tools.getIDFromCounters( "fid" )
+    
+        newFact        = copy.deepcopy( Fact.Fact( fid, newFactData, rule.cursor ) ) # cursor should be identical for everything.
+        newFact.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
+        factMeta.append( newFact )
+  
+        setTypes.setTypes( rule.cursor, settings_path )
+
+  logging.debug( "  FIXED DATA HEAD REWRITES : len( ruleMeta )     = " + str( len( ruleMeta ) ) )
+  logging.debug( "  FIXED DATA HEAD REWRITES : len( factMeta )     = " + str( len( factMeta ) ) )
+  return ruleMeta, factMeta
 
 
 ##################
@@ -141,6 +286,8 @@ def aggRewrites( ruleMeta, settings_path ) :
   new_relationNames = []
 
   for rule in ruleMeta :
+
+    logging.debug( "  AGG REWRITES : rule.ruleData = " + str( rule.ruleData ) )
 
     if containsAgg_rule( rule ) :
 
@@ -155,7 +302,7 @@ def aggRewrites( ruleMeta, settings_path ) :
       # build new goal att list
       new_goalAttList = []
       index           = 0
-      attMapper       = {}
+      attMapper       = {} # maps old goal att strings to new goal att strings.
       aggIndexes      = []
       for gatt in goalAttList :
 
@@ -780,7 +927,10 @@ def makeUnique( ruleSet ) :
         # ----------------------------------------- #
         # append the rid to all existential vars
 
-        if satt in goalAttList or satt == "_" :
+        if satt in goalAttList or \
+           satt == "_" or \
+           is_fixed_string( satt ) or \
+           is_fixed_int( satt ) :
           new_subgoalAttList.append( satt )
 
         else :
@@ -899,7 +1049,11 @@ def extractExistentialVars( ruleData ) :
     # collect all existential vars
 
     for satt in subgoalAttList :
-      if not satt in goalAttList and not satt in allExistentialVars and not satt == "_" :
+      if not satt in goalAttList and \
+         not satt in allExistentialVars and \
+         not satt == "_" and \
+         not is_fixed_string( satt ) and \
+         not is_fixed_int( satt ) :
         allExistentialVars.append( satt )
 
   return allExistentialVars
@@ -1165,6 +1319,28 @@ def hasDM( subgoalName, ruleMeta ) :
   return False
 
 
+#####################
+#  IS FIXED STRING  #
+#####################
+def is_fixed_string( att ) :
+  if att.startswith( "'" ) and att.endswith( "'" ) :
+    return True
+  elif att.startswith( '"' ) and att.endswith( '"' ) :
+    return True
+  else :
+    return False
+
+
+##################
+#  IS FIXED INT  #
+##################
+def is_fixed_int( att ) :
+  if att.isdigit() :
+    return True
+  else :
+    return False
+
+
 ##################################
 #  BUILD EXISTENTIAL VARS RULES  #
 ##################################
@@ -1202,9 +1378,11 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
 
       existentialAttList = getExistentialVarList( rule )
 
+      logging.debug( "  BUILD EXISTENTIAL VARS RULES : existentialAttList = " + str( existentialAttList ) )
+
       # ----------------------------------------- #
       # iterate over rule subgoals to build a base 
-      # list of dictionaries
+      # list of dictionaries.
       # preserve existential vars, but replace
       # universal vars with wildcards
 
@@ -1329,7 +1507,7 @@ def isSafe( ruleData ) :
 # build a table of all possible combinations of 0s and 1s in rows of the input length
 def getPatternMap( numSubgoals ) :
 
-  logging.debug( "  GET PATTERN MAP : numSubgoals = " + str( numSubgoals ) )
+  logging.debug( "  GET PATTERN MAPsatt : numSubgoals = " + str( numSubgoals ) )
 
   patternMap = [ ''.join( i ) for i in itertools.product( [ "0", "1" ], repeat = numSubgoals ) ]
 
@@ -1357,7 +1535,11 @@ def getExistentialVarList( rule ) :
   for subgoal in rule.subgoalListOfDicts :
     subgoalAttList = subgoal[ "subgoalAttList" ]
     for satt in subgoalAttList :
-      if not satt in universalAttList and not satt in existentialAttList and not satt == "_" :
+      if not satt in universalAttList and \
+         not satt in existentialAttList and \
+         not satt == "_" and \
+         not is_fixed_string( satt ) and \
+         not is_fixed_int( satt ) :
         existentialAttList.append( satt )
 
   return existentialAttList
@@ -1382,7 +1564,10 @@ def containsExistentialVars( rule ) :
     subgoalAttList = subgoal[ "subgoalAttList" ]
     for satt in subgoalAttList :
       if not satt == "_" :
-        if not satt in universalAttList and not satt in existentialAttList :
+        if not satt in universalAttList and \
+           not satt in existentialAttList and \
+           not is_fixed_string( satt ) and \
+           not is_fixed_int( satt ) :
           existentialAttList.append( satt )
 
   if len( existentialAttList ) > 0 :
