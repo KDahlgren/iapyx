@@ -16,7 +16,7 @@ if not os.path.abspath( __file__ + "/../../src" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../src" ) )
 
 from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRewriter
-from utils      import dumpers, globalCounters, tools
+from utils      import dumpers, globalCounters, tools, setTypes
 from evaluators import c4_evaluator
 
 # ------------------------------------------------------ #
@@ -648,7 +648,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_3pc_optimist( self ) :
 
     # specify input and output paths
@@ -679,7 +679,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_3pc( self ) :
 
     # specify input and output paths
@@ -777,7 +777,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_2pc_optimist( self ) :
 
     # specify input and output paths
@@ -808,7 +808,7 @@ class Test_setTypes( unittest.TestCase ) :
   #	--crashes 0 \
   #	--prov-diagrams"
   #
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_2pc( self ) :
 
     # specify input and output paths
@@ -829,7 +829,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  EXAMPLE ACK RB  #
   ####################
   # tests ded to c4 datalog for ack reliable broadcast
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_ack_rb( self ) :
 
     # specify input and output paths
@@ -850,7 +850,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  EXAMPLE CLASSIC RB  #
   ########################
   # tests ded to c4 datalog for classic rb
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_classic_rb( self ) :
 
     # specify input and output paths
@@ -871,7 +871,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES REPLOG DM  #
   #########################
   # tests set types replog on dm
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_replog_dm( self ) :
 
     # specify input and output paths
@@ -890,7 +890,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES RDLOG DM  #
   ########################
   # tests rdlog on dm
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_rdlog_dm( self ) :
 
     # specify input and output paths
@@ -909,7 +909,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES SIMPLOG DM  #
   ##########################
   # tests simplog on dm
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_simplog_dm( self ) :
 
     # specify input and output paths
@@ -928,7 +928,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES REPLOG  #
   ######################
   # tests replog
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_replog( self ) :
 
     # specify input and output paths
@@ -946,7 +946,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES RDLOG  #
   #####################
   # tests rdlog
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_rdlog( self ) :
 
     # specify input and output paths
@@ -964,7 +964,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES SIMPLOG  #
   #######################
   # tests simplog
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_setTypes_simplog( self ) :
 
     # specify input and output paths
@@ -1051,6 +1051,12 @@ class Test_setTypes( unittest.TestCase ) :
     self.evaluate( programData, expected_eval_path )
 
     # --------------------------------------------------------------- #
+
+    # ========================================================== #
+    # CHECK TYPE MATCH
+
+    self.typeMatch(cursor, programData )
+
     #clean up testing
 
     IRDB.close()
@@ -1092,6 +1098,40 @@ class Test_setTypes( unittest.TestCase ) :
     if expected_eval_path :
 
       self.compare_evals( eval_results_dict, expected_eval_path )
+
+  ###################
+  #   TYPE MATCH    #
+  ###################
+  # check that subgoal types match correctly with their matching
+  # rule
+  def typeMatch( self, cursor, programData ) :
+    # grab all rules type information
+    cursor.execute("SELECT rid FROM Rule")
+    rids = cursor.fetchall()
+    rids = tools.toAscii_list( rids )
+    ruleTypes = {}
+    for rid in rids:
+      r = dumpers.singleRuleAttDump( rid, cursor )
+      ruleTypes[r['goalName']] = r
+
+    # grab all facts
+    cursor.execute("SELECT fid FROM Fact")
+    fids = cursor.fetchall()
+    fids = tools.toAscii_list( fids )
+    factTypes = {}
+    for fid in fids:
+      continue
+
+    # loop through and check matches between goals and subgoals
+    for rid, rule in ruleTypes.iteritems():
+      for subgoal in rule['subgoalAttData']:
+        if subgoal[1] not in ruleTypes.keys():
+          continue
+        matchingGoal = ruleTypes[subgoal[1]]
+        for i in range ( 0, len( subgoal[2] ) ) :
+          attr = subgoal[2][i]
+          matchingAttr = matchingGoal['goalAttData'][i]
+          self.assertEqual( attr[2], matchingAttr[2] )
 
 
   ###################
@@ -1225,7 +1265,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_settypes.ini"
+    argDict[ 'settings' ]                 = "settings_settypes.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile

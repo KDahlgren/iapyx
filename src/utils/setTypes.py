@@ -167,7 +167,7 @@ def update_rules( results_dict, cursor ) :
           logging.debug( "  UPDATE RULES : UPDATE SubgoalAtt SET attType='" + attType.lower() + 
                                         "' WHERE rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
           cursor.execute( "UPDATE SubgoalAtt SET attType='" + attType.lower() + "' WHERE \
-                           rid=='" + rid + "' AND attID=='" + str( sattID ) + "'" )
+                           rid=='" + rid + "' AND attID=='" + str( sattID ) + "' AND sid = '" + str(sid) + "'"  )
 
 ##################
 #  UPDATE FACTS  #
