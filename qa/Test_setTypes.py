@@ -1126,12 +1126,14 @@ class Test_setTypes( unittest.TestCase ) :
     fids = tools.toAscii_list( fids )
     factTypes = {}
     for fid in fids:
+      # working out the fact match still
       continue
 
     # loop through and check matches between goals and subgoals
     for rid, rule in ruleTypes.iteritems():
       for subgoal in rule['subgoalAttData']:
         if subgoal[1] not in ruleTypes.keys():
+          # working out the fact matching still
           continue
         matchingGoal = ruleTypes[subgoal[1]]
         for i in range ( 0, len( subgoal[2] ) ) :
