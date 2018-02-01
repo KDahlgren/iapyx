@@ -6,7 +6,7 @@
 #  IMPORTS  #
 #############
 # standard python packages
-import logging, inspect, os, string, sys, time
+import errno, logging, inspect, os, string, sys, time
 from ctypes import *
 from types  import *
 
@@ -26,7 +26,17 @@ class C4Wrapper( object ) :
   ##########
   def __init__( self ) :
 
-    c4_lib_loc                     = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.so' )
+    # get the lib file
+    dylib_path = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
+    so_path    = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
+
+    if os.path.exists( dylib_path ) :
+      c4_lib_loc                     = dylib_path
+    elif os.path.exists( so_path ) :
+      c4_lib_loc                     = so_path
+    else :
+      raise Exception( "Files not found: '" + dylib_path + "' or '" + so_path + "'. C4Wrapper died. aborting." )
+
     self.lib                       = cdll.LoadLibrary( c4_lib_loc )
     self.lib.c4_make.restype       = POINTER(c_char)
     self.lib.c4_dump_table.restype = c_char_p   # c4_dump_table returns a char*
@@ -399,7 +409,7 @@ class C4Wrapper( object ) :
 if __name__ == '__main__' :
 
   logging.debug( "[ Executing C4 wrapper ]" )
-  w = C4Wrapper( '../../lib/c4/build/src/libc4/libc4.dylib' ) # initializes c4
+  w = C4Wrapper( ) # initializes c4
 
   # /////////////////////////////////// #
   rf = open( "./myTest.olg", "r" )
@@ -414,7 +424,8 @@ if __name__ == '__main__' :
   table_str1 = table_str1.rstrip()
   table_str1 = table_str1.split( "," )
 
-  w.run( [ prog1, table_str1 ] )
+  for line in  w.run( [ prog1, table_str1 ] ) :
+    print line
 
 
 #########
