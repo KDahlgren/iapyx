@@ -1,0 +1,8 @@
+z("a")@1 ;
+c("a",2)@1 ;
+e("a",3)@1 ;
+f("a",4)@1 ;
+a(X,Y)@next :- b(X), c(X,Y) ;
+a(X,Y)@next :- f(X,Y);
+d(X,Y)@next :- e(X,Y), notin a(X,Y) ;
+b(X) :- z(X);
