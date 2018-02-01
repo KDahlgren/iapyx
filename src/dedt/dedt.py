@@ -1242,13 +1242,11 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   # add the provenance rules to the existing rule set
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
-  
   for rule in ruleMeta :
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
-
+    
   # be sure to fill in all the type info for the new rule definitions
   setTypes.setTypes( cursor, settings_path )
-
   # ----------------------------------------------------------------------------- #
 
   logging.debug( "  REWRITE : ...done." )
