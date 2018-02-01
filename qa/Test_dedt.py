@@ -1214,7 +1214,7 @@ class Test_dedt( unittest.TestCase ) :
   #  EXAMPLE 7  #
   ###############
   # test use of file includes
-  #@unittest.skip( "working on different example" )
+  @unittest.skip( "deprecated." )
   def test_example7( self ) :
 
     # --------------------------------------------------------------- #

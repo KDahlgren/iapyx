@@ -648,7 +648,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_3pc_optimist( self ) :
 
     # specify input and output paths
@@ -680,7 +680,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_3pc( self ) :
 
     # specify input and output paths
@@ -779,7 +779,7 @@ class Test_setTypes( unittest.TestCase ) :
   # 	--crashes 0 \
   # 	--prov-diagrams"
   #
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_2pc_optimist( self ) :
 
     # specify input and output paths
@@ -811,7 +811,7 @@ class Test_setTypes( unittest.TestCase ) :
   #	--crashes 0 \
   #	--prov-diagrams"
   #
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_2pc( self ) :
 
     # specify input and output paths
@@ -833,7 +833,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  EXAMPLE ACK RB  #
   ####################
   # tests ded to c4 datalog for ack reliable broadcast
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_ack_rb( self ) :
 
     # specify input and output paths
@@ -855,7 +855,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  EXAMPLE CLASSIC RB  #
   ########################
   # tests ded to c4 datalog for classic rb
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_classic_rb( self ) :
 
     # specify input and output paths
@@ -877,7 +877,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES REPLOG DM  #
   #########################
   # tests set types replog on dm
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_replog_dm( self ) :
 
     # specify input and output paths
@@ -896,7 +896,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES RDLOG DM  #
   ########################
   # tests rdlog on dm
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_rdlog_dm( self ) :
 
     # specify input and output paths
@@ -915,7 +915,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES SIMPLOG DM  #
   ##########################
   # tests simplog on dm
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_simplog_dm( self ) :
 
     # specify input and output paths
@@ -934,7 +934,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES REPLOG  #
   ######################
   # tests replog
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_replog( self ) :
 
     # specify input and output paths
@@ -952,7 +952,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES RDLOG  #
   #####################
   # tests rdlog
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_rdlog( self ) :
 
     # specify input and output paths
@@ -970,7 +970,7 @@ class Test_setTypes( unittest.TestCase ) :
   #  SET TYPES SIMPLOG  #
   #######################
   # tests simplog
-  @unittest.skip( "working on different example" )
+  #@unittest.skip( "working on different example" )
   def test_setTypes_simplog( self ) :
 
     # specify input and output paths
