@@ -167,10 +167,27 @@ class Test_comb( unittest.TestCase ) :
     # runs through function to make sure it finishes with expected error
 
     # get argDict
-    argDict = self.getArgDict( inputfile )
+    argDict = self.getArgDict( inputfile, negprov=True )
+    origArgDict = self.getArgDict( inputfile, negprov=False )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
+
+    # Clear db.
+    IRDB.close()
+    os.remove( testDB )
+
+    if os.path.isfile( "./IR.db" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
+      os.remove( "./IR.db" )
+
+    testDB = "./IR.db"
+    IRDB    = sqlite3.connect( testDB )
+    cursor  = IRDB.cursor()
+
+    # run the translator with negprov turned off to compare results
+    origProgData = dedt.translateDedalus( origArgDict, cursor )
+
 
     # portray actual output program lines as a single string
     iapyx_results = self.getActualResults( programData[0] )
@@ -195,7 +212,7 @@ class Test_comb( unittest.TestCase ) :
     # ========================================================== #
     # EVALUATION COMPARISON
 
-    self.evaluate( programData )
+    self.evaluate( programData, origProgData )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -207,10 +224,14 @@ class Test_comb( unittest.TestCase ) :
   ##################
   #  GET ARG DICT  #
   ##################
-  def getArgDict( self, inputfile ) :
+  def getArgDict( self, inputfile, negprov=True ) :
 
     # initialize
     argDict = {}
+
+    settingsFile = "settings_comb.ini"
+    if not negprov:
+      settingsFile = "settings.ini"
 
     # populate with unit test defaults
     argDict[ 'prov_diagrams' ]            = False
@@ -218,7 +239,7 @@ class Test_comb( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "settings_comb.ini"
+    argDict[ 'settings' ]                 = settingsFile
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -237,16 +258,17 @@ class Test_comb( unittest.TestCase ) :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, programData ) :
+  def evaluate( self, programData, origProgData ) :
 
     noOverlap = False
 
     results_array = c4_evaluator.runC4_wrapper( programData )
+    orig_results_array = c4_evaluator.runC4_wrapper( origProgData )
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
 
     eval_results_dict = tools.getEvalResults_dict_c4( results_array )
-    # print eval_results_dict
+    orig_eval_results_dict = tools.getEvalResults_dict_c4( orig_results_array )
     # ----------------------------------------------------------------- #
     # collect all pos/not_ rule pairs
 
@@ -263,7 +285,23 @@ class Test_comb( unittest.TestCase ) :
     # make sure comb positive relation results are identical to molly
     # relation results
 
-    #
+    self.comparePositiveResults( orig_eval_results_dict, eval_results_dict )
+
+
+
+  ############################
+  # COMPARE POSITIVE RESULTS #
+  ############################
+  # Checks that for each value in the original programs reuslts, the rewritten version
+  # gets the same  reuslts
+  def comparePositiveResults( self, orig_eval_results_dict, eval_results_dict ):
+
+    for key, val in orig_eval_results_dict.iteritems():
+      for item in val:
+        self.assertTrue(item in eval_results_dict[key])
+      for item in eval_results_dict[key]:
+        self.assertTrue(item in val)
+
 
     #################
   #  HAS OVERLAP  #

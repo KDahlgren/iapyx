@@ -129,9 +129,9 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
             # found this attribute in the parent.
             # therefore can define based off this value in the parents slot
             if len(parsedResults[rule[1]])==0:
-              val = '"not_exist"'
+              val = '"NULL"'
               if childVars[att] == "int":
-                val = 10
+                val = 99999999
               factData = {}
               factData['relationName'] = 'dom_not_'+rule[0]+'_'+str(attIndex)
               factData['dataList'] = [val]
