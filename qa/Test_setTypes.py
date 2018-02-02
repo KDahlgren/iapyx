@@ -16,7 +16,7 @@ if not os.path.abspath( __file__ + "/../../src" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../src" ) )
 
 from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRewriter
-from utils      import dumpers, globalCounters, tools
+from utils      import dumpers, globalCounters, tools, setTypes
 from evaluators import c4_evaluator
 
 # ------------------------------------------------------ #
@@ -1057,6 +1057,12 @@ class Test_setTypes( unittest.TestCase ) :
     self.evaluate( programData, expected_eval_path )
 
     # --------------------------------------------------------------- #
+
+    # ========================================================== #
+    # CHECK TYPE MATCH
+
+    self.typeMatch(cursor, programData )
+
     #clean up testing
 
     IRDB.close()
@@ -1098,6 +1104,42 @@ class Test_setTypes( unittest.TestCase ) :
     if expected_eval_path :
 
       self.compare_evals( eval_results_dict, expected_eval_path )
+
+  ###################
+  #   TYPE MATCH    #
+  ###################
+  # check that subgoal types match correctly with their matching
+  # rule
+  def typeMatch( self, cursor, programData ) :
+    # grab all rules type information
+    cursor.execute("SELECT rid FROM Rule")
+    rids = cursor.fetchall()
+    rids = tools.toAscii_list( rids )
+    ruleTypes = {}
+    for rid in rids:
+      r = dumpers.singleRuleAttDump( rid, cursor )
+      ruleTypes[r['goalName']] = r
+
+    # grab all facts
+    cursor.execute("SELECT fid FROM Fact")
+    fids = cursor.fetchall()
+    fids = tools.toAscii_list( fids )
+    factTypes = {}
+    for fid in fids:
+      # working out the fact match still
+      continue
+
+    # loop through and check matches between goals and subgoals
+    for rid, rule in ruleTypes.iteritems():
+      for subgoal in rule['subgoalAttData']:
+        if subgoal[1] not in ruleTypes.keys():
+          # working out the fact matching still
+          continue
+        matchingGoal = ruleTypes[subgoal[1]]
+        for i in range ( 0, len( subgoal[2] ) ) :
+          attr = subgoal[2][i]
+          matchingAttr = matchingGoal['goalAttData'][i]
+          self.assertEqual( attr[2], matchingAttr[2] )
 
 
   ###################
@@ -1231,7 +1273,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_settypes.ini"
+    argDict[ 'settings' ]                 = "settings_settypes.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile

@@ -38,7 +38,7 @@ def unittest_driver() :
 
   # run Test_setTypes tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_setTypes.Test_setTypes )
-  unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
+  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
 
 #########################
