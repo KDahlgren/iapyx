@@ -222,7 +222,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
     if RUN_DM :
 
-      factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
+      factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, argDict ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
       setTypes.setTypes( cursor, settings_path )

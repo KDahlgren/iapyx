@@ -9,6 +9,7 @@ dm.py
 import copy, inspect, logging, os, string, sys
 import sympy
 import itertools
+import ConfigParser
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -37,9 +38,11 @@ arithOps = [ "+", "-", "*", "/" ]
 # generate the new set of rules provided by the DM method for negative rewrites.
 # factMeta := a list of Fact objects
 # ruleMeta := a list of Rule objects
-def dm( factMeta, ruleMeta, cursor, settings_path ) :
+def dm( factMeta, ruleMeta, cursor, argDict ) :
 
   logging.debug( "  DM : running process..." )
+
+  settings_path = argDict[ "settings" ]
 
   # ----------------------------------------- #
   # rewrite rules with fixed data 
@@ -126,7 +129,7 @@ def dm( factMeta, ruleMeta, cursor, settings_path ) :
     # ----------------------------------------- #  
     # build and add the new de morgan's rules
 
-    ruleMeta = doDeMorgans( ruleMeta, targetRuleMetaSets, cursor )
+    ruleMeta = doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict )
 
     # ----------------------------------------- #  
     # increment loop counter
@@ -1078,7 +1081,7 @@ def identicalRules( rule1, rule2 ) :
 # create a new set of rules representing the application of 
 # DeMorgan's Law on the first-order logic representation
 # of the targetted rules
-def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor ) :
+def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
 
   logging.debug( "  DO DEMORGANS : running process..." )
 
@@ -1126,7 +1129,7 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor ) :
     # build domcomp rule and save to 
     # rule meta list
 
-    domcompRule = buildDomCompRule( orig_name, goalAttList, orig_rid, cursor )
+    domcompRule = buildDomCompRule( orig_name, goalAttList, orig_rid, cursor, argDict )
     ruleMeta.append( domcompRule )
 
     # ----------------------------------------- #
@@ -1580,7 +1583,7 @@ def containsExistentialVars( rule ) :
 #  BUILD DOM COMP RULE  #
 #########################
 # build the dom comp rule
-def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor ) :
+def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor, argDict ) :
 
   logging.debug( "===================================================" )
   logging.debug( "  BUILD DOM COMP RULE : running process..." )
@@ -1626,20 +1629,30 @@ def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor ) :
 
   else :
 
+    subgoalListOfDicts = []
+
+    try :
+      DM_CONCISE = tools.getConfig( argDict[ "settings" ], "DEFAULT", "DM_CONCISE", bool )
+
+    except ConfigParser.NoOptionError :
+      logging.debug( "  WARNING : DM_CONCISE not defined in settings file '" + argDict[ "settings" ] + "'. running with DM_CONCISE = False." )
+      DM_CONCISE = False
+
     # ----------------------------------------- #
     # build adom subgoals
 
-    subgoalListOfDicts = []
-    for i in range( 0, len( goalAttList ) ) :
-
-      att = goalAttList[ i ]
-
-      subgoalDict = {}
-      subgoalDict[ "subgoalName" ]    = "adom_" + goalTypeList[ i ]
-      subgoalDict[ "subgoalAttList" ] = [ att ]
-      subgoalDict[ "polarity" ]       = ""
-      subgoalDict[ "subgoalTimeArg" ] = ""
-      subgoalListOfDicts.append( subgoalDict )
+    #if not DM_CONCISE :
+    if True :
+      for i in range( 0, len( goalAttList ) ) :
+  
+        att = goalAttList[ i ]
+  
+        subgoalDict = {}
+        subgoalDict[ "subgoalName" ]    = "adom_" + goalTypeList[ i ]
+        subgoalDict[ "subgoalAttList" ] = [ att ]
+        subgoalDict[ "polarity" ]       = ""
+        subgoalDict[ "subgoalTimeArg" ] = ""
+        subgoalListOfDicts.append( subgoalDict )
 
     # ----------------------------------------- #
     # build negated original subgoal
@@ -1650,6 +1663,30 @@ def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor ) :
     negatedOrig_subgoal[ "polarity" ]       = "notin"
     negatedOrig_subgoal[ "subgoalTimeArg" ] = ""
     subgoalListOfDicts.append( negatedOrig_subgoal )
+
+    # ----------------------------------------- #
+    # add modified subgoals of the original
+    # relation for concision
+
+    if DM_CONCISE :
+      for i in range( 0, len( goalAttList ) ) :
+  
+        att = goalAttList[ i ]
+ 
+        if not att == "NRESERVED" and not att == "MRESERVED" :
+          subgoalDict = {}
+          subgoalDict[ "subgoalName" ]    = orig_name
+          subgoalDict[ "polarity" ]       = ""
+          subgoalDict[ "subgoalTimeArg" ] = ""
+    
+          subgoalDict[ "subgoalAttList" ] = []
+          for j in range( 0, len( goalAttList ) ) :
+            if j == i :
+              subgoalDict[ "subgoalAttList" ].append( att )
+            else :
+              subgoalDict[ "subgoalAttList" ].append( "_" )
+    
+          subgoalListOfDicts.append( subgoalDict )
 
     # ----------------------------------------- #
     # save rule data and create the 

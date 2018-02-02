@@ -29,12 +29,35 @@ import dm
 ##############
 class Test_dm( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
+
+
+  ########################
+  #  DM CONCISE SIMPLOG  #
+  ########################
+  # tests rewriting simplog
+  #@unittest.skip( "working on different example" )
+  def test_dm_concise_simplog( self ) :
+
+    test_id = "_dm_concise_simplog_"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/simplog_driver.ded"
+    expected_iapyx_dm_path = "./testFiles/simplog_iapyx_dm_concise.olg"
+    expected_eval_path     = "./testFiles/simplog_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_dm_concise.ini"
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
+
 
   ################
   #  DM REPLOG  #
@@ -426,8 +449,10 @@ class Test_dm( unittest.TestCase ) :
           logging.debug( "HAS OVERLAP : pos_row '" + str( pos_row ) + "' is in not_results:" )
           for not_row in not_results :
             logging.debug( "HAS OVERLAP : not_row " + str( not_row ) )
+          logging.debug( "HAS OVERLAP : returning True" )
           return True
 
+    logging.debug( "HAS OVERLAP : returning False" )
     return False
 
 
@@ -1317,6 +1342,10 @@ class Test_dm( unittest.TestCase ) :
     cursor  = IRDB.cursor()
     dedt.createDedalusIRTables( cursor )
 
+    # get argDict
+    argDict = {}
+    argDict[ "settings" ] = "./settings_dm.ini"
+
     # --------------------------------------------------------------- #
     # build test rule set
 
@@ -1396,7 +1425,7 @@ class Test_dm( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor, argDict )
 
       # build existential vars rules
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
@@ -1507,6 +1536,10 @@ class Test_dm( unittest.TestCase ) :
     cursor  = IRDB.cursor()
     dedt.createDedalusIRTables( cursor )
 
+    # get argDict
+    argDict = {}
+    argDict[ "settings" ] = "./settings_dm.ini"
+
     # --------------------------------------------------------------- #
     # build test rule set
 
@@ -1586,7 +1619,7 @@ class Test_dm( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor, argDict )
 
       # collect ruleData for test
       actual_domcompRules_ruleData.append( domcompRule.ruleData )
@@ -1652,6 +1685,10 @@ class Test_dm( unittest.TestCase ) :
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
     dedt.createDedalusIRTables( cursor )
+
+    # get argDict
+    argDict = {}
+    argDict[ "settings" ] = "./settings_dm.ini"
 
     # --------------------------------------------------------------- #
     # build test rule set
@@ -1732,7 +1769,7 @@ class Test_dm( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor, argDict )
 
       # build existential vars rules
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
@@ -1855,6 +1892,10 @@ class Test_dm( unittest.TestCase ) :
     cursor  = IRDB.cursor()
     dedt.createDedalusIRTables( cursor )
 
+    # get argDict
+    argDict = {}
+    argDict[ "settings" ] = "./settings_dm.ini"
+
     # --------------------------------------------------------------- #
     # build test rule set
 
@@ -1934,7 +1975,7 @@ class Test_dm( unittest.TestCase ) :
       goalTimeArg = ""
 
       # build dom comp rule
-      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor )
+      domcompRule = dm.buildDomCompRule( orig_name, goalAttList, ruleSet[0].rid, cursor, argDict )
 
       # build existential vars rules
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
@@ -2553,33 +2594,6 @@ class Test_dm( unittest.TestCase ) :
     program_string  = "\n".join( programLines )
     program_string += "\n" # add extra newline to align with read() parsing
     return program_string
-
-
-#  ##################
-#  #  GET ARG DICT  #
-#  ##################
-#  def getArgDict( self, inputfile ) :
-#
-#    # initialize
-#    argDict = {}
-#
-#    # populate with unit test defaults
-#    argDict[ 'prov_diagrams' ]            = False
-#    argDict[ 'use_symmetry' ]             = False
-#    argDict[ 'crashes' ]                  = 0
-#    argDict[ 'solver' ]                   = None
-#    argDict[ 'disable_dot_rendering' ]    = False
-#    argDict[ 'settings' ]                 = "./settings_dm.ini"
-#    argDict[ 'negative_support' ]         = False
-#    argDict[ 'strategy' ]                 = None
-#    argDict[ 'file' ]                     = inputfile
-#    argDict[ 'EOT' ]                      = 4
-#    argDict[ 'find_all_counterexamples' ] = False
-#    argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
-#    argDict[ 'evaluator' ]                = "c4"
-#    argDict[ 'EFF' ]                      = 2
-#
-#    return argDict
 
 
 if __name__ == "__main__" :
