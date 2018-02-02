@@ -36,17 +36,6 @@ def getActiveDomain(cursor, factMeta, parsedResults):
           newfactMeta.append(createDomFact(cursor, "dom_int", [z]))
           continue
         newfactMeta.append(createDomFact(cursor, "dom_str", [z]))
-
-  for fact in factMeta:
-    for item in fact.dataListWithTypes:
-      if item[1] == "string":
-        if item[0] not in str_exists.keys():
-          str_exists[item[0]] = True
-          newfactMeta.append(createDomFact(cursor, "dom_str", [item[0]]))
-      elif item[1] == "int":
-        if item[0] not in int_exists.keys():
-          int_exists[item[0]] = True
-          newfactMeta.append(createDomFact(cursor, "dom_int", [item[0]]))
   return factMeta + newfactMeta
 
 def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
@@ -104,7 +93,7 @@ def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
           goalAttList = []
           for i in range (0, len(childRule.goalAttList)):
             if i == attIndex:
-              goalAttList.append(childRule.goalAttList[i])
+              goalAttList.append(subgoal['subgoalAttList'][attIndex])
             else:
               goalAttList.append('_')
           goalDict = createSubgoalDict(childRule.relationName, goalAttList, 'notin', childRule.goalTimeArg)

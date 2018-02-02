@@ -32,14 +32,14 @@ class Test_comb( unittest.TestCase ) :
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = True
+  PRINT_STOP = False
 
 
   ################
   #  COMB REPLOG  #
   ################
   # tests rewriting replog
-  @unittest.skip( "working on different example" )
+  @unittest.skip( "issue with overlap" )
   def test_comb_replog( self ) :
 
     # specify input and output paths
@@ -66,7 +66,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB RDLOG  #
   ###############
   # tests rewriting rdlog
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_rdlog( self ) :
 
     # specify input and output paths
@@ -92,7 +92,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB AGG 2 #
   ###############
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_agg_2( self ):
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/test_comb_agg_2.ded"

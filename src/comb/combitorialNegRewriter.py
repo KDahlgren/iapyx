@@ -40,7 +40,7 @@ def neg_rewrite(cursor, settings_path, ruleMeta, factMeta, parsedResults):
       break
 
     # Negate the rules in the list
-    ruleMeta, factMeta = negateRules(cursor, settings_path, ruleMeta, factMeta, rulesToNegate, parsedResults)
+    ruleMeta, factMeta = negateRules(cursor, settings_path,  ruleMeta, factMeta, rulesToNegate, parsedResults)
 
   return ruleMeta, factMeta
 
@@ -69,4 +69,5 @@ def negateRules(cursor, settings_path, ruleMeta, factMeta, rulesToNegate, parsed
     # for each rule, negate it.
     ruleMeta, factMeta = negateRule(cursor, rule, ruleMeta, factMeta, parsedResults)
     setTypes.setTypes( cursor, settings_path )
+
   return ruleMeta, factMeta
