@@ -27,6 +27,8 @@ def getActiveDomain(cursor, factMeta, parsedResults):
   for x in parsedResults.values():
     for y in x:
       for z in y:
+        if z=="NULL" or z=="99999999":
+          continue
         if z in str_exists.keys():
           continue
         str_exists[z] = True

@@ -115,8 +115,7 @@ def update_rules( results_dict, cursor ) :
 
   for relation in results_dict :
 
-    logging.debug( "  UPDATE RULES : relation = " + relation )
-    logging.debug( "  UPDATE RULES : results_dict['" + relation + "'] = " + str( results_dict[ relation ] ) )
+    logging.debug( "  UPDATE RULES : relation       = " + relation )
 
     goal_type_list = results_dict[ relation ][0]
 
@@ -152,8 +151,6 @@ def update_rules( results_dict, cursor ) :
       for sub in subs :
         sid         = sub[0]
         subgoalName = sub[1]
-
-        logging.debug( "  UPDATE RULES : subgoalName = " + subgoalName )
 
         if subgoalName == "clock" or subgoalName == "next_clock" :
           subgoal_type_list = [ "string", "string", "int", "int" ]
@@ -234,8 +231,6 @@ def get_setTypes_program_data( cursor ) :
   cursor.execute( "SELECT rid,goalName FROM Rule" )
   goal_data = cursor.fetchall()
   goal_data = tools.toAscii_multiList( goal_data )
-
-  logging.debug( "  GET SET TYPES PROGRAM : goal_data = " + str( goal_data ) )
 
   goal_name_to_arity = {}
   for goal in goal_data :
@@ -318,7 +313,7 @@ def get_setTypes_program_data( cursor ) :
 
       # wtf???
       else :
-        raise Exception( "  FATAL ERROR : datum '" + datum + "' in fact '" + name + "' is neither string nor integer. aborting."  )
+        raise Exception( "  FATAL ERROR : datum '" + + "' in fact '" + name + "' is neither string nor integer. aborting."  )
 
       if i < len( data_list ) - 1 :
         fact += ","
@@ -366,7 +361,6 @@ def get_setTypes_program_data( cursor ) :
 ###############
 #  GET RULES  #
 ###############
-# build the rules for the set types program
 def get_rules( goal_data, cursor ) :
 
   rule_list = []
@@ -387,22 +381,6 @@ def get_rules( goal_data, cursor ) :
 
     logging.debug( "  GET RULES : goal_atts (0) = " + str( goal_atts ) )
 
-    # handle fixed data in head
-    tmp = []
-    for goal_att in goal_atts :
-      index = goal_att[0]
-      gatt  = goal_att[1]
-#      if is_fixed_string( gatt ) :
-#        tmp.append( [ index, '"STRING"' ] )
-#      elif is_fixed_int( gatt ) :
-#        tmp.append( [ index, '"INT"' ] )
-#      else :
-#        tmp.append( [ index, gatt ] )
-      tmp.append( [ index, gatt ] )
-    goal_atts = copy.copy( tmp )
-
-    logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
-
     # clean agg functions
     tmp = []
     for att in goal_atts :
@@ -415,7 +393,7 @@ def get_rules( goal_data, cursor ) :
       tmp.append( [ attID, attName ] )
     goal_atts = copy.copy( tmp )
 
-    logging.debug( "  GET RULES : goal_atts (2) = " + str( goal_atts ) )
+    logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
 
     # clean agg ops
     tmp = []
@@ -429,7 +407,7 @@ def get_rules( goal_data, cursor ) :
       tmp.append( gatt )
     goal_atts = copy.copy( tmp )
 
-    logging.debug( "  GET RULES : goal_atts (3) = " + str( goal_atts ) )
+    logging.debug( "  GET RULES : goal_atts (2) = " + str( goal_atts ) )
 
     # -------------------- #
     # get subgoal info
@@ -458,8 +436,6 @@ def get_rules( goal_data, cursor ) :
     for i in range( 0, len( goal_atts ) ) :
       gatt  = goal_atts[i]
 
-      logging.debug( "  GET RULES : gatt = " + gatt )
-
       # handle fixed data
       if ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
          ( gatt.startswith( '"' ) and gatt.endswith( '"' ) ) :
@@ -470,10 +446,6 @@ def get_rules( goal_data, cursor ) :
       rule += gatt
       if i < len( goal_atts ) - 1 :
         rule += ","
-
-    if name == "timer_svc" :
-      logging.debug( "rule = " + rule )
-      #sys.exit( "blah" )
 
     rule += "):-"
 
@@ -486,45 +458,22 @@ def get_rules( goal_data, cursor ) :
 
       if subgoalPolarity == "" : # only need positive subgoals because only using safe rules.
 
-        if not subgoalName.startswith( "not_" ) :
-
-          rule += " " + subgoalName + "("
-  
-          for i in range( 0, len( subgoal_atts_list ) ) :
-            if subgoal_atts_list[i][0] == sid :
-              satt  = subgoal_atts_list[i][2]
-
-              # handle fixed data
-              if ( satt.startswith( "'" ) and satt.endswith( "'" ) ) or \
-                 ( satt.startswith( '"' ) and satt.endswith( '"' ) ) :
-                satt = '"STRING"'
-              elif satt.isdigit() :
-                satt = '"INT"'
-
-              rule += satt
-              rule += ","
- 
-          rule  = rule[:-1] # remove trailing comma in subgoal att list
-          rule += "),"
-
-      elif name.startswith( "not_" ) and subgoalPolarity == "notin" : # only need positive subgoals because only using safe rules.
-
         rule += " " + subgoalName + "("
-  
+
         for i in range( 0, len( subgoal_atts_list ) ) :
           if subgoal_atts_list[i][0] == sid :
             satt  = subgoal_atts_list[i][2]
-
+  
             # handle fixed data
             if ( satt.startswith( "'" ) and satt.endswith( "'" ) ) or \
                ( satt.startswith( '"' ) and satt.endswith( '"' ) ) :
               satt = '"STRING"'
             elif satt.isdigit() :
               satt = '"INT"'
-
+  
             rule += satt
             rule += ","
- 
+  
         rule  = rule[:-1] # remove trailing comma in subgoal att list
         rule += "),"
 
@@ -540,27 +489,6 @@ def get_rules( goal_data, cursor ) :
 
   return rule_list
 
-
-#####################
-#  IS FIXED STRING  #
-#####################
-def is_fixed_string( att ) :
-  if att.startswith( "'" ) and att.endswith( "'" ) :
-    return True
-  elif att.startswith( '"' ) and att.endswith( '"' ) :
-    return True
-  else :
-    return False
-
-
-##################
-#  IS FIXED INT  #
-##################
-def is_fixed_int( att ) :
-  if att.isdigit() :
-    return True
-  else :
-    return False
 
 ####################
 #  SET TYPES ORIG  #

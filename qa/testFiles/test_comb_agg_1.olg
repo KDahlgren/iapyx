@@ -41,8 +41,6 @@ dom_int(3);
 dom_str("b");
 dom_int(5);
 dom_str("c");
-dom_str("NULL");
-dom_int(99999999);
 dom_str("a");
 dom_int(1);
 dom_int(2);

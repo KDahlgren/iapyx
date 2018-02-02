@@ -59,6 +59,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
   headRule, negated_pieces = concate_neg_rules(cursor, negated_pieces)
 
   if headRule != None:
+    headRule = goalData.saveRule(headRule)
     ruleMeta.append(headRule)
 
   for negRule in negated_pieces:
@@ -71,7 +72,7 @@ def negateRule(cursor, rule, ruleMeta, factMeta,  parsedResults):
     negRule = goalData.saveRule(negRule)
     ruleMeta.append(negRule)
     # update goalAtts
-    goalData.update_goalAtts(cursor, rule, neg_rid)
+    # goalData.update_goalAtts(cursor, rule, neg_rid)
   ruleMeta = replaceAllNotins(cursor, old_name, new_name, ruleMeta)
   return ruleMeta, factMeta
 

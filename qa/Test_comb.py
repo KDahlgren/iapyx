@@ -29,10 +29,10 @@ from evaluators import c4_evaluator
 class Test_comb( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = False
+  PRINT_STOP = True
 
 
   ################
@@ -52,7 +52,7 @@ class Test_comb( unittest.TestCase ) :
   # COMB SIMPLOG  #
   ################
   # tests rewriting simplog
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_simplog( self ) :
 
     # specify input and output paths
@@ -79,12 +79,12 @@ class Test_comb( unittest.TestCase ) :
   # #  COMB TOY 3 AGG REWRITES  #
   # ############################
   # tests rewriting the second toy program
-  @unittest.skip( "working on different example" )
+  # @unittest.skip( "working on different example" )
   def test_comb_toy3_aggRewrites( self ) :
 
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/toy3_aggRewrites.ded"
-    expected_iapyx_comb_path = "./testFiles/toy3_aggRewrites.olg"
+    expected_iapyx_comb_path = "./testFiles/toy3_aggRewrites_comb.olg"
 
     self.comparison_workflow( inputfile, expected_iapyx_comb_path )
 
@@ -92,7 +92,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB AGG 2 #
   ###############
   # tests rewriting the second toy program
-  # @unittest.skip( "working on different example" )
+  @unittest.skip( "working on different example" )
   def test_comb_agg_2( self ):
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/test_comb_agg_2.ded"
