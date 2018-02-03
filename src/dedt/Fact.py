@@ -61,7 +61,7 @@ class Fact :
     # save data in the IR database
 
     logging.debug( "  FACT : self.relationName      = " + self.relationName )
-    logging.debug( "  FACT : self.factTimeArg       = " + self.factTimeArg )
+    logging.debug( "  FACT : self.factTimeArg       = " + str( self.factTimeArg ) )
     logging.debug( "  FACT : self.dataListWithTypes = " + str( self.dataListWithTypes ) )
 
     self.saveFactInfo()
