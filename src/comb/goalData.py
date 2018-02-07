@@ -114,14 +114,13 @@ def check_for_rule_id(cursor, neg_name):
   rule = cursor.fetchone()
   return rule != None
 
-def check_for_id(cursor, neg_name):
+def check_for_name(relationName, ruleMeta, factMeta):
   '''
     Checks to see if the negated goalName exists in the db.
   '''
-  cursor.execute("SELECT * FROM Rule WHERE goalName = '" + neg_name + "'")
-  rule = cursor.fetchone()
-  if rule != None:
-    return True
-  cursor.execute("SELECT * FROM Fact WHERE name = '" + neg_name + "'")
-  rule = cursor.fetchone()
-  return rule != None
+  for rule in ruleMeta:
+    if rule.relationName == relationName:
+      return True
+  for fact in factMeta:
+    if fact.relationName == relationName:
+      return True

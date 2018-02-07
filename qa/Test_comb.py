@@ -35,11 +35,22 @@ class Test_comb( unittest.TestCase ) :
   PRINT_STOP = False
 
 
+  #######
+  # 2PC #
+  #######
+  # @unittest.skip( "issue with overlap" )
+  def test_comb_2pc( self ):
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/2pc_driver.ded"
+    expected_iapyx_comb_path = "./testFiles/2pc_ctp_comb.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path )
+
   ################
   #  COMB REPLOG  #
   ################
   # tests rewriting replog
-  @unittest.skip( "issue with overlap" )
+  # @unittest.skip( "issue with overlap" )
   def test_comb_replog( self ) :
 
     # specify input and output paths
@@ -194,8 +205,6 @@ class Test_comb( unittest.TestCase ) :
 
     if self.PRINT_STOP :
       print iapyx_results
-      with open( expected_iapyx_comb_path, 'w' ) as expectedFile :
-        expectedFile.write(iapyx_results)
       sys.exit( "print stop." )
 
     # ========================================================== #
@@ -295,7 +304,8 @@ class Test_comb( unittest.TestCase ) :
   # Checks that for each value in the original programs reuslts, the rewritten version
   # gets the same  reuslts
   def comparePositiveResults( self, orig_eval_results_dict, eval_results_dict ):
-
+    # print orig_eval_results_dict
+    # print eval_results_dict
     for key, val in orig_eval_results_dict.iteritems():
       for item in val:
         self.assertTrue(item in eval_results_dict[key])

@@ -19,12 +19,11 @@ import domain
 from negate import  negateRule
 import dm
 
-def neg_rewrite(cursor, settings_path, ruleMeta, factMeta, parsedResults):
+def neg_rewrite(cursor, argDict, settings_path, ruleMeta, factMeta, parsedResults):
   ''' Performs the negative rewrite of the dedalus program. '''
 
   # use the aggregate rewrite from the dm module, avoids issues with
   # aggregate rules.
-
   ruleMeta = dm.aggRewrites( ruleMeta, settings_path )
 
   # add in active domain facts, this should only be done once in reality.
@@ -40,7 +39,7 @@ def neg_rewrite(cursor, settings_path, ruleMeta, factMeta, parsedResults):
       break
 
     # Negate the rules in the list
-    ruleMeta, factMeta = negateRules(cursor, settings_path,  ruleMeta, factMeta, rulesToNegate, parsedResults)
+    ruleMeta, factMeta = negateRules(cursor, argDict, settings_path,  ruleMeta, factMeta, rulesToNegate, parsedResults)
 
   return ruleMeta, factMeta
 
@@ -63,7 +62,7 @@ def isRule(ruleMeta, ruleName):
       return True
   return False
 
-def negateRules(cursor, settings_path, ruleMeta, factMeta, rulesToNegate, parsedResults):
+def negateRules(cursor, argDict, settings_path, ruleMeta, factMeta, rulesToNegate, parsedResults):
   ''' Negates all rules '''
   for rule in rulesToNegate.iteritems():
     # for each rule, negate it.
