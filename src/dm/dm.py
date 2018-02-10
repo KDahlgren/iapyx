@@ -518,8 +518,19 @@ def makeUniform( ruleSet, cursor ) :
       this_orig_att = orig_goalAttList[ i ]
 
       ## skip time atts
+      ## observe this makes zero sense.
       #if not this_orig_att.startswith( "NRESERVED" ) and not this_orig_att.startswith( "MRESERVED" ) :
       #  attMapper[ this_orig_att ] = uniformAtts[ i ]
+
+      # preserve time atts
+      # observe this shits up the process of 
+      # shuffling inter-rule subgoals across not_ rules.
+      #if this_orig_att.startswith( "NRESERVED" ) or this_orig_att.startswith( "MRESERVED" ) :
+      #  attMapper[ this_orig_att ] = this_orig_att
+      #else :
+      #  attMapper[ this_orig_att ] = uniformAtts[ i ]
+
+      # this is the regular line:
       attMapper[ this_orig_att ] = uniformAtts[ i ]
 
     logging.debug( "  MAKE UNIFORM : attMapper = " + str( attMapper ) )
@@ -2240,8 +2251,66 @@ def buildAdom( factMeta, cursor ) :
         logging.debug( "  BUILD ADOM : saved new rule with rid=" + str( newRule.rid ) + " and ruleData:\n" + str( newRule.ruleData ) )
 
 
-  logging.debug( "  BUILD ADOM : returning newRules = " + str( newRules ) )
+  # ----------------------------------------- #
+  # define adom rules over clock facts
 
+  newRuleData_clock_att0 = {}
+  newRuleData_clock_att0[ "relationName" ]       = "adom_string"
+  newRuleData_clock_att0[ "goalAttList" ]        = [ "T" ]
+  newRuleData_clock_att0[ "goalTimeArg" ]        = ""
+  newRuleData_clock_att0[ "subgoalListOfDicts" ] = [ { "subgoalName" : "clock", \
+                                                       "subgoalAttList" : [ "T", "_", "_", "_" ], \
+                                                       "polarity" : "", \
+                                                       "subgoalTimeArg" : "" } ]
+  newRuleData_clock_att0[ "eqnDict" ]            = {}
+  rid = tools.getIDFromCounters( "rid" )
+  newRule_clock_att0        = copy.deepcopy( Rule.Rule( rid, newRuleData_clock_att0, cursor) )
+  newRule_clock_att0.cursor = cursor # need to do this for some reason or else cursor disappears?
+  newRules.append( newRule_clock_att0 )
+
+  newRuleData_clock_att1 = {}
+  newRuleData_clock_att1[ "relationName" ]       = "adom_string"
+  newRuleData_clock_att1[ "goalAttList" ]        = [ "T" ]
+  newRuleData_clock_att1[ "goalTimeArg" ]        = ""
+  newRuleData_clock_att1[ "subgoalListOfDicts" ] = [ { "subgoalName" : "clock", \
+                                                       "subgoalAttList" : [ "_", "T", "_", "_" ], \
+                                                       "polarity" : "", \
+                                                       "subgoalTimeArg" : "" } ]
+  newRuleData_clock_att1[ "eqnDict" ]            = {}
+  rid = tools.getIDFromCounters( "rid" )
+  newRule_clock_att1        = copy.deepcopy( Rule.Rule( rid, newRuleData_clock_att1, cursor) )
+  newRule_clock_att1.cursor = cursor # need to do this for some reason or else cursor disappears?
+  newRules.append( newRule_clock_att1 )
+
+  newRuleData_clock_att2 = {}
+  newRuleData_clock_att2[ "relationName" ]       = "adom_int"
+  newRuleData_clock_att2[ "goalAttList" ]        = [ "T" ]
+  newRuleData_clock_att2[ "goalTimeArg" ]        = ""
+  newRuleData_clock_att2[ "subgoalListOfDicts" ] = [ { "subgoalName" : "clock", \
+                                                       "subgoalAttList" : [ "_", "_", "T", "_" ], \
+                                                       "polarity" : "", \
+                                                       "subgoalTimeArg" : "" } ]
+  newRuleData_clock_att2[ "eqnDict" ]            = {}
+  rid = tools.getIDFromCounters( "rid" )
+  newRule_clock_att2        = copy.deepcopy( Rule.Rule( rid, newRuleData_clock_att2, cursor) )
+  newRule_clock_att2.cursor = cursor # need to do this for some reason or else cursor disappears?
+  newRules.append( newRule_clock_att2 )
+
+  newRuleData_clock_att3 = {}
+  newRuleData_clock_att3[ "relationName" ]       = "adom_int"
+  newRuleData_clock_att3[ "goalAttList" ]        = [ "T" ] 
+  newRuleData_clock_att3[ "goalTimeArg" ]        = ""
+  newRuleData_clock_att3[ "subgoalListOfDicts" ] = [ { "subgoalName" : "clock", \
+                                                       "subgoalAttList" : [ "_", "_", "_", "T" ], \
+                                                       "polarity" : "", \
+                                                       "subgoalTimeArg" : "" } ]
+  newRuleData_clock_att3[ "eqnDict" ]            = {}
+  rid = tools.getIDFromCounters( "rid" )
+  newRule_clock_att3        = copy.deepcopy( Rule.Rule( rid, newRuleData_clock_att3, cursor) )
+  newRule_clock_att3.cursor = cursor # need to do this for some reason or else cursor disappears?
+  newRules.append( newRule_clock_att3 )
+
+  logging.debug( "  BUILD ADOM : returning newRules = " + str( newRules ) )
   return newRules
 
 
