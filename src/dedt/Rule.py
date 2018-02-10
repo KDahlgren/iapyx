@@ -33,7 +33,7 @@ NOTES :
 
 '''
 
-import inspect, logging, os, sqlite3, sys
+import copy, inspect, logging, os, sqlite3, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -66,14 +66,17 @@ class Rule :
     ########################
     #  ATTRIBUTE DEFAULTS  #
     ########################
-    self.rid                = ""
-    self.cursor             = None
-    self.relationName       = ""
-    self.goalAttList        = []
-    self.goalTimeArg        = None
-    self.subgoalListOfDicts = []
-    self.eqnDict            = {}
-    self.ruleData           = {}
+    self.rid                 = ""
+    self.orig_rule_ptr       = None # the ptr to the original rule in provenance rules.
+    self.cursor              = None
+    self.relationName        = ""
+    self.goalAttList         = []
+    self.orig_goalAttList    = []
+    self.goalTimeArg         = None
+    self.orig_goal_time_type = None
+    self.subgoalListOfDicts  = []
+    self.eqnDict             = {}
+    self.ruleData            = {}
 
     # =========================================== #
 
@@ -85,22 +88,37 @@ class Rule :
 
     # =========================================== #
     # extract relation name
+
     self.relationName = ruleData[ "relationName" ]
 
     # =========================================== #
     # extract goal attribute list
-    self.goalAttList = ruleData[ "goalAttList" ]
+
+    self.goalAttList      = ruleData[ "goalAttList" ]
+    self.orig_goalAttList = copy.deepcopy( ruleData[ "goalAttList" ] )
 
     # =========================================== #
     # extract goal time argument
+
     self.goalTimeArg = ruleData[ "goalTimeArg" ]
+
+    if self.goalAttList[ -1 ] == "NRESERVED" :
+      self.orig_goal_time_type = ""
+    elif self.goalAttList[ -1 ] == "MRESERVED" :
+      self.orig_goal_time_type = "async"
+    elif self.goalAttList[ -1 ] == "NRESERVED+1" :
+      self.orig_goal_time_type = "next"
+    else :
+      self.orig_goal_time_type == "UNKNOWN_TIME_REF"
 
     # =========================================== #
     # extract subgoal information
+
     self.subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
 
     # =========================================== #
     # extract equation dictionary
+
     self.eqnDict = ruleData[ "eqnDict" ]
 
     # =========================================== #
@@ -141,13 +159,13 @@ class Rule :
   def saveToGoalAtt( self ) :
 
     logging.debug( "========================================================" )
-    if self.relationName == "log" :
-      logging.debug( "  SAVE TO GOAL ATT : log rule meta = " + str( self.ruleData ) )
-      self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
-      typeList = self.cursor.fetchall()
-      typeList = tools.toAscii_multiList( typeList )
-      for t in typeList :
-        logging.debug(  "  SAVE TO GOAL ATT : " + str( t ) )
+    logging.debug( "  SAVE TO GOAL ATT : self.relationName = " + self.relationName )
+    logging.debug( "  SAVE TO GOAL ATT : rule meta = " + str( self.ruleData ) )
+    self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+    typeList = self.cursor.fetchall()
+    typeList = tools.toAscii_multiList( typeList )
+    for t in typeList :
+      logging.debug(  "  SAVE TO GOAL ATT : " + str( t ) )
 
     # get type list
     self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )

@@ -88,7 +88,7 @@ def aggProv( aggRule, provid, cursor ) :
 
   # extract and save the time argument as the last element in the attribute list
   bindings_goalAttList_last = bindings_goalAttList[-1]
-  bindings_goalAttList = bindings_goalAttList[:-1]
+  bindings_goalAttList      = bindings_goalAttList[:-1]
 
   # grab all subgoal atts
   subgoalListOfDicts = bindingsmeta_ruleData[ "subgoalListOfDicts" ]
@@ -144,6 +144,8 @@ def aggProv( aggRule, provid, cursor ) :
 
   # ------------------------------------------------------ #
   # the goal att list consists of all subgoal atts
+
+  orig_aggRule_goalAttList = sortGoalAttList( orig_aggRule_goalAttList )
 
   aggprovmeta_ruleData[ "goalAttList" ] = orig_aggRule_goalAttList
 
@@ -280,10 +282,6 @@ def regProv( regRule, nameAppend, cursor ) :
   # grab all goal atts
   goalAttList = new_provmeta_ruleData[ "goalAttList" ]
 
-#  if new_provmeta_ruleData[ "relationName" ] == "log_prov4" :
-#    logging.debug( "goalAttList = " + str( goalAttList ) )
-#    sys.exit( "blah" )
-
   # save to provenance rule goal attribute list
   provGoalAttList.extend( goalAttList )
 
@@ -311,6 +309,14 @@ def regProv( regRule, nameAppend, cursor ) :
 #  if not provGoalAttList_last in provGoalAttList :
 #    provGoalAttList.append( provGoalAttList_last )
 
+  logging.debug( "  REG PROV : new_provmeta_ruleData['relationName'] = " + new_provmeta_ruleData[ "relationName" ]  )
+  logging.debug( "  REG PROV : provGoalAttList                       = " + str( provGoalAttList ) )
+
+  # sort goal atts to ensure NRESERVED, NRESERVED+1, and MRESERVED are rightmost
+  provGoalAttList = sortGoalAttList( provGoalAttList )
+
+  logging.debug( "  REG PROV : provGoalAttList (after sorting)       = " + str( provGoalAttList ) )
+
   # save to rule data
   new_provmeta_ruleData[ "goalAttList" ] = provGoalAttList
 
@@ -318,7 +324,8 @@ def regProv( regRule, nameAppend, cursor ) :
   # preserve adjustments by instantiating the new meta rule
   # as a Rule
 
-  provRule = Rule.Rule( rid, new_provmeta_ruleData, cursor )
+  provRule               = Rule.Rule( rid, new_provmeta_ruleData, cursor )
+  provRule.orig_rule_ptr = regRule
   #provRule.relationName       = new_provmeta_ruleData[ "relationName" ]
   #provRule.goalAttList        = new_provmeta_ruleData[ "goalAttList" ]
   #provRule.goalTimeArg        = new_provmeta_ruleData[ "goalTimeArg" ]
@@ -326,13 +333,228 @@ def regProv( regRule, nameAppend, cursor ) :
   #provRule.eqnDict            = new_provmeta_ruleData[ "eqnDict" ] 
 
   logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
-  logging.debug( "REG PROV : provRule.relationName       = " + provRule.relationName )
-  logging.debug( "REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
-  logging.debug( "REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
-  logging.debug( "REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
-  logging.debug( "REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
+  logging.debug( "  REG PROV : provRule.relationName       = " + provRule.relationName )
+  logging.debug( "  REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
+  logging.debug( "  REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
+  logging.debug( "  REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
+  logging.debug( "  REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
+
+  # ------------------------------------------------------ #
+  # replace original time goal atts
+
+  provRule = replaceTimeAtts( provRule )
 
   return provRule
+
+
+#######################
+#  REPLACE TIME ATTS  #
+#######################
+# input a dm-rewritten rule 
+# replace uniform atts referencing time 
+# atts with the fixed att strings referencing time.
+# observe every rewritten dedalus rule will contain
+# a maximum of one time reference.
+# also, replace all unused variables with wildcards.
+def replaceTimeAtts( rule ) :
+
+  logging.debug( "  REPLACE TIME ATTS : running process..." )
+  logging.debug( "  REPLACE TIME ATTS : rule.ruleData = " + str( rule.ruleData ) )
+
+  goalAttList = copy.deepcopy( rule.goalAttList )
+
+  # ----------------------------------------- #
+  # replace all unused vars with wildcards
+
+  subgoalAttList_complete = []
+  subgoalListOfDicts      = copy.deepcopy( rule.subgoalListOfDicts )
+  for subgoal in subgoalListOfDicts :
+    subgoalAttList_complete.extend( subgoal[ "subgoalAttList" ] )
+
+  countMapper = {}
+  for satt in subgoalAttList_complete :
+    if not satt in countMapper :
+      countMapper[ satt ] = 1
+    else :
+      countMapper[ satt ] += 1
+
+  new_subgoalListOfDicts = []
+  for subgoal in subgoalListOfDicts :
+    new_subgoalDict = {}
+    new_subgoalDict[ "subgoalName" ]    = subgoal[ "subgoalName" ]
+    new_subgoalDict[ "polarity" ]       = subgoal[ "polarity" ]
+    new_subgoalDict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+    new_subgoalDict[ "subgoalAttList" ] = []
+
+    orig_subgoalAttList = subgoal[ "subgoalAttList" ]
+    for satt in orig_subgoalAttList :
+      if countMapper[ satt ] > 1 or satt in goalAttList :
+        new_subgoalDict[ "subgoalAttList" ].append( satt )
+      else :
+        new_subgoalDict[ "subgoalAttList" ].append( "_" )
+
+    new_subgoalListOfDicts.append( copy.deepcopy( new_subgoalDict ) )
+
+  rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+  rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+  rule.saveSubgoals()
+
+  # ----------------------------------------- #
+  # replace all uniform attributes 
+  # representing time references with the
+  # original time references
+
+  # ========================================= #
+  # handle time ref replacement in 
+  # next and async rules :
+
+  #if len( rule.orig_rule_ptr.goalAttList ) < len( rule.goalAttList ) :
+  if rule.orig_rule_ptr.orig_goal_time_type == "next" or \
+     rule.orig_rule_ptr.orig_goal_time_type == "async" :
+
+    orig_rightmost       = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
+    new_second_rightmost = rule.goalAttList[ -2 ]
+
+    logging.debug( " rule.relationName                   = " + rule.relationName )
+    logging.debug( " rule.orig_rule_ptr.orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
+    logging.debug( " rule.goalAttList                    = " + str( rule.goalAttList ) )
+    logging.debug( " orig_rightmost                      = " + str( orig_rightmost ) )
+    logging.debug( " new_second_rightmost                = " + str( new_second_rightmost ) )
+
+    # replace the time reference in the goal
+    new_goalAttList = []
+    for gatt in rule.goalAttList :
+      if gatt == new_second_rightmost :
+        new_goalAttList.append( orig_rightmost )
+      else :
+        new_goalAttList.append( gatt )
+
+    new_goalAttList = sortGoalAttList( new_goalAttList )
+
+    rule.ruleData[ "goalAttList" ] = new_goalAttList
+    rule.goalAttList               = new_goalAttList
+    rule.saveToGoalAtt()
+
+    # replace the time reference in the subgoals
+    new_subgoalListOfDicts = []
+    for subgoal in subgoalListOfDicts :
+      new_subgoalDict = {}
+      new_subgoalDict[ "subgoalName" ]    = subgoal[ "subgoalName" ]
+      new_subgoalDict[ "polarity" ]       = subgoal[ "polarity" ]
+      new_subgoalDict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+      new_subgoalDict[ "subgoalAttList" ] = []
+  
+      # replace all instances of new_rightmost with orig_rightmost
+      orig_subgoalAttList = subgoal[ "subgoalAttList" ]
+      for satt in orig_subgoalAttList :
+        if satt == new_second_rightmost :
+          new_subgoalDict[ "subgoalAttList" ].append( orig_rightmost )
+        else :
+          new_subgoalDict[ "subgoalAttList" ].append( satt )
+  
+      new_subgoalListOfDicts.append( copy.deepcopy( new_subgoalDict ) )
+  
+    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+    rule.saveSubgoals()
+
+  # ========================================= #
+  # handle time ref replacement in 
+  # deductive rules :
+
+  elif rule.orig_rule_ptr.orig_goal_time_type == "" :
+
+    orig_rightmost = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
+    new_rightmost  = rule.goalAttList[ -1 ]
+
+    logging.debug( " rule.relationName                   = " + rule.relationName )
+    logging.debug( " rule.orig_rule_ptr.orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
+    logging.debug( " rule.goalAttList                    = " + str( rule.goalAttList ) )
+    logging.debug( " orig_rightmost                      = " + str( orig_rightmost ) )
+    logging.debug( " new_rightmost                       = " + str( new_rightmost ) )
+
+    # replace the time reference in the goal
+    new_goalAttList = []
+    for gatt in rule.goalAttList :
+      if gatt == new_rightmost :
+        new_goalAttList.append( orig_rightmost )
+      else :
+        new_goalAttList.append( gatt )
+
+    new_goalAttList = sortGoalAttList( new_goalAttList )
+
+    rule.ruleData[ "goalAttList" ] = new_goalAttList
+    rule.goalAttList               = new_goalAttList
+    rule.saveToGoalAtt()
+
+    # replace the time reference in the subgoals
+    new_subgoalListOfDicts = []
+    for subgoal in subgoalListOfDicts :
+      new_subgoalDict = {}
+      new_subgoalDict[ "subgoalName" ]    = subgoal[ "subgoalName" ]
+      new_subgoalDict[ "polarity" ]       = subgoal[ "polarity" ]
+      new_subgoalDict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+      new_subgoalDict[ "subgoalAttList" ] = []
+  
+      # replace all instances of new_rightmost with orig_rightmost
+      orig_subgoalAttList = subgoal[ "subgoalAttList" ]
+      for satt in orig_subgoalAttList :
+        if satt == new_rightmost :
+          new_subgoalDict[ "subgoalAttList" ].append( orig_rightmost )
+        else :
+          new_subgoalDict[ "subgoalAttList" ].append( satt )
+  
+      new_subgoalListOfDicts.append( copy.deepcopy( new_subgoalDict ) )
+  
+    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+    rule.saveSubgoals()
+
+  logging.debug( "  REPLACE TIME ATTS : ...done." )
+  return rule
+
+
+########################
+#  SORT GOAL ATT LIST  #
+########################
+# input a list of goal attributes for a provenance rule
+# re-order atts to place the NRESERVED, NRESERVED+1, and MRESERVED atts as the
+# rightmost fields.
+# output the sorted list.
+def sortGoalAttList( provGoalAttList ) :
+
+  logging.debug( "  SORT GOAL ATT LIST : running process...")
+  logging.debug( "  SORT GOAL ATT LIST : provGoalAttList = " + str( provGoalAttList ) )
+
+  tmp = []
+
+  flag_nreserved     = False
+  flag_nreserved_agg = False
+  flag_mreserved     = False
+  for gatt in provGoalAttList :
+    if gatt == "NRESERVED+1" :
+      flag_nreserved_agg = True
+    elif gatt == "NRESERVED" :
+      flag_nreserved = True
+    elif gatt == "MRESERVED" :
+      flag_mreserved = True
+    else :
+      tmp.append( gatt )
+
+  logging.debug( "flag_nreserved     = " + str( flag_nreserved ) )
+  logging.debug( "flag_nreserved_agg = " + str( flag_nreserved_agg ) )
+  logging.debug( "flag_mreserved     = " + str( flag_mreserved ) )
+
+  if flag_nreserved :
+    tmp.append( "NRESERVED" )
+  if flag_nreserved_agg :
+    tmp.append( "NRESERVED+1" )
+  if flag_mreserved :
+    tmp.append( "MRESERVED" )
+
+  logging.debug( "  SORT GOAL ATT LIST : returning " + str( tmp ) ) 
+
+  return tmp
 
 
 ########################
@@ -353,11 +575,22 @@ def rewriteProvenance( ruleMeta, cursor ) :
 
     logging.debug( "  REWRITE PROVENANCE : ruleData = " + str( rule.ruleData ) )
 
+    goalName = rule.ruleData[ "relationName" ]
+
+    # -------------------------------------------------- #
+    # do not bother making prov rules for dom_, domcomp_,
+    # adom_string, or adom_int
+
+    if goalName.startswith( "domcomp_" ) or \
+       goalName.startswith( "dom_" ) or \
+       goalName.startswith( "adom_" ) :
+       continue
+
     # -------------------------------------------------- #
     # make all provenance name append numbers start from
     # 0 for each new rule name
 
-    goalName = rule.ruleData[ "relationName" ]
+    #goalName = rule.ruleData[ "relationName" ]
 
     # don't need to be this smart when comparing output w/ molly
     #if goalName == previousGoalName :
