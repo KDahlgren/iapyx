@@ -5,3 +5,4 @@
 [submodule "lib/molly"]
 	path = lib/molly
 	url = https://github.com/KDahlgren/molly.git
+	ignore = dirty
