@@ -37,10 +37,11 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 class Test_vs_molly( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = False
+  PRINT_STOP    = False
+  COMPARE_PROGS = True
 
   ####################
   #  EXAMPLE TOKENS  #
@@ -799,7 +800,8 @@ class Test_vs_molly( unittest.TestCase ) :
     with open( expected_iapyx_path, 'r' ) as expectedFile :
       expected_iapyx_results = expectedFile.read()
 
-    self.assertEqual( iapyx_results, expected_iapyx_results )
+    if self.COMPARE_PROGS :
+      self.assertEqual( iapyx_results, expected_iapyx_results )
 
     # ========================================================== #
     # MOLLY COMPARISON
@@ -1355,7 +1357,9 @@ class Test_vs_molly( unittest.TestCase ) :
 if __name__ == "__main__" :
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
+    logging.debug( "removing all ./IR*.db* files." )
     os.remove( "./IR*.db*" )
+
 
 #########
 #  EOF  #
