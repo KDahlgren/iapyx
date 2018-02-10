@@ -157,7 +157,9 @@ def dedToIR( filename, cursor, settings_path ) :
 # create the initial clock relation in SQL database
 # output nothing
 def starterClock( cursor, argDict ) :
+  logging.debug( "  STARTER CLOCK : running process..." )
   clockRelation.initClockRelation( cursor, argDict )
+  logging.debug( "  STARTER CLOCK : ...done." )
 
 
 ########################
