@@ -22,8 +22,10 @@ TODO:
   How to collect metric from molly?
 '''
 
-DEMOS          = False
-ORIGINAL_TESTS = True
+PRINT_STOP = False
+
+DEMOS          = True
+ORIGINAL_TESTS = False
 DM_TESTS       = False
 COMBO_TESTS    = False
 SC_TESTS       = False
@@ -44,7 +46,8 @@ def experiment_driver( molly_path ) :
 
   if DEMOS :
 
-    demos.dm_demo_1( molly_path, table_path, type_path )
+    demos.demo_0( PRINT_STOP, molly_path, table_path, type_path )
+    #demos.dm_demo_1( PRINT_STOP, molly_path, table_path, type_path )
 
   # ---------------------------- #
   #        ORIGINAL TESTS        #
@@ -52,7 +55,7 @@ def experiment_driver( molly_path ) :
 
   if ORIGINAL_TESTS :
 
-    original_tests.original_simplog( molly_path, table_path, type_path )
+    original_tests.original_simplog( PRINT_STOP, molly_path, table_path, type_path )
     #original_tests.original_rdlog( molly_path, table_path, type_path ) # need to implement crash table!
     #original_tests.original_replog( molly_path, table_path, type_path )
 
@@ -62,9 +65,9 @@ def experiment_driver( molly_path ) :
 
   if DM_TESTS :
 
-    dm_tests.dm_simplog( molly_path, table_path, type_path )
-    dm_tests.dm_rdlog()
-    dm_tests.dm_replog()
+    dm_tests.dm_simplog( PRINT_STOP, molly_path, table_path, type_path )
+    #dm_tests.dm_rdlog()
+    #dm_tests.dm_replog()
 
   # ------------------------- #
   #        COMBO TESTS        #

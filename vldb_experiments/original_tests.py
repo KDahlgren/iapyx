@@ -15,7 +15,7 @@ from drivers import iapyx
 ######################
 #  ORIGINAL SIMPLOG  #
 ######################
-def original_simplog( molly_path, table_path, type_path ) :
+def original_simplog( PRINT_STOP, molly_path, table_path, type_path ) :
 
   logging.info( "  ORIGINAL SIMPLOG : running test..." )
   experiment_workflow.clean_dirs()
@@ -54,7 +54,8 @@ def original_simplog( molly_path, table_path, type_path ) :
                                            eff, \
                                            evaluator, \
                                            settings_path, \
-                                           argDict )
+                                           argDict, \
+                                           PRINT_STOP )
 
   logging.info( "  ORIGINAL SIMPLOG : ...done." )
 

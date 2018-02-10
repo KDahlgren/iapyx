@@ -30,12 +30,13 @@ def experiment_workflow( molly_path, \
                          tmp_path, \
                          driver_path, \
                          crashes, \
-                         node_list_str, \
+                         node_list, \
                          eot, \
                          eff, \
                          evaluator, \
                          settings_path, \
-                         argDict ) :
+                         argDict, \
+                         PRINT_STOP ) :
 
   # ----------------------------------- #
   # generate the iapyx program
@@ -45,6 +46,15 @@ def experiment_workflow( molly_path, \
   # collect program data
   program_array = allProgramData[0]
   table_array   = allProgramData[1]
+
+  if PRINT_STOP :
+    logging.debug( "  EXPERIMENT WORKFLOW : program_array :" )
+    for line in program_array :
+      logging.debug( "    " + line )
+    logging.debug( "  EXPERIMENT WORKFLOW : table_array :" )
+    for table in table_array :
+      logging.debug( "    " + table )
+
 
   # ----------------------------------- #
   # collect type lists per relation
@@ -69,8 +79,9 @@ def experiment_workflow( molly_path, \
 
     # comment out all defines, crashes, and clocks
     if line.startswith( "define(" ) or \
-       line.startswith( "crash(" ) or \
-       line.startswith( "clock(" )  :
+       line.startswith( "crash(" )  or \
+       line.startswith( "clock(" )  or \
+       line.startswith( "next_clock(" )  :
       f.write( "//" + line + "\n" )
     else :
       f.write( line + "\n" )
@@ -89,6 +100,28 @@ def experiment_workflow( molly_path, \
     f.write( tp + "," + str( type_map[ tp ] ) )
   f.close()
 
+  if PRINT_STOP :
+
+    logging.debug( "  EXPERIMENT WORKFLOW : program_path '" + program_path + "'" )
+    fo = open( program_path, "r" )
+    for line in fo :
+      logging.debug( "    " + line.strip( "\n" ) )
+    fo.close()
+
+    logging.debug( "  EXPERIMENT WORKFLOW : table_path '" + table_path + "'" )
+    fo = open( table_path, "r" )
+    for line in fo :
+      logging.debug( "    " + line.strip( "\n" ) )
+    fo.close()
+
+    logging.debug( "  EXPERIMENT WORKFLOW : type_path '" + type_path + "'" )
+    fo = open( type_path, "r" )
+    for line in fo :
+      logging.debug( "    " + line.strip( "\n" ) )
+    fo.close()
+
+    sys.exit()
+
   # ---------------------------------------------------- #
   # run the hacked molly branch on the program files
   # step 1. copy over tables for this experiment 
@@ -103,10 +136,11 @@ def experiment_workflow( molly_path, \
     cd ' + molly_path + ' ; \
     sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
 	' + program_path + ' \
-	--EOT 4 \
-	--EFF 2 \
-	--nodes a,b,c \
-	--crashes 0 \
+	--EOT ' + str( eot ) + ' \
+	--EFF ' + str( eff ) + '  \
+	--nodes ' + ",".join( node_list ) + ' \
+	--crashes ' + str( crashes ) + ' \
+	--ignore-prov-nodes domcomp_,dom_ \
 	--prov-diagrams"' )
 
   # ----------------------------------- #
