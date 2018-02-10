@@ -2,3 +2,6 @@
 	path = lib/c4
 	url = https://github.com/bloom-lang/c4.git
 	ignore = dirty
+[submodule "lib/molly"]
+	path = lib/molly
+	url = https://github.com/KDahlgren/molly.git

@@ -132,6 +132,7 @@ def main() :
       sys.exit( "failed to install C4. No fully functioning APR found." )
   # ---------------------------------------------- #
 
+  os.system( "make molly" )
 
 ##############################
 #  MAIN THREAD OF EXECUTION  #
