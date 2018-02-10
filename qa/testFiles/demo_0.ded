@@ -1,0 +1,6 @@
+t( X )@next :- t( X ) ;
+t( X ) :- n( X ) ;
+n( "a" )@1 ;
+post( X ) :- t( X ) ;
+pre( X ) :- l( X ) ;
+l( "a" )@2 ;

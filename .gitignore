@@ -1,3 +1,5 @@
+qa/data/*
+qa/tmp_data
 lib/molly/*
 
 **/IR*.db*
