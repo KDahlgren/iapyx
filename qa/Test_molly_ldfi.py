@@ -106,6 +106,46 @@ class Test_molly_ldfi( unittest.TestCase ) :
   def test_dm_demo_1( self ) :
     test_id = "test_dm_demo_1"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    self.clean_dirs()
+
+    program_path = os.getcwd() + "/tmp_data/dm_demo_1.olg"
+    metrics_path = "./metrics_data/metrics.data"
+    tmp_path     = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/demo_1_vldb_version.ded"
+    crashes       = "0"
+    node_list     = [ "a", "b", "c" ]
+    eot           = "4"
+    eff           = "1"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_dm.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    # insert asserts here :
+    actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+    expected_json_results_path = os.getcwd() + "/testFiles/runs_dm_demo_1_vldb_version.json"
+
+    actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+    expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+    self.assertEqual( actual_num_iterations, expected_num_iterations )
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
     logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
     return None
 
@@ -116,8 +156,47 @@ class Test_molly_ldfi( unittest.TestCase ) :
   def test_demo_1( self ) :
     test_id = "test_demo_1"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    self.clean_dirs()
+ 
+    program_path = os.getcwd() + "/tmp_data/demo_1.olg"
+    metrics_path = "./metrics_data/metrics.data"
+    tmp_path     = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/demo_1_vldb_version.ded"
+    crashes       = "0"
+    node_list     = [ "a", "b", "c" ]
+    eot           = "4"
+    eff           = "1"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_regular.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+ 
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    # insert asserts here :
+    actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+    expected_json_results_path = os.getcwd() + "/testFiles/runs_demo_1_vldb_version.json"
+
+    actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+    expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+    self.assertEqual( actual_num_iterations, expected_num_iterations )
+    self.assertEqual( actual_conclusion, expected_conclusion )
+
     logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
-    return None
 
 
   ############

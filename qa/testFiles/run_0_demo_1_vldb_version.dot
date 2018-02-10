@@ -1,0 +1,50 @@
+digraph dataflow {
+    {rank="same"; goal15}
+    
+    goal11 -> rule4 [color="black"];
+    goal1 [label="clock(a, a, 1, __WILDCARD__)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal8 [label="clock(a, __WILDCARD__, 1, 2)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal0 [label="n(a, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal5 -> rule0 [color="black"];
+    goal2 [label="q(a, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule4 [label="t_prov0",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    goal4 [label="p(b, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule6 -> goal14 [color="black"];
+    goal7 [label="t(a, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule2 [label="t_prov1",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    rule3 -> goal8 [color="black"];
+    rule1 -> goal1 [color="black"];
+    rule5 -> goal11 [color="black"];
+    rule4 -> goal10 [color="black"];
+    rule0 -> goal4 [color="black"];
+    goal6 [label="m(a, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule3 -> goal7 [color="black"];
+    rule6 -> goal13 [color="black"];
+    goal9 [label="t(a, 2)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal12 [label="clock(a, __WILDCARD__, 3, 4)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal14 [label="clock(a, a, 4, __WILDCARD__)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal9 -> rule3 [color="black"];
+    goal13 [label="t(a, 4)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule1 -> goal0 [color="black"];
+    rule1 -> goal5 [color="black"];
+    goal5 [label="NOT!o(a, 1)",style="filled",fontcolor="white",color="black",fillcolor="black"];
+    rule2 -> goal1 [color="black"];
+    rule4 -> goal9 [color="black"];
+    rule2 -> goal6 [color="black"];
+    goal10 [label="clock(a, __WILDCARD__, 2, 3)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal11 [label="t(a, 3)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule6 [label="post_prov5",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    rule0 -> goal2 [color="black"];
+    goal13 -> rule5 [color="black"];
+    rule0 [label="phony",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    goal6 -> rule1 [color="black"];
+    goal3 [label="q(c, 1)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    goal15 -> rule6 [color="black"];
+    rule5 [label="t_prov0",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    rule5 -> goal12 [color="black"];
+    rule3 [label="t_prov0",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    rule1 [label="m_prov2",shape="rect",fontcolor="black",color="black",fillcolor="white"];
+    goal7 -> rule2 [color="black"];
+    goal15 [label="post(a, 4)",style="filled",fontcolor="black",color="black",fillcolor="white"];
+    rule0 -> goal3 [color="black"];
+}
