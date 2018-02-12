@@ -471,10 +471,6 @@ def get_rules( goal_data, cursor ) :
       if i < len( goal_atts ) - 1 :
         rule += ","
 
-    if name == "timer_svc" :
-      logging.debug( "rule = " + rule )
-      #sys.exit( "blah" )
-
     rule += "):-"
 
     # add subgoals
@@ -531,14 +527,79 @@ def get_rules( goal_data, cursor ) :
     rule  = rule[:-1] # remove trailing comma after subgoal list
     rule += ";"
 
-    logging.debug( "  GET RULES : adding rule '" + rule + "'" )
-    rule_list.append( rule )
+    if isSafe_hacky( rule ) :
+      logging.debug( "  GET RULES : adding rule '" + rule + "'" )
+      rule_list.append( rule )
 
   logging.debug( "  GET RULES : rule_list :" )
   for rule in rule_list :
     logging.debug( rule )
 
   return rule_list
+
+
+###################
+#  IS SAFE HACKY  #
+###################
+# check if the given rule string is safe
+def isSafe_hacky( rule_str ) :
+
+  # ---------------------------------- #
+  # CASE : empty body
+
+  if rule_str.endswith( ":;" ) :
+    return False
+
+  # ---------------------------------- #
+  # CASE : contains undefined goal atts
+
+  elif contains_undefinedGoalAtts( rule_str ) :
+    return False
+
+  # ---------------------------------- #
+  # CASE : it's probably fine, 
+  #        hopefully... >.>
+
+  else :
+    return True
+
+
+##################################
+#  CONTAINS UNDEFINED GOAL ATTS  #
+##################################
+# make sure all goal atts appear in the body
+def contains_undefinedGoalAtts( rule_str ) :
+
+  logging.debug( "  CONTAINS UNDEFINED GOAL ATTS : rule_str = " + rule_str )
+
+  # make sure line contains no spaces
+  rule_str = rule_str.translate( None, string.whitespace )
+
+  # extract goal attributes
+  goalAtts    = rule_str.split( ":-" )[0] # grab the goal part only
+  goalAtts    = goalAtts[:-1]             # remove the ')'
+  paren_index = goalAtts.find( "(" )
+  goalAtts    = goalAtts[ paren_index+1 : ]
+  goalAtts    = goalAtts.split( "," )
+
+  # extract body
+  body = rule_str.split( ":-" )[1]
+
+  flag = False
+  for gatt in goalAtts :
+    case_1 = "(" + gatt
+    case_2 = "," + gatt + ","
+    case_3 = gatt + ")"
+
+    if not case_1 in body and \
+       not case_2 in body and \
+       not case_3 in body :
+      logging.debug( "  CONTAINS UNDEFINED GOAL ATTS : gatt '" + gatt + "' is undefined"  )
+      flag = True
+      break
+
+  logging.debug( "  CONTAINS UNDEFINED GOAL ATTS : returning " + str( flag ) )
+  return flag
 
 
 #####################
