@@ -30,8 +30,8 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 #####################
 class Test_molly_ldfi( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
@@ -457,6 +457,9 @@ class Test_molly_ldfi( unittest.TestCase ) :
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    logging.debug( "removing all ./IR*.db* files." )
+    os.remove( "./IR*.db*" )
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
     logging.debug( "removing all ./IR*.db* files." )

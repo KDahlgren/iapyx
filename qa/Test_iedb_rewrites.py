@@ -52,7 +52,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_iedb_rewrites_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_replog_dm_" )
     logging.info( "  TEST_IEDB_REWRITES : ...done." )
@@ -74,7 +74,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_iedb_rewrites_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_rdlog_dm_" )
     logging.info( "  TEST_IEDB_REWRITES : ...done." )
@@ -96,9 +96,9 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_iedb_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_iedb_rewrites_dm.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "iedb_rewrites_simplog_dm_" )
+    self.comparison_workflow( argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, "_iedb_rewrites_simplog_dm_" )
     logging.info( "  TEST_IEDB_REWRITES : ...done." )
 
 
@@ -433,7 +433,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_iedb_rewrites.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings_iedb_rewrites.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -447,6 +447,8 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
     os.remove( "./IR*.db*" )

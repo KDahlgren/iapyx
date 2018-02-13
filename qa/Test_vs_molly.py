@@ -36,8 +36,8 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 ###################
 class Test_vs_molly( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
@@ -820,8 +820,8 @@ class Test_vs_molly( unittest.TestCase ) :
 
     match_elements_flag_iapyx, match_elements_flag_molly = self.compareIapyxAndMolly( iapyx_results, molly_results )
 
-    self.assertEqual( True, match_elements_flag_iapyx )
-    self.assertEqual( True, match_elements_flag_molly )
+    self.assertTrue( match_elements_flag_iapyx )
+    self.assertTrue( match_elements_flag_molly )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -838,7 +838,8 @@ class Test_vs_molly( unittest.TestCase ) :
 
     # ----------------------------------------------------- #
     # grab relevant substring from iapyx results
-    iapyx_substring  = iapyx_results.split( "\nclock", 1 )                  # remove all clock facts (and crash facts)
+
+    iapyx_substring  = iapyx_results.split( "\nclock", 1 ) # remove all clock facts (and crash facts)
     iapyx_substring  = iapyx_substring[0]
     iapyx_substring  = iapyx_substring.replace( "\n", "" )                  # remove all newlines
     iapyx_substring  = iapyx_substring.translate( None, string.whitespace ) # remove all whitespace
@@ -846,7 +847,8 @@ class Test_vs_molly( unittest.TestCase ) :
 
     # ----------------------------------------------------- #
     # grab relevant substring from molly results
-    molly_substring  = molly_results.split( "\nclock", 1 )                  # remove all clock facts
+
+    molly_substring  = molly_results.split( "\nclock", 1 ) # remove all clock facts
     molly_substring  = molly_substring[0]
     molly_substring  = molly_substring.replace( "\n", "" )                  # remove all newlines
     molly_substring  = molly_substring.translate( None, string.whitespace ) # remove all whitespace
@@ -871,6 +873,7 @@ class Test_vs_molly( unittest.TestCase ) :
 
     # -------------------------------------------------------------------------------- #
     # make sure all lines in the iapyx program have a match in the molly program
+
     match_elements_flag_iapyx = False
     for iapyx_line in iapyx_line_array :
 
@@ -909,8 +912,12 @@ class Test_vs_molly( unittest.TestCase ) :
             logging.debug( "  COMPARE IAPYX AND MOLLY (2) : iapyx_line '" + iapyx_line+ "' not found in molly program." )
             match_elements_flag_iapyx = False
 
+    if not match_elements_flag_iapyx :
+      sys.exit( "blah" )
+
     # -------------------------------------------------------------------------------- #
     # make sure all lines in the molly program have a match in the iapyx program
+
     match_elements_flag_molly = False
     for molly_line in molly_line_array :
 
@@ -1341,7 +1348,7 @@ class Test_vs_molly( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -1355,6 +1362,9 @@ class Test_vs_molly( unittest.TestCase ) :
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    logging.debug( "removing all ./IR*.db* files." )
+    os.remove( "./IR*.db*" )
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
     logging.debug( "removing all ./IR*.db* files." )

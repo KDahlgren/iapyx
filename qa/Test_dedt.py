@@ -28,8 +28,8 @@ from utils import dumpers, globalCounters, tools
 class Test_dedt( unittest.TestCase ) :
 
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
 
@@ -61,7 +61,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+    argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -114,7 +114,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+    argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -167,7 +167,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_next_clock_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_use_next_clock_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -220,7 +220,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_next_clock.ini"
+    argDict[ "settings" ] = "./settings_files/settings_use_next_clock.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -273,7 +273,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_sync_assumption_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_sync_assumption_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -326,7 +326,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_sync_assumption.ini"
+    argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -379,7 +379,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_aggs_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_use_aggs_dm.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -432,7 +432,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
 
     # specify settings file
-    argDict[ "settings" ] = "./settings_use_aggs.ini"
+    argDict[ "settings" ] = "./settings_files/settings_use_aggs.ini"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -538,8 +538,11 @@ class Test_dedt( unittest.TestCase ) :
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
 
+    if self.PRINT_STOP :
+      print actual_ruleData
+
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['8', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['9', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['17', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '3': {'goalName': 'role_x_vars', 'goalAttData': [[0, 'N', 'string'], [1, 'I', 'int'], [2, 'R', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['13', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int'], [3, 'NRESERVED', 'int']]], ['15', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['11', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['12', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'new_term_prov1', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int'], [3, 'T', 'int']], 'subgoalAttData': [['18', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'role_x_prov0', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['16', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '6': {'goalName': 'lclock_register_prov2', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['22', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
+    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['8', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['9', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['17', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '3': {'goalName': 'role_x_vars', 'goalAttData': [[0, 'N', 'string'], [1, 'I', 'int'], [2, 'R', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['13', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int'], [3, 'NRESERVED', 'int']]], ['15', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['11', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['12', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'new_term_prov1', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['24', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['25', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['26', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'role_x_prov0', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['16', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '6': {'goalName': 'lclock_register_prov2', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['31', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['32', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -617,10 +620,11 @@ class Test_dedt( unittest.TestCase ) :
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
 
-    #print actual_ruleData
+    if self.PRINT_STOP :
+      print actual_ruleData
 
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['9', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['11', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['6', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['7', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['8', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '3': {'goalName': 'c_prov0', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['15', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['16', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['17', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['12', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['13', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'e_prov2', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int'], [3, 'Z', 'string']], 'subgoalAttData': [['21', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['22', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['23', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'd_prov1', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int'], [3, 'Z', 'int']], 'subgoalAttData': [['18', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
+    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['9', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['11', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['6', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['7', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['8', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '3': {'goalName': 'c_prov0', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['22', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['23', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['12', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['13', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'e_prov2', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['39', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['40', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['41', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'd_prov1', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['30', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['31', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['32', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -1837,7 +1841,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -1851,7 +1855,11 @@ class Test_dedt( unittest.TestCase ) :
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 #########
 #  EOF  #

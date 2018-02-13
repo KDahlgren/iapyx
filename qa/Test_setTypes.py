@@ -27,8 +27,8 @@ from evaluators import c4_evaluator
 ####################
 class Test_setTypes( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
@@ -57,7 +57,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -87,7 +87,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -117,7 +117,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -147,7 +147,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -177,7 +177,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -207,7 +207,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -237,7 +237,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -267,7 +267,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -297,7 +297,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -327,7 +327,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -357,7 +357,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -387,7 +387,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -417,7 +417,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -447,7 +447,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -477,7 +477,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -507,7 +507,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -537,7 +537,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -567,7 +567,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -597,7 +597,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -627,7 +627,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -658,7 +658,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -690,7 +690,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -722,7 +722,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -758,7 +758,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -789,7 +789,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -821,7 +821,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -843,7 +843,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -865,7 +865,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes.ini"
 
     self.comparison_workflow( argDict, \
                               expected_iapyx_path, \
@@ -887,7 +887,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_replog_dm_" )
 
@@ -906,7 +906,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_rdlog_dm_" )
 
@@ -925,7 +925,7 @@ class Test_setTypes( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_path, expected_eval_path, "_setTypes_simplog_dm_" )
 
@@ -989,7 +989,7 @@ class Test_setTypes( unittest.TestCase ) :
   #########################
   # tests an example program
   #@unittest.skip( "working on different example" )
-  def test_settypes_example_1( self ) :
+  def test_setTypes_example_1( self ) :
 
     # specify input and output paths
     inputfile                    = os.getcwd() + "/testFiles/settypes_example_1.ded"
@@ -1273,7 +1273,7 @@ class Test_setTypes( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "settings_settypes.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings_setTypes.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -1287,6 +1287,9 @@ class Test_setTypes( unittest.TestCase ) :
     return argDict
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    logging.debug( "removing all ./IR*.db* files." )
+    os.remove( "./IR*.db*" )
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
     os.remove( "./IR*.db*" )

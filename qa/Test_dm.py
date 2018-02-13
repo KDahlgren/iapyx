@@ -29,8 +29,8 @@ import dm
 ##############
 class Test_dm( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
@@ -54,7 +54,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_dm_concise.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm_concise.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
@@ -156,7 +156,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -175,7 +175,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -194,7 +194,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -446,11 +446,13 @@ class Test_dm( unittest.TestCase ) :
 
       for pos_row in pos_results :
         if pos_row in not_results :
-          logging.debug( "HAS OVERLAP : pos_row '" + str( pos_row ) + "' is in not_results:" )
+          logging.debug( "  HAS OVERLAP : pos_row '" + str( pos_row ) + "' is in not_results:" )
           for not_row in not_results :
-            logging.debug( "HAS OVERLAP : not_row " + str( not_row ) )
-          logging.debug( "HAS OVERLAP : returning True" )
+            logging.debug( "  HAS OVERLAP : not_row " + str( not_row ) )
+          logging.debug( "  HAS OVERLAP : returning True" )
           return True
+
+      logging.debug( "  HAS OVERLAP : no overlap for pair '" + str( pair ) + "'" )
 
     logging.debug( "HAS OVERLAP : returning False" )
     return False
@@ -877,7 +879,7 @@ class Test_dm( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_dm.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings_dm.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -1344,7 +1346,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = {}
-    argDict[ "settings" ] = "./settings_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm.ini"
 
     # --------------------------------------------------------------- #
     # build test rule set
@@ -1538,7 +1540,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = {}
-    argDict[ "settings" ] = "./settings_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm.ini"
 
     # --------------------------------------------------------------- #
     # build test rule set
@@ -1688,7 +1690,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = {}
-    argDict[ "settings" ] = "./settings_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm.ini"
 
     # --------------------------------------------------------------- #
     # build test rule set
@@ -1894,7 +1896,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = {}
-    argDict[ "settings" ] = "./settings_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm.ini"
 
     # --------------------------------------------------------------- #
     # build test rule set
@@ -2497,80 +2499,118 @@ class Test_dm( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # check assertion
 
-    expected_a0 = { "relationName":"adom_int", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"a", \
-                                             "subgoalAttList":[ "T", "_", "_" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    #expected_a1 = { "relationName":"adom_str", \
-    #                "goalAttList":[ "T" ], \
-    #                "goalTimeArg":"", 
-    #                "subgoalListOfDicts":[ { "subgoalName":"a", \
-    #                                         "subgoalAttList":[ "_", "T", "_" ], \
-    #                                         "polarity":"", \
-    #                                         "subgoalTimeArg":"" } ], \
-    #                "eqnDict":{} }
-    expected_a1 = { "relationName":"adom_string", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"a", \
-                                             "subgoalAttList":[ "_", "T", "_" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    expected_a2 = { "relationName":"adom_int", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"a", \
-                                             "subgoalAttList":[ "_", "_", "T" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    expected_b0 = { "relationName":"adom_string", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"b", \
-                                             "subgoalAttList":[ "T", "_", "_", "_" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    expected_b1 = { "relationName":"adom_string", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"b", \
-                                             "subgoalAttList":[ "_", "T", "_", "_" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    expected_b2 = { "relationName":"adom_int", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"b", \
-                                             "subgoalAttList":[ "_", "_", "T", "_" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
-    expected_b3 = { "relationName":"adom_int", \
-                    "goalAttList":[ "T" ], \
-                    "goalTimeArg":"", 
-                    "subgoalListOfDicts":[ { "subgoalName":"b", \
-                                             "subgoalAttList":[ "_", "_", "_", "T" ], \
-                                             "polarity":"", \
-                                             "subgoalTimeArg":"" } ], \
-                    "eqnDict":{} }
+    expected_a0 = { 'relationName': 'adom_int', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'a', \
+                                              'subgoalAttList': ['T', '_', '_'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_a1 = { 'relationName': 'adom_int', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'a', \
+                                              'subgoalAttList': ['_', 'T', '_'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_a2 = { 'relationName': 'adom_int', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'a', \
+                                              'subgoalAttList': ['_', '_', 'T'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_b0 = { 'relationName': 'adom_string', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'b', \
+                                              'subgoalAttList': ['T', '_', '_', '_'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_b1 = { 'relationName': 'adom_string', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'b', \
+                                              'subgoalAttList': ['_', 'T', '_', '_'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_b2 = { 'relationName': 'adom_string', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'b', \
+                                              'subgoalAttList': ['_', '_', 'T', '_'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+    expected_b3 = { 'relationName': 'adom_string', \
+                    'eqnDict': {}, \
+                    'goalTimeArg': '', \
+                    'subgoalListOfDicts': [ { 'polarity': '', \
+                                              'subgoalName': 'b', \
+                                              'subgoalAttList': ['_', '_', '_', 'T'], \
+                                              'subgoalTimeArg': '' } ], \
+                    'goalAttList': ['T'] }
+#    expected_clock1 = { 'relationName': 'adom_string', \
+#                        'eqnDict': {}, \
+#                        'goalTimeArg': '', \
+#                        'subgoalListOfDicts': [ { 'polarity': '', \
+#                                                  'subgoalName': 'clock', \
+#                                                  'subgoalAttList': ['T', '_', '_', '_'], \
+#                                                  'subgoalTimeArg': ''}], 
+#                        'goalAttList': ['T']}
+#    expected_clock2 = { 'relationName': 'adom_string', \
+#                        'eqnDict': {}, \
+#                        'goalTimeArg': '', \
+#                        'subgoalListOfDicts': [ { 'polarity': '', \
+#                                                  'subgoalName': 'clock', \
+#                                                  'subgoalAttList': ['_', 'T', '_', '_'], \
+#                                                  'subgoalTimeArg': ''}], 
+#                        'goalAttList': ['T']}
+#    expected_clock3 = { 'relationName': 'adom_string', \
+#                        'eqnDict': {}, \
+#                        'goalTimeArg': '', \
+#                        'subgoalListOfDicts': [ { 'polarity': '', \
+#                                                  'subgoalName': 'clock', \
+#                                                  'subgoalAttList': ['_', '_', 'T', '_'], \
+#                                                  'subgoalTimeArg': ''}], 
+#                        'goalAttList': ['T']}
+#    expected_clock4 = { 'relationName': 'adom_string', \
+#                        'eqnDict': {}, \
+#                        'goalTimeArg': '', \
+#                        'subgoalListOfDicts': [ { 'polarity': '', \
+#                                                  'subgoalName': 'clock', \
+#                                                  'subgoalAttList': ['_', '_', '_', 'T'], \
+#                                                  'subgoalTimeArg': ''}], 
+#                        'goalAttList': ['T']}
 
-    expectedAdomRuleData = [ expected_a0, expected_a1, expected_a2, expected_b0, expected_b1, expected_b2, expected_b3 ]
+    expectedAdomRuleData = [ expected_a0, expected_a1, expected_a2, \
+                             expected_b0, expected_b1, expected_b2, expected_b3 ] #, \
+#                             expected_clock1, expected_clock2, expected_clock3, expected_clock4 ]
 
-    for i in range( 0, len( actualAdomRuleData ) ) :
-      actual   = actualAdomRuleData[ i ]
-      expected = expectedAdomRuleData[ i ]
+    if self.PRINT_STOP :
+      for i in range( 0, len( actualAdomRuleData ) ) :
+        print actualAdomRuleData[ i ]
+      sys.exit( "blah" )
 
-      logging.debug( "  TEST BUILD ADOM : comparing :\n" + str( actual ) + "\nvs\n" + str( expected ) )
+    flag0 = True
+    for aRule in actualAdomRuleData :
+      flag = False
+      for eRule in expectedAdomRuleData :
+        logging.debug( "  TEST BUILD ADOM : comparing :\n" + str( aRule ) + "\nvs\n" + str( eRule ) )
+        if aRule == eRule :
+          flag = True
+        logging.debug( "  TEST BUILD ADOM : flag == " + str( flag ) )
+      if not flag :
+        flag0 = False
+        break
 
-      self.assertEqual( actual, expected )
+
+      self.assertTrue( flag0 )
 
     # --------------------------------------------------------------- #
     # clean up testing
@@ -2597,6 +2637,8 @@ class Test_dm( unittest.TestCase ) :
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
   unittest.main()
   if os.path.exists( "./IR*.db*" ) :
     os.remove( "./IR*.db*" )

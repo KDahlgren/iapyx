@@ -50,7 +50,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_wildcard_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
 
@@ -69,7 +69,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_wildcard_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
 
@@ -88,7 +88,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_wildcard_rewrites_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
 
     self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
 
@@ -412,7 +412,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_wildcard_rewrites.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings_wildcard_rewrites.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
