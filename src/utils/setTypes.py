@@ -403,7 +403,7 @@ def get_rules( goal_data, cursor ) :
 
     logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
 
-    # clean agg functions
+    # clean agg functions (don't need these to derive types)
     tmp = []
     for att in goal_atts :
       attID   = att[0]
@@ -417,7 +417,7 @@ def get_rules( goal_data, cursor ) :
 
     logging.debug( "  GET RULES : goal_atts (2) = " + str( goal_atts ) )
 
-    # clean agg ops
+    # clean agg ops (don't need these to derive types)
     tmp = []
     for goal_att in goal_atts :
       gatt = goal_att[1]
@@ -480,7 +480,8 @@ def get_rules( goal_data, cursor ) :
       subgoalName     = sub[1]
       subgoalPolarity = sub[2]
 
-      if subgoalPolarity == "" : # only need positive subgoals because only using safe rules.
+      # only need positive subgoals because only using safe rules.
+      if subgoalPolarity == "" :
 
         if not subgoalName.startswith( "not_" ) :
 
@@ -503,7 +504,8 @@ def get_rules( goal_data, cursor ) :
           rule  = rule[:-1] # remove trailing comma in subgoal att list
           rule += "),"
 
-      elif name.startswith( "not_" ) and subgoalPolarity == "notin" : # only need positive subgoals because only using safe rules.
+      # only need positive subgoals because only using safe rules.
+      elif name.startswith( "not_" ) and subgoalPolarity == "notin" :
 
         rule += " " + subgoalName + "("
   
@@ -587,6 +589,12 @@ def contains_undefinedGoalAtts( rule_str ) :
 
   flag = False
   for gatt in goalAtts :
+
+    if ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
+       ( gatt.startswith( '"' ) and gatt.endswith( '"' ) ) or \
+       gatt.isdigit() :
+      continue
+
     case_1 = "(" + gatt
     case_2 = "," + gatt + ","
     case_3 = gatt + ")"
