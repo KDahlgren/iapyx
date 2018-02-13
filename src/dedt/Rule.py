@@ -66,8 +66,17 @@ class Rule :
     ########################
     #  ATTRIBUTE DEFAULTS  #
     ########################
-    self.rid                 = ""
-    self.orig_rule_ptr       = None # the ptr to the original rule in provenance rules.
+    self.rid                             = ""
+
+    # the ptr to the original rule for provenance rules only.
+    self.orig_rule_ptr                   = None
+
+    # map of original goal att strings to uniform att strings (dm rewrites).
+    self.orig_rule_attMapper             = {}
+
+    # map of original goal att strings to uniform att strings in aggregate rewrites (dm rewrites).
+    self.orig_rule_attMapper_aggRewrites = {}
+
     self.cursor              = None
     self.relationName        = ""
     self.goalAttList         = []
