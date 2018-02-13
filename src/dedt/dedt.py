@@ -278,12 +278,19 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
 
   for rule in ruleMeta :
+    logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+#  sys.exit( "blah2" )
 
   # be sure to fill in all the type info for the new rule definitions
   setTypes.setTypes( cursor, settings_path )
 
   # ----------------------------------------------------------------------------- #
+
+  for rule in ruleMeta :
+    logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+    logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+#  sys.exit( "blah2" )
 
   logging.debug( "  REWRITE : ...done." )
 
