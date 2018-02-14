@@ -380,6 +380,8 @@ def replaceTimeAtts( rule ) :
   # ----------------------------------------- #
   # replace all unused vars with wildcards
 
+  logging.debug( "  REPLACE TIME ATTS : executing wildcard replacement..." )
+
   subgoalAttList_complete = []
   subgoalListOfDicts      = copy.deepcopy( rule.subgoalListOfDicts )
   for subgoal in subgoalListOfDicts :
@@ -419,6 +421,8 @@ def replaceTimeAtts( rule ) :
   rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
   rule.saveSubgoals()
 
+  logging.debug( "  REPLACE TIME ATTS : ...wildcard replacement done." )
+
   # ----------------------------------------- #
   # replace all instances of the rightmost 
   # att of the original rule with MRESERVED
@@ -426,6 +430,9 @@ def replaceTimeAtts( rule ) :
   # not_ rules only!
 
   if rule.relationName.startswith( "not_" ) :
+
+    logging.debug( "  REPLACE TIME ATTS : time att replacement in not_ rule..." )
+
     orig_rightmost = rule.orig_rule_ptr.goalAttList[ -1 ]
     orig_rightmost = orig_rightmost.split( "+" )[ 0 ] # next time args always use '+'
   
@@ -470,6 +477,8 @@ def replaceTimeAtts( rule ) :
 #    logging.debug( rule.ruleData )
 #    sys.exit( "blah" ) 
 
+    logging.debug( "  REPLACE TIME ATTS : ...time att replacement in not_ rule done." )
+
   # ----------------------------------------- #
   # replace all uniform attributes 
   # representing time references with the
@@ -486,6 +495,9 @@ def replaceTimeAtts( rule ) :
 
     orig_rightmost       = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
     new_second_rightmost = rule.goalAttList[ -2 ]
+
+    logging.debug( "  REPLACE TIME ATTS : orig_rightmost       = " + orig_rightmost )
+    logging.debug( "  REPLACE TIME ATTS : new_second_rightmost = " + new_second_rightmost )
 
     if not new_second_rightmost == "NRESERVED" and \
        not new_second_rightmost == "NRESERVED+1" :
@@ -552,7 +564,8 @@ def replaceTimeAtts( rule ) :
     logging.debug( "  REPLACE TIME ATTS : hit deductive rule ..." )
 
     orig_rightmost = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
-    new_rightmost  = rule.goalAttList[ -1 ]
+    new_rightmost  = rule.orig_rule_ptr.goalAttList[ -1 ]
+    #new_rightmost  = rule.goalAttList[ -1 ]
 
     logging.debug( " rule.relationName                   = " + rule.relationName )
     logging.debug( " rule.orig_rule_ptr.orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
@@ -597,7 +610,11 @@ def replaceTimeAtts( rule ) :
     rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
     rule.saveSubgoals()
 
+    logging.debug( "  REPLACE TIME ATT : new rule data = " + str( rule.ruleData ) )
+
   else :
+
+    logging.debug( "  REPLACE TIME ATTS : executing else..." )
 
     if len( rule.orig_rule_ptr.orig_rule_attMapper_aggRewrites ) > 0 :
 
