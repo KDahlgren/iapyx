@@ -1225,10 +1225,10 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
       results_array = c4_evaluator.runC4_wrapper( original_prog )
       parsedResults = tools.getEvalResults_dict_c4( results_array )
       # run the neg rewrite for combinatorial approach
-      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
+      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, argDict, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
+    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without combo rewrites" )
     pass
 
   # ----------------------------------------------------------------------------- #
@@ -1244,7 +1244,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
   for rule in ruleMeta :
     logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
-    
+
   # be sure to fill in all the type info for the new rule definitions
   setTypes.setTypes( cursor, settings_path )
   # ----------------------------------------------------------------------------- #

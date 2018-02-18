@@ -24,6 +24,7 @@ def getActiveDomain(cursor, factMeta, parsedResults):
   str_exists = {}
   int_exists = {}
   newfactMeta = []
+  int_exists[0] = True
   for x in parsedResults.values():
     for y in x:
       for z in y:
@@ -38,33 +39,7 @@ def getActiveDomain(cursor, factMeta, parsedResults):
         newfactMeta.append(createDomFact(cursor, "dom_str", [z]))
   return factMeta + newfactMeta
 
-def collectDomainRuleInfo( cursor, rule, ruleMeta ):
-  parRule = []
-  childRule = []
-  for r in ruleMeta:
-    if r.relationName == rule[1]:
-      parRule.append(r)
-    if r.relationName == rule[0]:
-      childRule.append(r)
-  childVars = getAllVarTypes(cursor, childRule[0])
-  return parRule, childRule, childVars
-
 def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
-  # This has issues in the sense of the folowing:
-  # if you have the following parRule childRule relation
-  #   a(X,Y) :- b(X), c(Y);
-  #   a(X,Y) :- c(Y), b(X);
-  # THEN what happens.
-  # or by contrast if you have the parent rule
-  # a(X,Y) :- b(X), c(Y);
-  # a(X,Y) :- {not containing b}
-  # this would lead to not being able to find b in the parents list of subgoals
-  # when it is there. THEREFORE, i propose that  parRule be a list  rather  than a 
-  # singular rule. we can then take  into consideration each possible combination of
-  # things. (also this function really needs some beautification.)
-  # print "-----------------------------------------------------------------------"
-  # print "insertDomainFact"
-  # print "-----------------------------------------------------------------------"
   checkName = rule[1]
   m = re.match(r'^(.*)_(\d*)$', rule[1])
   if m:
@@ -81,7 +56,6 @@ def insertDomainFactOffParDomain(cursor, rule, checkName, ruleMeta, factMeta ):
   parRule, childRule, childVars = collectDomainRuleInfo( cursor, rule , ruleMeta )
   parRule = parRule[0]
   childRule = childRule[0]
-  # print "found parent dom"
   newRules = []
   newFacts = []
   # in this case  we want to base it on the previous iteration of the goal.
@@ -132,7 +106,6 @@ def insertDomainFactOffParDomain(cursor, rule, checkName, ruleMeta, factMeta ):
         newRules.append(newRule)
   ruleMeta = ruleMeta + newRules
   factMeta = factMeta + newFacts
-  # print "-----------------------------------------------------------------------"
   return ruleMeta, factMeta
 
 def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults ):
@@ -197,6 +170,18 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
   factMeta = factMeta + newFacts
   return ruleMeta, factMeta
 
+def collectDomainRuleInfo( cursor, rule, ruleMeta ):
+  ''' Returns information about the rule  for inserting Domain facts '''
+  parRule = []
+  childRule = []
+  for r in ruleMeta:
+    if r.relationName == rule[1]:
+      parRule.append(r)
+    if r.relationName == rule[0]:
+      childRule.append(r)
+  childVars = getAllVarTypes(cursor, childRule[0])
+  return parRule, childRule, childVars
+
 def createDomFact(cursor, name, data):
   # print "createDomFact", name
   for i in range(0, len(data)):
@@ -230,6 +215,7 @@ def createSubgoalDict(name, attList, polarity, timeargs):
   return goalDict
 
 def concateDomain(cursor, negRule, posRid, ruleName):
+  ''' Adds in domain subgoals to negated rules '''
   varss = getAllVars(cursor, negRule, posRid=posRid)
   for var in varss:
     if isStringConst(var[0]) or is_int(var[0]):
@@ -250,6 +236,7 @@ def concateDomain(cursor, negRule, posRid, ruleName):
   return negRule
 
 def appendDomainArgs(negRule, ruleName):
+  ''' adds in domain subgoals specific to the rule '''
   for i in  range (0, len(negRule.goalAttList)):
     att = negRule.goalAttList[i]
     if att == '_' or '+' in att or is_int(att) or isStringConst(att):
@@ -266,6 +253,9 @@ def getAllVars(cursor, rule, posRid=None):
   return getAllVarTypes(cursor, rule, posRid=posRid).iteritems()
 
 def getAllVarTypes(cursor, rule, posRid=None):
+  ''' returns a dictionary with key={variable name} val={variable type} for all variables 
+      for a given rule
+  ''' 
   rid = rule.rid
   if posRid:
     rid = posRid
@@ -283,6 +273,7 @@ def getAllVarTypes(cursor, rule, posRid=None):
   return vars
 
 def isStringConst(x):
+  ''' Checks if x is a string const '''
   m = re.match(r'".*"', x)
   return not (m==None)
 

@@ -1,0 +1,20 @@
+send_to_primary(P, J)@async :- job(S, J), notin primary_failure(S, P), primary(S,P);
+send_to_backup(B, J)@async :- job(S, J), primary_failure(S, P), primary(S,P), backup(S,B);
+
+primary_failure(S, P)@next :- primary_failure(S, P);
+primary_failure(S, P) :- primary(S, P), notin heartbeat(S, P, H), current_time(S, T), threshold(S, Thresh), T - H > Thresh;
+
+heartbeat(S, P)@async :- am_primary(P), scheduler(P, S);
+
+primary("A")@1;
+backup("B")@1;
+
+am_primary("A")@1;
+
+job("C", "hello")@1;
+
+current_time("C", 3)@1;
+
+threshold("C", 2)@1;
+
+scheduler("A", "C")@1;
