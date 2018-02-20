@@ -120,6 +120,12 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
         # we found the matching subgoal
         for attIndex in range(0, len(childRule.goalAttList)):
           att = subgoal['subgoalAttList'][attIndex]
+          if isConstant(att):
+            # the attribute is constant in the parent goal therefore add a fact for it
+            newFact = createDomFact( cursor, "dom_not_"+rule[0]+"_"+str(attIndex), [att])
+            newFacts.append(newFact)
+            continue
+
           found = False
           for parAttIndex in range(0, len(parRule.goalAttList)):
             parAtt = parRule.goalAttList[parAttIndex]
@@ -139,10 +145,13 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
                 newFact = Fact.Fact(fid, factData, cursor)
                 newFacts.append(newFact)
 
+              usedVals = {}
               for val in parsedResults[rule[1]]:
-                # this case is wrong, awkward. What is happening is that its matching the slot in the subgoal
-                # not the slot in the goalAtt. which is awkward and not how things work.
+                # add in a rule into the parsed results
                 data = val[parAttIndex]
+                if data in usedVals.keys():
+                  continue
+                usedVals[data] = True
                 newFact = createDomFact(cursor, "dom_not_" + rule[0] + "_" + str(attIndex), [data])
                 newFacts.append(newFact)
               break
@@ -271,6 +280,10 @@ def getAllVarTypes(cursor, rule, posRid=None):
           continue 
         vars[subgoalAtt[1]] = subgoalAtt[2]
   return vars
+
+
+def isConstant(x):
+  return is_int(x) or isStringConst(x)
 
 def isStringConst(x):
   ''' Checks if x is a string const '''

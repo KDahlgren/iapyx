@@ -78,7 +78,6 @@ def negateRules(cursor, argDict, settings_path, ruleMeta, factMeta, rulesToNegat
   for rule in rulesToNegate.iteritems():
     # for each rule, negate it.
     ruleMeta, factMeta = negateRule(cursor, rule, ruleMeta, factMeta, parsedResults, neg_clocks=neg_clocks)
-    original_prog = c4_translator.c4datalog( argDict, cursor )
     setTypes.setTypes( cursor, settings_path )
 
   return ruleMeta, factMeta

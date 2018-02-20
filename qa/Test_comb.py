@@ -61,7 +61,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMB REPLOG  #
   ################
   # tests rewriting replog
-  @unittest.skip( "issue with overlap" )
+  # @unittest.skip( "working on different example" )
   def test_comb_replog( self ) :
 
     # specify input and output paths
@@ -289,6 +289,7 @@ class Test_comb( unittest.TestCase ) :
 
     eval_results_dict = tools.getEvalResults_dict_c4( results_array )
     orig_eval_results_dict = tools.getEvalResults_dict_c4( orig_results_array )
+
     # ----------------------------------------------------------------- #
     # collect all pos/not_ rule pairs
 
@@ -328,7 +329,6 @@ class Test_comb( unittest.TestCase ) :
   def hasOverlap( self, rule_pairs, eval_results_dict ) :
 
     for pair in rule_pairs :
-
       logging.debug( "  HAS OVERLAP : pair = " + str( pair ) )
 
       pos_results = eval_results_dict[ pair[0] ]

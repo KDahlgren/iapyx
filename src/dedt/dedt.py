@@ -1169,7 +1169,6 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   # ----------------------------------------------------------------------------- #
   # dm rewrites
-
   try :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
     if RUN_DM :
@@ -1190,6 +1189,22 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     goal_atts = tools.toAscii_multiList( goal_atts )
     logging.debug( "  DEDT : goal_atts (2) = " + str( goal_atts ) )
 
+
+  try:
+    RUN_COMB = tools.getConfig( settings_path, "DEFAULT", "COMB", bool )
+
+    if RUN_COMB:
+      
+      # collect the results from the original program
+      original_prog = c4_translator.c4datalog( argDict, cursor )
+      results_array = c4_evaluator.runC4_wrapper( original_prog )
+      parsedResults = tools.getEvalResults_dict_c4( results_array )
+      # run the neg rewrite for combinatorial approach
+      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, argDict, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without combo rewrites" )
+    pass
   # ----------------------------------------------------------------------------- #
   # iedb rewrites 
   # ^ need to happen AFTER dm rewrites or else get wierd c4 eval results???
@@ -1213,22 +1228,6 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
-    pass
-
-  try:
-    RUN_COMB = tools.getConfig( settings_path, "DEFAULT", "COMB", bool )
-
-    if RUN_COMB:
-      
-      # collect the results from the original program
-      original_prog = c4_translator.c4datalog( argDict, cursor )
-      results_array = c4_evaluator.runC4_wrapper( original_prog )
-      parsedResults = tools.getEvalResults_dict_c4( results_array )
-      # run the neg rewrite for combinatorial approach
-      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, argDict, settings_path, ruleMeta, factMeta, parsedResults ) # returns new ruleMeta
-
-  except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without combo rewrites" )
     pass
 
   # ----------------------------------------------------------------------------- #
