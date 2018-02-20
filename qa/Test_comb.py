@@ -216,8 +216,6 @@ class Test_comb( unittest.TestCase ) :
 
     if self.PRINT_STOP :
       print iapyx_results
-      with open( expected_iapyx_comb_path, 'w') as expectedFile:
-        expectedFile.write(iapyx_results)
       sys.exit( "print stop." )
 
     # ========================================================== #
