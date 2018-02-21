@@ -1,3 +1,9 @@
+**/*.aux
+**/*.ent
+**/*.log
+**/*.pdf
+**/*.gz
+
 qa/data/*
 qa/tmp_data
 lib/molly/*
