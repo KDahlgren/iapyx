@@ -20,24 +20,25 @@ import goalData
 
 def getActiveDomain(cursor, factMeta, parsedResults):
   ''' Adds in a domain fact for each value in the active domain '''
-  dom_facts = []
+  str_exists, int_exists = collectAdom(parsedResults)
+  newfactMeta = []
+  for x in int_exists:
+    newfactMeta.append(createDomFact(cursor, "dom_int", [x]))
+  for x in str_exists:
+    newfactMeta.append(createDomFact(cursor, "dom_str", [x]))
+  return factMeta + newfactMeta
+
+def collectAdom(parsedResults):
   str_exists = {}
   int_exists = {}
-  newfactMeta = []
-  int_exists[0] = True
   for x in parsedResults.values():
     for y in x:
       for z in y:
-        if z=="NULL" or z=="99999999":
-          continue
-        if z in str_exists.keys():
-          continue
-        str_exists[z] = True
         if is_int(z):
-          newfactMeta.append(createDomFact(cursor, "dom_int", [z]))
-          continue
-        newfactMeta.append(createDomFact(cursor, "dom_str", [z]))
-  return factMeta + newfactMeta
+          int_exists[z] = True
+        else:
+          str_exists[z] = True
+  return str_exists.keys(), int_exists.keys()
 
 def insertDomainFact(cursor, rule, ruleMeta, factMeta, parsedResults):
   checkName = rule[1]
@@ -134,16 +135,20 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
               # found this attribute in the parent.
               # therefore can define based off this value in the parents slot
               if len(parsedResults[rule[1]])==0:
-                val = '"NULL"'
+                # nothing exists in the parents domain. Going to base off of whole active domain.
+                if rule[0] in parsedResults.keys():
+                  # in this case we can define the domain based off its previously fired not domain
+                  newFacts = newFacts + createFactsBasedOffParsedResults( cursor, childVars, childRule, attIndex, parsedResults )
+                  continue
+                dom_name = 'dom_str'
                 if childVars[childRule.goalAttList[attIndex]] == "int":
-                  val = 99999999
-                factData = {}
-                factData['relationName'] = 'dom_not_'+rule[0]+'_'+str(attIndex)
-                factData['dataList'] = [val]
-                factData["factTimeArg"] = ''
-                fid = tools.getIDFromCounters( "fid" )
-                newFact = Fact.Fact(fid, factData, cursor)
-                newFacts.append(newFact)
+                  dom_name = 'dom_int'
+                ruleData = createDomRule(rule[0], attIndex, childRule.goalTimeArg, att)
+                goalDict = createSubgoalDict( dom_name, [att], '', childRule.goalTimeArg )
+                ruleData['subgoalListOfDicts'].append(goalDict)
+                domrid = tools.getIDFromCounters( "rid" )
+                newRule = Rule.Rule( domrid, ruleData, cursor )
+                newRules.append(newRule)
 
               usedVals = {}
               for val in parsedResults[rule[1]]:
@@ -156,6 +161,9 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
                 newFacts.append(newFact)
               break
           if not found:
+            if rule[0] in parsedResults.keys():
+              newFacts = newFacts + createFactsBasedOffParsedResults( cursor, childVars, childRule, attIndex, parsedResults )
+              continue
             # we have not found it therefore must go off the active domain.
             att = childRule.goalAttList[attIndex]
             dom_name = 'dom_int'
@@ -178,6 +186,24 @@ def insertDomainFactWithoutPar( cursor, rule, ruleMeta, factMeta, parsedResults 
   ruleMeta = ruleMeta + newRules
   factMeta = factMeta + newFacts
   return ruleMeta, factMeta
+
+def createFactsBasedOffParsedResults( cursor, childVars, rule, attIndex, parsedResults ):
+  newFacts = []
+  attValues = [x[attIndex] for x in parsedResults[rule.relationName]]
+  strs, ints = collectAdom( parsedResults )
+  domName = "dom_not_"+rule.relationName+"_"+str(attIndex)
+  if childVars[rule.goalAttList[attIndex]] == "int":
+    for i in ints:
+      if i not in attValues:
+        newFact = createDomFact( cursor, domName, [i])
+        newFacts.append(newFact)
+  else:
+    for i in strs:
+      if i not in attValues:
+        newFact = createDomFact( cursor, domName, [i])
+        newFacts.append(newFact)
+  return newFacts
+
 
 def collectDomainRuleInfo( cursor, rule, ruleMeta ):
   ''' Returns information about the rule  for inserting Domain facts '''

@@ -38,13 +38,13 @@ class Test_comb( unittest.TestCase ) :
   #######
   # 2PC #
   #######
-  @unittest.skip( "example not working" )
+  # @unittest.skip( "example not working" )
   def test_comb_running_example( self ):
     # specify input and output paths
     inputfile               = os.getcwd() + "/testFiles/running_example.ded"
     expected_iapyx_comb_path = "./testFiles/running_example_comb.olg"
 
-    self.comparison_workflow( inputfile, expected_iapyx_comb_path )  
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path, nodes=["a", "jobscheduler"], eot=5, eff=4)  
 
   #######
   # 2PC #
@@ -167,7 +167,7 @@ class Test_comb( unittest.TestCase ) :
   #  COMPARISON WORKFLOW  #
   #########################
   # defines iapyx comb comparison workflow
-  def comparison_workflow( self, inputfile, expected_iapyx_comb_path ) :
+  def comparison_workflow( self, inputfile, expected_iapyx_comb_path, nodes=["a", "b", "c"], eot=4, eff=4 ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
@@ -189,7 +189,7 @@ class Test_comb( unittest.TestCase ) :
     # runs through function to make sure it finishes with expected error
 
     # get argDict
-    argDict = self.getArgDict( inputfile, negprov=True )
+    argDict = self.getArgDict( inputfile, negprov=True, nodes=nodes, eot=eot, eff=eff )
     origArgDict = self.getArgDict( inputfile, negprov=False )
 
     # run translator
@@ -244,7 +244,7 @@ class Test_comb( unittest.TestCase ) :
   ##################
   #  GET ARG DICT  #
   ##################
-  def getArgDict( self, inputfile, negprov=True ) :
+  def getArgDict( self, inputfile, negprov=True, nodes=["a", "b", "c"], eot=4, eff=2 ) :
 
     # initialize
     argDict = {}
@@ -263,11 +263,11 @@ class Test_comb( unittest.TestCase ) :
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
-    argDict[ 'EOT' ]                      = 4
+    argDict[ 'EOT' ]                      = eot
     argDict[ 'find_all_counterexamples' ] = False
-    argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
+    argDict[ 'nodes' ]                    = nodes
     argDict[ 'evaluator' ]                = "c4"
-    argDict[ 'EFF' ]                      = 2
+    argDict[ 'EFF' ]                      = eff
 
     return argDict
 
