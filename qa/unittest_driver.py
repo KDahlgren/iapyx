@@ -44,6 +44,9 @@ def unittest_driver() :
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_molly_ldfi.Test_molly_ldfi )
   unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
+  # run Test_comb tests
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_comb.Test_comb )
+  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
 #########################
 #  THREAD OF EXECUTION  #

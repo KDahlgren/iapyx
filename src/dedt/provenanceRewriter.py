@@ -338,7 +338,7 @@ def regProv( regRule, nameAppend, cursor ) :
   # ------------------------------------------------------ #
   # replace original time goal atts
 
-  provRule = replaceTimeAtts( provRule )
+  # provRule = replaceTimeAtts( provRule )
 
   logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
   logging.debug( "  REG PROV : provRule.relationName       = " + provRule.relationName )
