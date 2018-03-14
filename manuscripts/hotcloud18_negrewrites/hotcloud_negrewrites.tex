@@ -22,13 +22,35 @@
 % This version uses the latex2e styles, not the very ancient 2.09 stuff.
 \documentclass[letterpaper,twocolumn,10pt]{article}
 \usepackage{usenix,epsfig,endnotes}
+
+% ------------------------------------------------ADDED------------------------------------------------ %
+\usepackage[nocompress]{cite}
+\usepackage{amsmath}
+\usepackage{color}
+\newcommand{\paa}[1]{{\textcolor{red}{[[#1 -- paa]]}}}
+\newcommand{\kmd}[1]{{\textcolor{blue}{[[#1 -- kmd]]}}}
+\newcommand{\mcs}[1]{{\textcolor{green}{[[#1 -- mcs]]}}}
+
+% START : ALGORITHM SUPPORT
+\usepackage{amssymb}
+\usepackage{ifsym}
+\usepackage{enumerate}
+%\usepackage{algorithm, float}
+%\usepackage{algpseudocode}
+%\usepackage{algorithmicx}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+% END : ALGORITHM SUPPORT
+
+% ------------------------------------------------ADDED------------------------------------------------ %
+
+
 \begin{document}
 
 %don't want date printed
 \date{}
 
 %make title bold and 14 pt font (Latex default is non-bold, 16 pt)
-\title{\Large \bf Coding Positivity : \\ Why-not Provenance and Distributed Debugging }
+\title{\Large \bf Think Positive! \\ Why-not Provenance and Distributed Debugging }
 
 %for single author (just remove % characters)
 \author{
@@ -50,13 +72,18 @@
 %\thispagestyle{empty}
 
 \subsection*{Abstract}
-Your Abstract Text Goes Here.  Just a few facts.
-Whet our appetites.
+Software debugging often relies upon speculations regarding events which do and do not cause expected outcomes. The line of reasoning becomes second nature to programmers with the help of modern conventions, tools, and best practices designed to ease the process of extracting behavioral information from underlying software. However, even after decades of research and development, the distributed programming paradigm famously lacks a similarly comprehensive set of amenable and reliable methods for supporting debugging efforts. Fortunately, the notions of `why' and `why-not' provenance offer an excellent resource for harnessing novel perspectives on system execution analyses toward the goal of building efficient distributed software debugging platforms. This paper introduces a new method for characterizing why-not provenance via the combination of existing why-provenance collection techniques with the logical deduction capabilities afforded by De Morgan's Law. Furthermore, the work demonstrates the applicability of the technique as a means of supporting efficient distributed systems debugging.
 
 \input{intro}
 \input{negrewrites}
 \input{eval}
-\input{concl}
+\input{rw}
+\input{fw}
+
+\section{Conclusion}
+Debugging distributed applications remains one of the most challenging platforms for building correct software. Debugging techniques offering system execution analyses based upon the provenance of events which do and do not occur occupy the current bleeding-edge of the field. Many techniques exist for describing why events occur, but comparatively few methods attempt to also provide effective and efficient methods for justifying why events do not occur. This work explores the latter arena by harnessing established data provenance and query rewriting concepts and strategies to present a novel approach to describing the complete why and why-not provenance of distributed system executions. The proposed technique, called Negative Rewrites (NR), generates small and intuitive explanations for execution events without relying upon heuristics or knowledge about the underlying system or application domain. Comparisons outputs from existing distributed debugging platforms reveal the superiority of NR. Finally, the promising results motivate a number of areas of future work.
+
+Presenting Negative Rewrites as a novel and useful method for supporting the characterization of why-not explanations for absent events in distributed executions suggests a significant amount of fodder for discussion and debate. For example, the authors seek challenges from the community regarding the practical applicability of the technique to debugging frameworks outside of the arguably pristine environment provided by Datalog model analysis. Additionally, what aspects of NR . Furthermore, //. We welcome opinions and perspectives from the community and look forward to debating points of interest.
 
 
 %\section{Introduction}
@@ -209,7 +236,7 @@ Whet our appetites.
 %After the bibliography you are DONE.
 
 {\footnotesize \bibliographystyle{acm}
-\bibliography{../common/bibliography}}
+\bibliography{bibliography}}
 
 %\theendnotes
 \end{document}

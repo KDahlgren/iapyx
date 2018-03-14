@@ -1,2 +1,145 @@
-\section{Negative Rewrites}
-//
+
+\section{Negative Rewrites} \label{neg_rewrites}
+Negative Rewrites (NR) encompasses a novel technique for characterizing why-not provenance. Fundamentally, NR encodes the process of applying De Morgan's Law \cite{Epp:2010:DMA:1941983} when reasoning over events occurring during a distributed execution. The technique, when properly bounded and coupled with the evaluation of direct dependency relationships between processes (i.e. $A$ occurs after or because of $B$), allows the construction of comprehensive explanations of execution results based upon events which do and do not occur. 
+
+Presenting the approach and demonstrating applicability in the context of debugging distributed systems requires grounding the discussion in a formal language and syntax. The chosen delivery method for this paper is recursive Datalog with negation. However, the authors note that, because the technique essentially represents an encoding of the software debugging process as a concept, NR, in the abstract, is not strictly bounded to any particular encoding medium. Choosing a powerful flavor of Datalog just represents a particularly easy means of describing the encoding process.
+
+At a high level, NR supports the construction of explanations for why events do not occur by transforming components of application logic into Boolean Formula representations, portraying the why-not questions as why questions using De Morgan's Law, applying necessary constraints on the data to ensure explanation relevance and tractability, and converting the results into formats amenable to future analysis. Importantly, unlike existing distributed application analysis tools, the process does not impose heuristics or require fine-tuned ranges for value domains to manage either visual or conceptual complexities. As discussed in Section \ref{eval}, the efficiency and effectiveness of technique is markedly superior to existing comparable tools.
+
+\subsection{Methodology}
+Given the encoding medium of recursive Datalog with negation, NR amounts to a program rewriting scheme relying directly upon the application of De Morgan's Law upon Datalog rules indirectly modeled as Boolean formulae in Disjunctive Normal Form (DNF). The crux of the approach is building new sets of DNF formulae representing absent events in a distributed execution from the CNF equations resulting simplifications pursued after applying De Morgan's law and mapping the new DNF formulae to sets of new Datalog rules capturing the complete space of possible why-not explanations for the events. Since practicality depends upon the establishment of a closed-world assumption, NR further requires the incorporation of additional logic to reduce the space of why-not explanations into a manageable set useful within the context of the Datalog program modeling the distributed system under consideration.
+
+Limiting the theoretically infinite range of explanations for absent events depends upon the integration of value constraints upon the attributes of negated subgoals appearing in Datalog rules. The current implementation achieves a closed-world assumption by allowing attributes to range over all possible values for the corresponding data type such that the ranges encompass all data appearing in the existential databases (EDBs) of the program per data type. Because applying DeMorgan's law upon an arbitrary formula may translate into the negation of additional intensional databases (IDBs), the process repeats across a series of successive rewriting and program evaluation cycles until every rule in the final version of the rewritten program contains only positive IDB subgoals. End state convergence is guaranteed by the finite nature of practical and safe Datalog programs. The rewriting method, applied in conjunction with existing why-provenance collection techniques, results in a final Datalog program promising evaluation results possessing all information necessary to comprehensively describe the provenance of all present and absent events occurring within the targetted distributed system execution.
+
+\subsubsection{Algorithm}
+The Negative Rewrites algorithm exerts a series of transformations upon an arbitrary input Datalog program such that the final output Datalog program includes an additional set of ``$not\_$'' rules capturing explanations for why particular data do not appear within specific relations. Algorithm \ref{DMalg} details the steps in pseudocode. The process begins by ensuring all rules used in the definition of a particular relation utilize the same set of strings representing universal attributes (line 2). Subsequently, the algorithm institutes the rewrites necessary for ensuring all existential attributes per rule per relation definition are unique (line 3). Both phases are critical preconditions ensuring the correctness of joins outlined in the resulting ``$not\_$'' rules. Another critical prelude to the $not\_$ rule generation process is the encoding of domains for all data types under consideration (line 4). Fundamentally, NR seeks the definition of relation complements. The current implementation employs the naive strategy of referencing the entire active domains for particular data types when building such structures. Optimizations capable of effectively narrowing the complements to only relevant subsets of the active domain represent an existing area of future work.
+
+While the program contains rules predicated on negated IDBs, the NR algorithm iteratively examines the subset of rules containing negated IDBs and adds new rules describing the complements of the negated IDBs. The process terminates because the number of possible negated IDBs is bounded by the number of rules in the program. For every rule containing a negated IDB $n$, the algorithm generates a corresponding FOL formula in disjunctive normal form (DNF), denoted $F$, using the set of rules defining $n$, where individual subgoals adopt the role of literals. Then, the negation of $F$ captures the logical complement of $F$ and generates a Boolean formula in conjunctive normal form (CNF) in the process, denoted $F'$ in line 10. The application of DeMorgan's law upon the CNF formula transforms the formula back into DNF. After performing any possible simplifications on the result, the transformation of the DNF formula back into a series of Datalog rules describes the complement of the original relation, when universal and existential variables are appropriately bounded over the active domain per data type. The imposition of appropriate boundaries on universal and existential variables in ``$not\_$'' rules is achieved via the definition and incorporation of additional subgoals. Subgoals following the ``$domcomp\_$'' convention exert boundaries upon the domains of universal variables (see Section \ref{dom-subs}) and subgoals following the ``$domexi\_$'' convention exert boundaries upon the domains of existential variables (see Section \ref{exi-subs}). Observe negated EDBs are never rewritten.
+
+The criticality of ensuring uniform universal attributes per relation definition and unique existential attributes per rule stems from the fact that the application of DeMorgan's Law combined with the subsequent simplification steps in the process of generating a version of the negated FOL relation representation informative of a set of legal corresponding Datalog rules necessarily shuffles the sets of previously isolated attributes into the same rules. Accordingly, not ensuring a uniform set of universal attributes risks preventing valid joins among subgoals from different rules. Conversely, not ensuring unique sets of existential attributes risks allowing invalid joins among subgoals from different rules.
+
+\begin{algorithm} \label{DMalg}
+\SetAlgoLined
+\KwData{ a Datalog program $P$ }
+\KwResult{ a rewritten Datalog program $P'$ }
+	Create a Datalog program $P'$ identical to $P$\;
+	Perform rewrites ensuring all rules defining the same relation possess uniform sets of universal attributes\;
+	Perform rewrites ensuring all rules defining the same relation possess unique sets of existential attributes\;
+	Add EDBs to $P'$ for the active domains of each data type\;
+	\While{ $P'$ contains rules predicated on negated IDBs : }{
+		Let $R$ be the set of rules containing negated IDBs\;
+		\For{ $r \in R$ }{
+			Let $n$ be a negated IDB subgoal in $r$\;
+			Let $F = GetBooleanFormula( n )$\;
+			Let $F' = Negate( F )$\;
+			Let $F'' = ApplyDeMorgans( F' )$\;
+			$not\_F = Simplify( F'' )$\;
+			\For{ each clause $c$ in $not\_F$ }{
+				Add $not\_n(U) \leftarrow c, domcomp_n(U), domex_n(S)$ to $P'$\;
+			}
+			\For{ $p \in P'$ }{
+				Replace all instances of $\neg n$ with $not\_n$\;
+			}
+		}
+	}
+ \caption{NR Approach}
+\end{algorithm}
+
+\subsubsection{Defining Domain Subgoals}\label{dom-subs}
+The derivation of Negative Rewrites for a subgoal $n$ negated in some rule results in a set of additional rules encoding the logical complement $n$. However, relation complements inspire interesting philosophical questions about the definition of the universe under consideration. Under a very liberal definition, the complement of a relation is as infinite as the space of strings representable in a computer. Such a universe is obviously intractable. A more practical definition characterizes relation complements relative to the active domain of the database under consideration. An even more practical definition of the complement of a relation is the isolation of only combinations of elements from the active domain which align with the semantics of the attributes of particular rules and predicates under consideration.
+
+Of the three major strategies for defining boundaries for relation complements, the DM approach to Negative Rewrites currently opts for the middle tactic. Specifically, the DM algorithm generates EDB definitions enumerating all possible values for all data types in the Datalog program by extracting corresponding data contained in EDB information of the input program. For example, consider the following Datalog program:
+\\ \\
+$b( ``aString0'' ) ;$ \\
+$b( ``aString1'' ) ; $\\
+$d( ``aString0'', 10 ) ; $\\
+$d( ``aString2'', 11 ) ; $\\
+$a( X, Y ) \leftarrow  b( X ), \neg c( X, Y ) ; $\\
+$c( X, Y ) \leftarrow d( X, Y ) ; $
+\\
+
+Observe the program evaluates over two data types, strings and integers. Then, the active domain for the set of strings is $\{ ``aString0'', ``aString1'', ``aString2'' \}$ and the active domain for the set of integers is $\{ 10, 11 \}$. Accordingly, the DM algorithm adds the following EDBs to the rewritten program:
+\\ \\
+$adom_{str}( ``aString0'' ) ; $\\
+$adom_{str}( ``aString1'' ) ; $\\
+$adom_{str}( ``aString2'' ) ; $\\
+$adom_{int}( 10 ) ; $\\
+$adom_{int}( 11 ) ; $
+\\
+
+Domain complement ( ``$domcomp\_$'' ) subgoals serve the two essential purposes. First, the subgoals offer finite boundaries upon the ranges of univsersal variables in ``$not\_$''. The subgoals play a secondary and equally essential role as a tool for ensuring safety. Since ``$domcomp\_$'' subgoals are always positive and appear in all relevant ``$not\_$'' rules, the universal attributes of ``$not\_$'' rules predicating on negated versions of subgoals from the original relation definitions will always be safe. For example, the `a' relation in the above example program triggers a DM rewrite over the `c' relation definition, resulting in the incorporation of a new $not\_c(X,Y) \leftarrow \neg d(X,Y)$ rule. The rule is categorically unsafe because $X$ only appears in negated subgoals. However, after the incorporation of an appropriate $domcomp\_c$ subgoal, the resulting rule, $not\_c(X,Y) \leftarrow domcomp_c(X,Y), \neg d(X,Y)$, is safe.
+
+Given the chosen naive complement derivation strategy, the definition of a $domcomp\_n$ relation for some relation $n$ is precisely the set of all combinations of data in the active domain for the particular sequence of data types not appearing in $n$. Formally, 
+\\ \\
+$domcomp\_n(U) \leftarrow adom_{type_1}(U_1), \\
+\-\hspace{2.7cm} adom_{type_2}(U_2), \\
+\-\hspace{2.7cm} \cdots, \\
+\-\hspace{2.7cm} adom_{type_m}(U_m), \\
+\-\hspace{2.7cm} \neg n( U )$ ;
+\\ \\
+where $\{ U_1, U_2 ..., U_m \}$ is the ordered set of universal attributes appearing in $U$ and $type_i$ is the type for the $U_i$ universal attribute.
+
+Thus, the final version of the DM-rewritten program is:
+\\ \\
+$b( ``aString0'' ) ;$ \\
+$b( ``aString1'' ) ; $\\
+$d( ``aString0'', 10 ) ; $\\
+$d( ``aString2'', 11 ) ; $\\
+$adom_{str}( ``aString0'' ) ; $\\
+$adom_{str}( ``aString1'' ) ; $\\
+$adom_{str}( ``aString2'' ) ; $\\
+$adom_{int}( 10 ) ; $\\
+$adom_{int}( 11 ) ; $ \\
+$a( X, Y ) \leftarrow  b( X ), not\_c( X, Y ) ; $\\
+$c( X, Y ) \leftarrow d( X, Y ) ; $ \\
+$not\_c( X, Y ) \leftarrow domcomp\_c( X, Y ),  \neg d( X, Y ) ; $ \\
+$domcomp\_c(X,Y) \leftarrow adom_{str}(X), adom_{int}(Y), \neg c( X, Y )$ ;
+\\
+
+\subsubsection{Defining Existential Subgoals} \label{exi-subs}
+Deriving Negative Rewrites for a subgoal negated in some program rule also requires the establishment of domain boundaries upon contributing existential variables. The implementations currently pursues a relatively naive method for defining existential variable domains very reliant upon the assumption that existential variables are unique per rule per relation definition. The resulting existential domain definitions are blindly integrated as subgoals into each member of the corresponding set of ``not\_'' rules. Specifically, the domain of a set of existential variables, per rule, is exactly the set of variables which do and do not trigger rule joins on the existential variables, for all safe combinations of subgoal polarities. Capturing the existential values which both do and do not trigger joins is essential for generating a complete set of explanations. The rules naturally do not necessarily amount to replicating entire subsets of the active domain because the trigger values are bound by the corresponding value ranges of the associated subgoals.
+
+Consider the following Datalog program:
+\\ \\
+$b( ``aString0'' ) ;$ \\
+$b( ``aString1'' ) ; $\\
+$d( ``aString0'', 10 ) ; $\\
+$d( ``aString2'', 11 ) ; $\\
+$e( 10, ``aString1'' ) ; $\\
+$e( 11, ``aString2'' ) ; $\\
+$a( X, Y ) \leftarrow  b( X ), \neg c( X, Y ) ; $\\
+$c( X, Y ) \leftarrow d( X, Z ), e( Z, Y ) ; $
+\\
+
+Then, the `c' definition contains exactly one existential variable. Creating closed boundaries for the domain of the existential variable entails generating rules for all polarity combinations of the original subgoals such that universal variables are ignored. The strategy captures only the values of existential variables capable of not triggering the original rule:
+\\ \\
+$domexi\_c\_Z( Z ) \leftarrow d( \_, Z ), e( Z, \_ ) ; $\\
+$domexi\_c\_Z( Z ) \leftarrow \neg d( \_, Z ), e( Z, \_ ) ; $\\
+$domexi\_c\_Z( Z ) \leftarrow d( \_, Z ), \neg e( Z, \_ ) ; $\\
+\\
+
+Notice the fourth possible combination, `$domexi\_c\_Z( Z ) \leftarrow \neg d( \_, Z ), \neg e( Z, \_ )$', is ignored because the rule is not safe. Thus, the complete version of the DM-rewritten program is:
+\\ \\
+$b( ``aString0'' ) ;$ \\
+$b( ``aString1'' ) ; $\\
+$d( ``aString0'', 10 ) ; $\\
+$d( ``aString2'', 11 ) ; $\\
+$e( 10, ``aString1'' ) ; $\\
+$e( 11, ``aString2'' ) ; $\\
+$a( X, Y ) \leftarrow  b( X ), not\_c( X, Y ) ; $\\
+$c( X, Y ) \leftarrow d( X, Z ), e( Z, Y ) ; $ \\
+$not\_c( X, Y ) \leftarrow domcomp\_c( X, Y ), \\
+\-\hspace{2.2cm} domexi\_c\_Z(Z), \\
+\-\hspace{2.2cm} \neg d( X, Z ) ; $ \\
+$not\_c( X, Y ) \leftarrow domcomp\_c( X, Y ), \\
+\-\hspace{2.2cm} domexi\_c\_Z(Z), \\
+\-\hspace{2.2cm} \neg e( Z, Y ) ; $ \\
+$domcomp\_c(X,Y) \leftarrow adom_{str}(X), adom_{int}(Y), \neg c( X, Y )$ ;
+$domexi\_c\_Z( Z ) \leftarrow d( \_, Z ), e( Z, \_ ) ; $\\
+$domexi\_c\_Z( Z ) \leftarrow \neg d( \_, Z ), e( Z, \_ ) ; $\\
+$domexi\_c\_Z( Z ) \leftarrow d( \_, Z ), \neg e( Z, \_ ) ; $\\
+\\
+
+
+% ============================================================ %
+% ============================================================ %
