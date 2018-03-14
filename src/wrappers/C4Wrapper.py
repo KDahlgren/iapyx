@@ -6,6 +6,7 @@
 #  IMPORTS  #
 #############
 # standard python packages
+import ConfigParser
 import errno, logging, inspect, os, string, sys, time
 from ctypes import *
 from types  import *
@@ -24,7 +25,9 @@ class C4Wrapper( object ) :
   ##########
   #  INIT  #
   ##########
-  def __init__( self ) :
+  def __init__( self, argDict ) :
+
+    self.argDict = argDict
 
     # get the lib file
     dylib_path = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
@@ -144,133 +147,6 @@ class C4Wrapper( object ) :
     return finalProg
 
 
-  ######################################
-  #  GET INPUT PROG GROUP CLOCKS ONLY  #
-  ######################################
-  def getInputProg_group_clocks_only( self, program ) :
-
-    finalProg            = []
-    clockStatementGroups = [] # list of strings grouping clock statements by SndTime
-    currClockList        = ""
-    currTime             = 1
-
-    # only works if clock facts are sorted by increasing SndTime when 
-    # appearing in the input c4 line list.
-    # also only works if simulations start at time 1.
-    for i in range(0 ,len(program)) :
-
-      statement = program[i]
-      nextStatement = None
-      lastClock     = False
-
-      parsedStatement = statement.split( "(" )
-
-      # CASE : hit a clock fact
-      if parsedStatement[0] == "clock" :
-
-        # check if the next statement in the program also declares a clock fact
-        try :
-          nextStatement    = program[ i+1 ]
-          parsedStatement1 = nextStatement.split( "(" )
-          parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
-          assert( parsedStatement1[0] == "clock" )
-        except :
-          currClockList += statement
-          lastClock = True
-
-        parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
-
-        # check if SndTime is in the current group
-        if not lastClock and int( parsedClockArgs[2] ) == currTime :
-          currClockList += statement
-
-        # hit a clock fact in the next time group
-        elif not lastClock and int( parsedClockArgs[2] ) > currTime :
-          clockStatementGroups.append( currClockList ) # save the old clock group
-          currClockList  = ""                          # reset the clock group
-          currClockList += statement                   # reset the clock group
-          currTime       = int( parsedClockArgs[2] )   # reset the curr time
-
-        # hit a clock fact in the last time group
-        elif lastClock :
-          clockStatementGroups.append( currClockList ) # save the old clock group
-
-      # CASE : hit a non clock fact
-      else :
-        finalProg.append( statement )
-
-    finalProg.extend( clockStatementGroups )  # add clock statements
-
-    return finalProg
-
-
-  ####################################################
-  #  GET INPUT PROG GROUP ALL AND CLOCKS BY SNDTIME  #
-  ####################################################
-  def getInputProg_group_all_and_clocks_by_sndtime( self, program ) :
-
-    defineStatementsOnly = "" # string of defines statements only. no clocks or code.
-    codeStatementsOnly   = "" # string of code statements only. no clock statements.
-    clockStatementGroups = [] # list of strings grouping clock statements by SndTime
-    currClockList        = ""
-    currTime             = 1
-
-    # only works if clock facts are sorted by increasing SndTime when 
-    # appearing in the input c4 line list.
-    # also only works if simulations start at time 1.
-    for i in range(0 ,len(program)) :
-
-      statement = program[i]
-      nextStatement = None
-      lastClock     = False
-
-      parsedStatement = statement.split( "(" )
-
-      # CASE : hit a define statement
-      if parsedStatement[0] == "define" :
-        defineStatementsOnly += statement
-
-      # CASE : hit a clock fact
-      elif parsedStatement[0] == "clock" :
-
-        # check if the next statement in the program also declares a clock fact
-        try :
-          nextStatement    = program[ i+1 ]
-          parsedStatement1 = nextStatement.split( "(" )
-          parsedClockArgs1 = parsedStatement1[1].split( "," ) # split clock fact arguments into a list
-          assert( parsedStatement1[0] == "clock" )
-        except :
-          currClockList += statement
-          lastClock = True
-
-        parsedClockArgs = parsedStatement[1].split( "," ) # split clock fact arguments into a list
-
-        # check if SndTime is in the current group
-        if not lastClock and int( parsedClockArgs[2] ) == currTime :
-          currClockList += statement
-
-        # hit a clock fact in the next time group
-        elif not lastClock and int( parsedClockArgs[2] ) > currTime :
-          clockStatementGroups.append( currClockList ) # save the old clock group
-          currClockList  = ""                          # reset the clock group
-          currClockList += statement                   # reset the clock group
-          currTime       = int( parsedClockArgs[2] )   # reset the curr time
-
-        # hit a clock fact in the last time group
-        elif lastClock :
-          clockStatementGroups.append( currClockList ) # save the old clock group
-
-      # CASE : hit a non clock fact
-      else :
-        codeStatementsOnly += statement
-
-    finalProg = []
-    finalProg.append( defineStatementsOnly )  # add define statements
-    finalProg.append( codeStatementsOnly   )  # add code statements
-    finalProg.extend( clockStatementGroups )  # add clock statements
-
-    return finalProg
-
   ##############
   #  RUN PURE  #
   ##############
@@ -311,6 +187,23 @@ class C4Wrapper( object ) :
     self.lib.c4_destroy( self.c4_obj )
     self.lib.c4_terminate( )
 
+    try :
+      C4_HOME_PATH = tools.getConfig( self.argDict[ "settings" ], "DEFAULT", "C4_HOME_PATH", str )
+      try :
+        # for safety:
+        C4_HOME_PATH = C4_HOME_PATH.replace( "/c4_home", "" )
+        C4_HOME_PATH = C4_HOME_PATH.replace( "//", "" )
+
+        assert( os.path.isdir( C4_HOME_PATH ) == True )
+        os.system( "rm -rf " + C4_HOME_PATH + "/c4_home/*" )
+
+      except AssertionError :
+        raise AssertionError( C4_HOME_PATH + " does not exist." )
+
+    except ConfigParser.NoOptionError as e :
+      logging.info( "  FATAL ERROR : option 'C4_HOME_PATH' not set in settings file '" + self.argDict[ "settings" ] + "'. aborting." )
+      raise e
+
     return results_array
 
 
@@ -324,13 +217,11 @@ class C4Wrapper( object ) :
     tableList       = allProgramData[1] # := list of all tables in generated C4 program.
 
     # get full program
-    #fullprog = self.getInputProg_group_all_and_clocks_by_sndtime( allProgramLines ) # group statements, clocks by time.
     fullprog = self.getInputProg_one_group_for_everything_besides_clocks_and_group_clocks_by_sndTime( allProgramLines )
-    #fullprog = self.getInputProg_group_clocks_only( allProgramLines )
-    #fullprog = allProgramLines # no grouping, every code line installed separately.
 
     # ----------------------------------------- #
-    # KD : bcsat debugging session 6/21/17
+    # outputs are good
+
     logging.debug( "PRINTING RAW INPUT PROG" )
     for x in fullprog :
       logging.debug( x )
@@ -344,34 +235,69 @@ class C4Wrapper( object ) :
           statement = statement + ";"
           logging.debug( statement )
 
-    # ----------------------------------------- #
+    if os.path.isdir( self.argDict[ "data_save_path" ] ) :
+      filename = self.argDict[ "data_save_path" ] + "/full_program.olg"
+      logging.debug( "SAVING TO FILE at path : " + filename )
+      fo = open( filename, "w" )
+      for line in fullprog :
+        line = line.split( ";" )
+        for statement in line :
+          statement = statement.rstrip()
+          if not statement == "" :
+            statement = statement + ";"
+            fo.write( statement + "\n" )
+      fo.close()
 
+    # ----------------------------------------- #
     # initialize c4 instance
+
     self.lib.c4_initialize()
     self.c4_obj = self.lib.c4_make( None, 0 )
 
     # ---------------------------------------- #
     # load program
+
     logging.debug( "... loading prog ..." )
 
     for subprog in fullprog :
       logging.debug( "SUBMITTING SUBPROG : " )
       logging.debug( subprog )
       c_prog = bytes( subprog )
+      logging.debug( "...completed bytes conversion..." )
       self.lib.c4_install_str( self.c4_obj, c_prog )
+      logging.debug( "...done installing str." )
 
     # ---------------------------------------- #
     # dump program results to file
+
     logging.debug( "... dumping program ..." )
 
     results_array = self.saveC4Results_toArray( tableList )
 
     # ---------------------------------------- #
     # close c4 program
+
     logging.debug( "... closing C4 ..." )
 
     self.lib.c4_destroy( self.c4_obj )
     self.lib.c4_terminate( )
+
+    try : 
+      C4_HOME_PATH = tools.getConfig( self.argDict[ "settings" ], "DEFAULT", "C4_HOME_PATH", str )
+      try :
+        # for safety:
+        C4_HOME_PATH = C4_HOME_PATH.replace( "/c4_home", "" )
+        C4_HOME_PATH = C4_HOME_PATH.replace( "//", "" )
+
+        assert( os.path.isdir( C4_HOME_PATH ) == True )
+        os.system( "rm -rf " + C4_HOME_PATH + "/c4_home/*" )
+
+      except AssertionError :
+        raise AssertionError( C4_HOME_PATH + " does not exist." )
+        
+    except ConfigParser.NoOptionError as e :
+      logging.info( "  FATAL ERROR : option 'C4_HOME_PATH' not set in settings file '" + self.argDict[ "settings" ] + "'. aborting." )
+      raise e
 
     return results_array
 
