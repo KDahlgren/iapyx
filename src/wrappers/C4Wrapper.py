@@ -31,7 +31,7 @@ class C4Wrapper( object ) :
 
     # get the lib file
     dylib_path = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
-    so_path    = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.dylib' )
+    so_path    = os.path.abspath( __file__ + '/../../../lib/c4/build/src/libc4/libc4.so' )
 
     if os.path.exists( dylib_path ) :
       c4_lib_loc                     = dylib_path
