@@ -74,7 +74,7 @@ class Test_dm_time_att_replacement( unittest.TestCase ) :
                  "EFF"            : eff, \
                  "evaluator"      : evaluator, \
                  "settings"       : settings_path, \
-                 "data_save_path" : './data' }
+                 "data_save_path" : './data/' }
 
     if self.RUN_IAPYX :
       actual_program_array, actual_table_array, actual_cursor, actual_factMeta, actual_ruleMeta = self.run_iapyx( argDict )
@@ -353,7 +353,7 @@ class Test_dm_time_att_replacement( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
-    argDict[ 'data_save_path' ]           = './data'
+    argDict[ 'data_save_path' ]           = './data/'
 
     return argDict
 

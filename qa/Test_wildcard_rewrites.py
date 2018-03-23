@@ -316,7 +316,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
-    argDict[ 'data_save_path' ]           = "./data"
+    argDict[ 'data_save_path' ]           = "./data/"
 
     return argDict
 
