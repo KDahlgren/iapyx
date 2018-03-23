@@ -11,7 +11,7 @@ Core.py
 #  IMPORTS  #
 #############
 # standard python packages
-import ast, inspect, itertools, os, sqlite3, string, sys, time
+import ast, inspect, itertools, logging, os, sqlite3, string, sys, time
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -25,31 +25,22 @@ from evaluators     import c4_evaluator
 # **************************************** #
 
 
-DEBUG = True
-
-
 ################
 #  CLASS CORE  #
 ################
 class Core :
 
-  # --------------------------------- #
-  #############
-  #  ATTRIBS  #
-  #############
-  argDict       = None  # dictionary of commaned line args
-  cursor        = None  # a reference to the IR database
-  program_array = None  # the translated datalog program as an array of program lines
-  table_array   = None  # the array of tables in the program
-
-  # --------------------------------- #
 
   #################
   #  CONSTRUCTOR  #
   #################
   def __init__( self, argDict, cursor ) :
-    self.argDict             = argDict
-    self.cursor              = cursor
+    self.argDict       = argDict  # dictionary of commaned line args
+    self.cursor        = cursor   # a reference to the IR database
+    self.program_array = None     # the translated datalog program as an array of program lines
+    self.table_array   = None     # the array of tables in the program
+    self.factMeta      = None     # the array of fact objects in the IR database
+    self.ruleMeta      = None     # the array of rule objects in the IR database
 
 
   ##################
@@ -57,20 +48,19 @@ class Core :
   ##################
   def run_workflow( self ) :
 
-    if DEBUG :
-     print "*******************************************************"
-     print "                   RUNNING IAPYX CORE"
-     print "*******************************************************"
-     print
+    logging.info( "*******************************************************" )
+    logging.info( "                   RUNNING IAPYX CORE" )
+    logging.info( "*******************************************************" )
+    logging.info( "" )
 
     # ---------------------------------------------------------------- #
     # 1. build c4 datalog program                                      #
     # ---------------------------------------------------------------- #
 
     # allProgramData := [ allProgramLines, tableListArray ]
-    allProgramData     = self.dedalus_to_datalog( self.argDict, self.cursor )
-    self.program_array = allProgramData[0]
-    self.table_array   = allProgramData[1]
+    allProgramData, self.factMeta, self.ruleMeta = self.dedalus_to_datalog( self.argDict, self.cursor )
+    self.program_array                           = allProgramData[0]
+    self.table_array                             = allProgramData[1]
 
     # ----------------------------------------------- #
     # 2. evaluate                                     #
@@ -98,7 +88,7 @@ class Core :
     # inject custom faults here.
     allProgramData = injectCustomFaults( argDict, allProgramData )
 
-    results_array = c4_evaluator.runC4_wrapper( allProgramData )
+    results_array = c4_evaluator.runC4_wrapper( allProgramData, argDict )
 
     # ----------------------------------------------------------------- #
     # dump evaluation results locally
@@ -138,8 +128,7 @@ class Core :
     for line in results_array :
       
       # output to stdout
-      if DEBUG :
-        print line
+      logging.debug( " EVAL RESULTS DUMP TO FILE : " + line )
 
       # output to file
       f.write( line + "\n" )
@@ -157,7 +146,6 @@ class Core :
 
 def injectCustomFaults( argDict, allProgramData ) :
 
-
   # grab the custom fault, which is a list of clock fact strings, with quotes,
   # to remove from full clock relation
   customFaultList = tools.getConfig( argDict[ "settings" ], "CORE", "CUSTOM_FAULT", list )
@@ -165,8 +153,8 @@ def injectCustomFaults( argDict, allProgramData ) :
   if customFaultList :
     # delete specified clock facts from program
     faultyProgramLines = []
-    programLines       = allProgramData[0]
-    tableList          = allProgramData[1]
+    programLines       = allProgramData[0][0]
+    tableList          = allProgramData[0][1]
     for line in programLines :
       line = line.replace( ";", "" )
       if line in customFaultList :

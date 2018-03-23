@@ -46,12 +46,14 @@ arithOps = [ "+", "-", "/", "*" ]
 ###############
 #  SET TYPES  #
 ###############
-def setTypes( cursor, settings_path ) :
+def setTypes( cursor, argDict ) :
+
+  settings_path = argDict[ "settings" ]
 
   try :
     SETTYPES_DATALOG = tools.getConfig( settings_path, "DEFAULT", "SETTYPES_DATALOG", bool )
     if SETTYPES_DATALOG :
-      setTypes_datalog( cursor )
+      setTypes_datalog( cursor, argDict )
     else :
       setTypes_orig( cursor )
 
@@ -68,7 +70,7 @@ def setTypes( cursor, settings_path ) :
 # extract the types for all goals and subgoals in the
 # program.
 # assume use of the c4 datalog evaluator.
-def setTypes_datalog( cursor ) :
+def setTypes_datalog( cursor, argDict ) :
 
   # ---------------------------------------------------- #
   # generate the setTypes program
@@ -85,7 +87,7 @@ def setTypes_datalog( cursor ) :
   # ---------------------------------------------------- #
   # run the setTypes program using the c4 wrapper
 
-  w             = C4Wrapper.C4Wrapper( ) # initializes c4 wrapper instance
+  w             = C4Wrapper.C4Wrapper( argDict ) # initializes c4 wrapper instance
   results_array = w.run_pure( [ setTypes_program, setTypes_tables ] )
 
   # ---------------------------------------------------- #
@@ -376,6 +378,7 @@ def get_rules( goal_data, cursor ) :
     rid  = goal[0]
     name = goal[1]
 
+    logging.debug( "  GET RULES : rid  = " + rid )
     logging.debug( "  GET RULES : name = " + name )
 
     # -------------------- #
@@ -392,13 +395,13 @@ def get_rules( goal_data, cursor ) :
     for goal_att in goal_atts :
       index = goal_att[0]
       gatt  = goal_att[1]
-#      if is_fixed_string( gatt ) :
-#        tmp.append( [ index, '"STRING"' ] )
-#      elif is_fixed_int( gatt ) :
-#        tmp.append( [ index, '"INT"' ] )
-#      else :
-#        tmp.append( [ index, gatt ] )
-      tmp.append( [ index, gatt ] )
+      if is_fixed_string( gatt ) :
+        tmp.append( [ index, '"STRING"' ] )
+      elif is_fixed_int( gatt ) :
+        tmp.append( [ index, '"INT"' ] )
+      else :
+        tmp.append( [ index, gatt ] )
+#      tmp.append( [ index, gatt ] )
     goal_atts = copy.copy( tmp )
 
     logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
@@ -408,10 +411,15 @@ def get_rules( goal_data, cursor ) :
     for att in goal_atts :
       attID   = att[0]
       attName = att[1]
-      for agg in aggOps :
-        if attName.startswith( agg + "<" ) and attName.endswith( ">" ) :
-          attName = attName.replace( agg + "<", "" )
-          attName = attName.replace( ">", "" )
+      if is_fixed_string( gatt ) :
+        tmp.append( [ index, '"STRING"' ] )
+      elif is_fixed_int( gatt ) :
+        tmp.append( [ index, '"INT"' ] )
+      else :
+        for agg in aggOps :
+          if attName.startswith( agg + "<" ) and attName.endswith( ">" ) :
+            attName = '"INT"'
+            break
       tmp.append( [ attID, attName ] )
     goal_atts = copy.copy( tmp )
 
@@ -421,12 +429,15 @@ def get_rules( goal_data, cursor ) :
     tmp = []
     for goal_att in goal_atts :
       gatt = goal_att[1]
-      for i in range( 0, len( gatt ) ) :
-        curr_char = gatt[i]
-        if curr_char in arithOps :
-          gatt = gatt[:i]
-          break
-      tmp.append( gatt )
+      if is_fixed_string( gatt ) or is_fixed_int( gatt ) :
+        tmp.append( gatt ) # preserve fixed inputs
+      else :
+        for i in range( 0, len( gatt ) ) :
+          curr_char = gatt[i]
+          if curr_char in arithOps :
+            gatt = '"INT"'
+            break
+        tmp.append( gatt )
     goal_atts = copy.copy( tmp )
 
     logging.debug( "  GET RULES : goal_atts (3) = " + str( goal_atts ) )
@@ -441,6 +452,9 @@ def get_rules( goal_data, cursor ) :
     cursor.execute( "SELECT sid,attID,attName FROM SubgoalAtt WHERE rid=='" + rid + "'" )
     subgoal_atts_list = cursor.fetchall()
     subgoal_atts_list = tools.toAscii_multiList( subgoal_atts_list )
+
+    logging.debug( "  GET RULES : subgoals_list     = " + str( subgoals_list ) )
+    logging.debug( "  GET RULES : subgoal_atts_list = " + str( subgoal_atts_list ) )
 
     # -------------------- #
     # get equation info - not applicable.
@@ -458,11 +472,15 @@ def get_rules( goal_data, cursor ) :
     for i in range( 0, len( goal_atts ) ) :
       gatt  = goal_atts[i]
 
-      logging.debug( "  GET RULES : gatt = " + gatt )
+      logging.debug( "  GET RULES : gatt = " + str( gatt ) )
 
       # handle fixed data
-      if ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
-         ( gatt.startswith( '"' ) and gatt.endswith( '"' ) ) :
+      if gatt == '"STRING"' :
+        gatt = '"STRING"'
+      elif gatt == '"INT"' :
+        gatt = '"INT"'
+      elif ( gatt.startswith( "'" ) and gatt.endswith( "'" ) ) or \
+           ( gatt.startswith( '"' ) and gatt.endswith( '"' ) ) :
         gatt = '"STRING"'
       elif gatt.isdigit() :
         gatt = '"INT"'
@@ -472,6 +490,7 @@ def get_rules( goal_data, cursor ) :
         rule += ","
 
     rule += "):-"
+
 
     # add subgoals
     for i in range( 0, len( subgoals_list ) ) :
@@ -514,8 +533,12 @@ def get_rules( goal_data, cursor ) :
             satt  = subgoal_atts_list[i][2]
 
             # handle fixed data
-            if ( satt.startswith( "'" ) and satt.endswith( "'" ) ) or \
-               ( satt.startswith( '"' ) and satt.endswith( '"' ) ) :
+            if gatt == '"STRING"' :
+              gatt = '"STRING"'
+            elif gatt == '"INT"' :
+              gatt = '"INT"'
+            elif ( satt.startswith( "'" ) and satt.endswith( "'" ) ) or \
+                 ( satt.startswith( '"' ) and satt.endswith( '"' ) ) :
               satt = '"STRING"'
             elif satt.isdigit() :
               satt = '"INT"'
@@ -546,16 +569,20 @@ def get_rules( goal_data, cursor ) :
 # check if the given rule string is safe
 def isSafe_hacky( rule_str ) :
 
+  logging.debug( "  IS SAFE HACKY : running process..." )
+
   # ---------------------------------- #
   # CASE : empty body
 
   if rule_str.endswith( ":;" ) :
+    logging.debug( "  IS SAFE HACKY : returning False. line ends with ':;'." )
     return False
 
   # ---------------------------------- #
   # CASE : contains undefined goal atts
 
   elif contains_undefinedGoalAtts( rule_str ) :
+    logging.debug( "  IS SAFE HACKY : returning False. line has undefined goal attributes." )
     return False
 
   # ---------------------------------- #
@@ -563,6 +590,7 @@ def isSafe_hacky( rule_str ) :
   #        hopefully... >.>
 
   else :
+    logging.debug( "  IS SAFE HACKY : returning True." )
     return True
 
 
@@ -614,7 +642,12 @@ def contains_undefinedGoalAtts( rule_str ) :
 #  IS FIXED STRING  #
 #####################
 def is_fixed_string( att ) :
-  if att.startswith( "'" ) and att.endswith( "'" ) :
+
+  if att == "STRING" :
+    return True
+  elif is_fixed_int( att ) :
+    return False
+  elif att.startswith( "'" ) and att.endswith( "'" ) :
     return True
   elif att.startswith( '"' ) and att.endswith( '"' ) :
     return True
@@ -626,7 +659,9 @@ def is_fixed_string( att ) :
 #  IS FIXED INT  #
 ##################
 def is_fixed_int( att ) :
-  if att.isdigit() :
+  if att == "INT" :
+    return True
+  elif att.isdigit() :
     return True
   else :
     return False

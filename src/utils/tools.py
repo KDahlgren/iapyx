@@ -286,7 +286,7 @@ def getEvalResults_dict_c4( results_array ) :
   # CASE: empty results array                                              #
   # ---------------------------------------------------------------------- #
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "No evaluation results." )
+    bp( __name__, inspect.stack()[0][3], "No evaluation results." )
 
   return resultsDict
 

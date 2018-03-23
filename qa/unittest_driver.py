@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import logging, os, string, sys, unittest
-import Test_dedt, Test_dm, Test_iedb_rewrites, Test_setTypes, Test_vs_molly, Test_molly_ldfi
+import Test_dedt, Test_dm, Test_iedb_rewrites, Test_setTypes, Test_vs_molly, Test_molly_ldfi, Test_wildcard_rewrites
 
 #####################
 #  UNITTEST DRIVER  #
@@ -36,13 +36,17 @@ def unittest_driver() :
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_iedb_rewrites.Test_iedb_rewrites )
   unittest.TextTestRunner( verbosity=2, buffer=True ).run( suite )
 
+  # run Test_wildcard_rewrites tests
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_wildcard_rewrites.Test_wildcard_rewrites )
+  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
+
   # run Test_setTypes tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_setTypes.Test_setTypes )
   unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
-  # run Test_molly_ldfi tests
-  suite = unittest.TestLoader().loadTestsFromTestCase( Test_molly_ldfi.Test_molly_ldfi )
-  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
+#  # run Test_molly_ldfi tests
+#  suite = unittest.TestLoader().loadTestsFromTestCase( Test_molly_ldfi.Test_molly_ldfi )
+#  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
 
 #########################

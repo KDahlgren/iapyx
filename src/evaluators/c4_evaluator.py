@@ -100,7 +100,7 @@ def runC4_directly( c4_file_path, table_path, savepath ) :
 # runs c4 program on generated overlog program
 # by interacting with a C4 wrapper.
 # saves the evaluation results to file at c4_results_dump_path.
-def runC4_wrapper( allProgramData ) :
+def runC4_wrapper( allProgramData, argDict ) :
 
   logging.debug( "USING C4 WRAPPER..." )
   logging.debug( "allProgramLines = " + str( allProgramData[0] ) )
@@ -113,7 +113,7 @@ def runC4_wrapper( allProgramData ) :
     if allProgramData[1] and not allProgramData[1] == "" :
 
       # run the program using the c4 wrapper
-      w             = C4Wrapper.C4Wrapper( ) # initializes c4 wrapper instance
+      w             = C4Wrapper.C4Wrapper( argDict ) # initializes c4 wrapper instance
       results_array = w.run( allProgramData )
 
       # return c4 evaluation results as an array of strings

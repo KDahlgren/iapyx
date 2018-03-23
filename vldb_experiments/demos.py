@@ -83,13 +83,14 @@ def demo_0( PRINT_STOP, molly_path, table_path, type_path ) :
   #settings_path = "./settings_files/settings_dm.ini"
   settings_path = "./settings_files/settings_regular.ini"
 
-  argDict = {  "file"      : driver_path, \
-               "crashes"   : crashes, \
-               "nodes"     : node_list, \
-               "EOT"       : eot, \
-               "EFF"       : eff, \
-               "evaluator" : evaluator, \
-               "settings"  : settings_path }
+  argDict = {  "file"           : driver_path, \
+               "crashes"        : crashes, \
+               "nodes"          : node_list, \
+               "EOT"            : eot, \
+               "EFF"            : eff, \
+               "evaluator"      : evaluator, \
+               "settings"       : settings_path, \
+               "data_save_path" : tmp_path }
 
   experiment_workflow.experiment_workflow( molly_path, \
                                            program_path, \

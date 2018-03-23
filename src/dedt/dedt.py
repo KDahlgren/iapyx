@@ -83,7 +83,7 @@ def globalCounterReset() :
 def dedToIR( filename, cursor, settings_path ) :
 
   parsedLines = []
-  parsedLines = dedalusParser.parseDedalus( filename ) # program exits here if file cannot be opened.
+  parsedLines = dedalusParser.parseDedalus( filename, settings_path ) # program exits here if file cannot be opened.
 
   logging.debug( "  DED TO IR : parsedLines = " + str( parsedLines ) )
 
@@ -194,7 +194,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta = allMeta[1]
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor, settings_path )
+  #setTypes.setTypes( cursor, argDict )
 
   for rule in ruleMeta :
     rid = rule.rid
@@ -204,21 +204,10 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     logging.debug( "  DEDT : goal_atts (1) = " + str( goal_atts ) )
 
   # ----------------------------------------------------------------------------- #
-  # wilcard rewrites
-
-  logging.debug( "  REWRITE : calling wildcard rewrites..." )
-
-  try :
-    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "REWRITE_WILDCARDS", bool )
-    if rewriteWildcards :
-      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
-
-  except ConfigParser.NoOptionError :
-    logging.warning( "WARNING : no 'REWRITE_WILDCARDS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
-    pass
-
-  # ----------------------------------------------------------------------------- #
   # dm rewrites
+
+  # be sure to fill in all the type info for the new rule definitions
+  setTypes.setTypes( cursor, argDict )
 
   try :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
@@ -227,7 +216,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
       factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, argDict ) # returns new ruleMeta
 
       # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor, settings_path )
+      setTypes.setTypes( cursor, argDict )
 
   except ConfigParser.NoOptionError :
     logging.warning( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
@@ -259,7 +248,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
         logging.debug( "  DEDT : goal_atts (3) = " + str( goal_atts ) )
 
       # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor, settings_path )
+      setTypes.setTypes( cursor, argDict )
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
@@ -270,26 +259,44 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   logging.debug( "  REWRITE : before prov dump :" )
   for rule in ruleMeta :
-    logging.debug( "  REWRITE : r = " + printRuleWithTypes( rule.rid, cursor ) )
+    logging.debug( "  REWRITE : (0) r = " + printRuleWithTypes( rule.rid, cursor ) )
+  #sys.exit( "blah2" )
 
   logging.debug( "  REWRITE : calling provenance rewrites..." )
 
   # add the provenance rules to the existing rule set
-  ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor ) )
+  ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor, argDict ) )
 
   for rule in ruleMeta :
-    logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-    logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
-#  sys.exit( "blah2" )
+    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+  #sys.exit( "blah2" )
 
   # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor, settings_path )
+  setTypes.setTypes( cursor, argDict )
+
+  # ----------------------------------------------------------------------------- #
+  # wilcard rewrites
+
+  logging.debug( "  REWRITE : calling wildcard rewrites..." )
+
+  try :
+    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "WILDCARD_REWRITES", bool )
+    if rewriteWildcards :
+      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
+
+  except ConfigParser.NoOptionError :
+    logging.warning( "WARNING : no 'WILDCARD_REWRITES' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
+    pass
+
+  # be sure to fill in all the type info for the new rule definitions
+  setTypes.setTypes( cursor, argDict )
 
   # ----------------------------------------------------------------------------- #
 
   for rule in ruleMeta :
     logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-    logging.debug( "  REWRITE : r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+    logging.debug( "  REWRITE : (2) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 #  sys.exit( "blah2" )
 
   logging.debug( "  REWRITE : ...done." )
@@ -438,7 +445,7 @@ def translateDedalus( argDict, cursor ) :
   # ----------------------------------------------------------------- #
 
   logging.debug( "  TRANSLATE DEDALUS : datalogLines = " + str( datalogLines ) )
-  return datalogLines
+  return datalogLines, factMeta, ruleMeta
 
 
 ###########################

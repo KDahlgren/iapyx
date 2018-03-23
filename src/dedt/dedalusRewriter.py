@@ -120,29 +120,12 @@ def rewriteDeductive( metarule, cursor ) :
   # preserve adjustments by instantiating the new meta rule
   # as a Rule
 
-#  if new_metarule_ruleData[ "relationName" ] == "post" :
-#    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + str( rid ) + "'" )
-#    attList = cursor.fetchall()
-#    attList = tools.toAscii_multiList( attList )
-#    print attList
-#
-#    cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + str( rid ) + "'" )
-#    subgoalList = cursor.fetchall()
-#    subgoalList = tools.toAscii_multiList( subgoalList )
-#    print subgoalList
-
   new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
 
-#  if new_metarule_ruleData[ "relationName" ] == "post" :
-#    for sub in new_metarule_ruleData[ "subgoalListOfDicts" ] :
-#      print sub
-#    _rid = new_metarule.rid
-#    cursor.execute( "SELECT attID,attName FROM SubgoalAtt WHERE rid='" + str( _rid ) + "'" )
-#    attList = cursor.fetchall()
-#    attList = tools.toAscii_multiList( attList )
-#    print attList
-#    sys.exit( "blah")
+  # ------------------------------------------------------ #
+  # populate rule type
 
+  new_metarule.rule_type  = "deductive"
 
   logging.debug( "  REWRITE DEDUCTIVE : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
   return new_metarule
@@ -201,6 +184,7 @@ def rewriteInductive( argDict, metarule, cursor ) :
     new_metarule_ruleData[ "goalAttList"].append( timeAtt_snd+"+1" )
   elif NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" :
     new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
+    #new_metarule_ruleData[ "eqnDict" ][ "MRESERVED==NRESERVED+1" ] = { "variableList" : [ "MRESRVED", "NRESERVED" ] }
   elif NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
     new_metarule_ruleData[ "goalAttList"].append( timeAtt_deliv )
 
@@ -277,6 +261,12 @@ def rewriteInductive( argDict, metarule, cursor ) :
   # as a Rule
 
   new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+  # ------------------------------------------------------ #
+  # populate rule type
+
+  new_metarule.rule_type = "inductive"
+
 
   logging.debug( "  REWRITE INDUCTIVE : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
   return new_metarule
@@ -387,6 +377,11 @@ def rewriteAsynchronous( metarule, cursor ) :
 
   logging.debug( "  REWRITE RULES : overwriting old rule with new ruleData = " + str( new_metarule_ruleData ) )
   new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+  # ------------------------------------------------------ #
+  # populate rule type
+
+  new_metarule.rule_type = "asynchronous"
 
   logging.debug( "  REWRITE ASYNCHRONOUS : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
   return new_metarule

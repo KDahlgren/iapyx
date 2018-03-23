@@ -8,6 +8,7 @@ Test_molly_ldfi.py
 #  IMPORTS  #
 #############
 # standard python packages
+import ConfigParser
 import inspect, logging, json, os, re, string, sqlite3, sys, unittest
 
 # ------------------------------------------------------ #
@@ -30,19 +31,652 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 #####################
 class Test_molly_ldfi( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP = False
+  PRINT_STOP   = False
+  SKIP_ASSERTS = True
 
   MOLLY_PATH = os.getcwd() + "/../lib/molly/"
   TABLE_PATH = os.getcwd() + "/tmp_data/iapyx_tables.data" # filename hard-coded in molly
   TYPE_PATH  = os.getcwd() + "/tmp_data/iapyx_types.data"  # filename hard-coded in molly
 
+
+  ###################
+  #  TCP HANDSHAKE  #
+  ###################
+  #@unittest.skip( "working on different example." )
+  def test_tcp_handshake( self ) :
+
+    test_id    = "tcp_handshake"
+    input_file = "tcp_handshake.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "b" ]
+    eot           = "3"
+    eff           = "3"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_tcp_handshake.ini"
+
+    argDict = {  "file"           : driver_path, \
+                 "crashes"        : crashes, \
+                 "nodes"          : node_list, \
+                 "EOT"            : eot, \
+                 "EFF"            : eff, \
+                 "evaluator"      : evaluator, \
+                 "settings"       : settings_path, \
+                 "data_save_path" : "./data" }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  #####################
+  #  KAFKA FAIL CASE  #
+  #####################
+  #@unittest.skip( "working on different example." )
+  def test_kafka_failcase( self ) :
+
+    test_id    = "kafka_failcase"
+    input_file = "kafka_driver.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "1"
+    node_list     = [ "a", "b", "c", "C", "Z" ]
+    eot           = "7"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_kafka.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ###########
+  #  KAFKA  #
+  ###########
+  #@unittest.skip( "working on different example." )
+  def test_kafka( self ) :
+
+    test_id    = "kafka"
+    input_file = "kafka_driver.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "b", "c", "C", "Z" ]
+    eot           = "7"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_kafka.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ##########
+  #  3 PC  #
+  ##########
+  @unittest.skip( "working on different example." )
+  def test_3pc( self ) :
+    test_id = "test_3pc"
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/3pc_driver.ded"
+    crashes       = "0"
+    node_list     = [ "a", "b", "C", "d" ]
+    eot           = "4"
+    eff           = "2"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_setTypes.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_kafka.json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  #####################
+  #  EXAMPLE THING 1  #
+  #####################
+  #@unittest.skip( "working on different example." )
+  def test_example_thing_1( self ) :
+    test_id = "example_thing_1"
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/example_thing_1.ded"
+    crashes       = "0"
+    node_list     = [ "astring0", "astring1", "astring2" ]
+    eot           = "2"
+    eff           = "0"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_dm.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path, \
+                 "data_save_path"  : "./data" }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_example_thing_1.json"
+  
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+  
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ##############
+  #  TOY 2 V2  #
+  ##############
+  #@unittest.skip( "working on different example." )
+  def test_toy2_v2( self ) :
+    test_id = "test_toy2_v2"
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/toy2_v2.ded"
+    crashes       = "0"
+    node_list     = [ "a", "b", "c" ]
+    eot           = "2"
+    eff           = "0"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_use_aggs.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_toy2_v2.json"
+  
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+  
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ##########################################
+  #  PAPER DEMO V3 FIX WILDS FAIL CASE DM  #
+  ##########################################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3_fix_wilds_failcase_dm( self ) :
+
+    test_id    = "paper_demo_v3_failcase_fix_wilds_dm"
+    input_file = "paper_demo_v3_fix_wilds.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_dm.ini"
+
+    argDict = {  "file"            : driver_path, \
+                 "crashes"         : crashes, \
+                 "nodes"           : node_list, \
+                 "EOT"             : eot, \
+                 "EFF"             : eff, \
+                 "evaluator"       : evaluator, \
+                 "settings"        : settings_path, \
+                 "data_save_path"  : "./data" }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ################################
+  #  PAPER DEMO V3 FAIL CASE DM  #
+  ################################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3_failcase_dm( self ) :
+
+    test_id    = "paper_demo_v3_failcase"
+    input_file = "paper_demo_v3.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_dm.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  #######################################
+  #  PAPER DEMO V3 FIX WILDS FAIL CASE  #
+  #######################################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3_fix_wilds_failcase( self ) :
+
+    test_id    = "paper_demo_v3_failcase_fix_wilds"
+    input_file = "paper_demo_v3_fix_wilds.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_regular.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  #############################
+  #  PAPER DEMO V3 FAIL CASE  #
+  #############################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3_failcase( self ) :
+
+    test_id    = "paper_demo_v3_failcase"
+    input_file = "paper_demo_v3.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_regular.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ######################
+  #  PAPER DEMO V3 DM  #
+  ######################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3_dm( self ) :
+
+    test_id    = "paper_demo_v3_dm"
+    input_file = "paper_demo_v3.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "c", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_dm.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
+  ###################
+  #  PAPER DEMO V3  #
+  ###################
+  #@unittest.skip( "stuck in datalog set types." )
+  def test_paper_demo_v3( self ) :
+
+    test_id    = "paper_demo_v3"
+    input_file = test_id + ".ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "a", "c", "jobscheduler" ]
+    eot           = "5"
+    eff           = "4"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_regular.ini"
+
+    argDict = {  "file"      : driver_path, \
+                 "crashes"   : crashes, \
+                 "nodes"     : node_list, \
+                 "EOT"       : eot, \
+                 "EFF"       : eff, \
+                 "evaluator" : evaluator, \
+                 "settings"  : settings_path }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
+
+
   ################
   #  DM SIMPLOG  #
   ################
+  #@unittest.skip( "working on different example." )
   def test_dm_simplog( self ) :
     test_id = "test_dm_simplog"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
@@ -53,11 +687,10 @@ class Test_molly_ldfi( unittest.TestCase ) :
   #############
   #  SIMPLOG  #
   #############
+  #@unittest.skip( "working on different example." )
   def test_simplog( self ) :
     test_id = "test_simplog"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
-
-    self.clean_dirs()
 
     program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
     metrics_path  = "./metrics_data/metrics.data"
@@ -103,11 +736,10 @@ class Test_molly_ldfi( unittest.TestCase ) :
   ###############
   #  DM DEMO 1  #
   ###############
+  #@unittest.skip( "working on different example." )
   def test_dm_demo_1( self ) :
     test_id = "test_dm_demo_1"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
-
-    self.clean_dirs()
 
     program_path = os.getcwd() + "/tmp_data/dm_demo_1.olg"
     metrics_path = "./metrics_data/metrics.data"
@@ -153,12 +785,11 @@ class Test_molly_ldfi( unittest.TestCase ) :
   ############
   #  DEMO 1  #
   ############
+  #@unittest.skip( "working on different example." )
   def test_demo_1( self ) :
     test_id = "test_demo_1"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
 
-    self.clean_dirs()
- 
     program_path = os.getcwd() + "/tmp_data/demo_1.olg"
     metrics_path = "./metrics_data/metrics.data"
     tmp_path     = "./tmp_data/"
@@ -202,12 +833,11 @@ class Test_molly_ldfi( unittest.TestCase ) :
   ############
   #  DEMO 0  #
   ############
+  #@unittest.skip( "working on different example." )
   def test_demo_0( self ) :
     test_id = "test_demo_0"
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
 
-    self.clean_dirs()
-  
     program_path = os.getcwd() + "/tmp_data/demo_0.olg"
     metrics_path = "./metrics_data/metrics.data"
     tmp_path     = "./tmp_data/"
@@ -277,7 +907,10 @@ class Test_molly_ldfi( unittest.TestCase ) :
                            tmp_path, \
                            driver_path, \
                            argDict ) :
-  
+ 
+    self.clean_tmp()
+    self.clean_dirs( argDict )
+ 
     # ----------------------------------- #
     # generate the iapyx program
   
@@ -381,19 +1014,22 @@ class Test_molly_ldfi( unittest.TestCase ) :
   	--nodes ' + ",".join( argDict[ "nodes" ] ) + ' \
   	--crashes ' + str( argDict[ "crashes" ] ) + ' \
   	--ignore-prov-nodes domcomp_,dom_ \
+  	--negative-support \
   	--prov-diagrams"' )
   
     # ----------------------------------- #
     # save metrics to file
     #
   
+    self.clean_dirs( argDict )
+
   
-  ################
-  #  CLEAN DIRS  #
-  ################
+  ###############
+  #  CLEAN TMP  #
+  ###############
   # remove leftover data from previous tests
-  def clean_dirs( self ) :
-  
+  def clean_tmp( self ) :
+
     # ---------------------- #
     # create a clean tmp_data/
   
@@ -403,6 +1039,13 @@ class Test_molly_ldfi( unittest.TestCase ) :
   
     logging.debug( "mkdir ./tmp_data/" )
     os.system( "mkdir ./tmp_data/" )
+
+  
+  ################
+  #  CLEAN DIRS  #
+  ################
+  # remove leftover data from previous tests
+  def clean_dirs( self, argDict ) :
   
     # ---------------------- #
     # remove rogue IR files
@@ -410,6 +1053,26 @@ class Test_molly_ldfi( unittest.TestCase ) :
     if os.path.exists( "./IR*" ) :
       logging.debug( "rm -rf ./IR.db" )
       os.system( "rm -rf ./IR.db" )
+
+    # ---------------------- #
+    # clear c4 tmp files
+
+    try :
+      C4_HOME_PATH = tools.getConfig( argDict[ "settings" ], "DEFAULT", "C4_HOME_PATH", str )
+      try :
+        # for safety:
+        C4_HOME_PATH = C4_HOME_PATH.replace( "/c4_home", "" )
+        C4_HOME_PATH = C4_HOME_PATH.replace( "//", "" )
+
+        assert( os.path.isdir( C4_HOME_PATH ) == True )
+        os.system( "rm -rf " + C4_HOME_PATH + "/c4_home/*" )
+
+      except AssertionError :
+        raise AssertionError( C4_HOME_PATH + " does not exist." )
+
+    except ConfigParser.NoOptionError as e :
+      logging.info( "  FATAL ERROR : option 'C4_HOME_PATH' not set in settings file '" + argDict[ "settings" ] + "'. aborting." )
+      raise e
 
 
   ###############
@@ -444,7 +1107,7 @@ class Test_molly_ldfi( unittest.TestCase ) :
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
     argDict[ 'settings' ]                 = "./settings.ini"
-    argDict[ 'negative_support' ]         = False
+    argDict[ 'negative_support' ]         = True
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
     argDict[ 'EOT' ]                      = 4
@@ -452,6 +1115,7 @@ class Test_molly_ldfi( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
+    argDict[ 'data_save_path' ]           = "./data"
 
     return argDict
 

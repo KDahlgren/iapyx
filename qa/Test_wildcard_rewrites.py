@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_wildcard_rewrites.py
+Test_iedb_rewrites.py
 '''
 
 #############
@@ -19,7 +19,7 @@ from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRe
 from utils      import dumpers, globalCounters, tools
 from evaluators import c4_evaluator
 
-import wildcard_rewrites
+import iedb_rewrites
 
 # ------------------------------------------------------ #
 
@@ -29,155 +29,50 @@ import wildcard_rewrites
 ############################
 class Test_wildcard_rewrites( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
 
-  #############################
-  #  WILDCARD REWRITES REPLOG DM  #
-  #############################
-  # tests rewriting replog on dm
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_replog_dm( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/replog_iapyx_wildcard_rewrites_dm.olg"
-    expected_eval_path      = "./testFiles/replog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  ############################
-  #  WILDCARD REWRITES RDLOG DM  #
-  ############################
-  # tests rewriting rdlog on dm
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_rdlog_dm( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/rdlog_iapyx_wildcard_rewrites_dm.olg"
-    expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  ##############################
-  #  WILDCARD REWRITES SIMPLOG DM  #
-  ##############################
-  # tests rewriting simplog on dm
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_simplog_dm( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/simplog_iapyx_wildcard_rewrites_dm.olg"
-    expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_wildcard_rewrites_dm.ini"
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  ##########################
-  #  WILDCARD REWRITES REPLOG  #
-  ##########################
-  # tests rewriting replog
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_replog( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/replog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/replog_iapyx_wildcard_rewrites.olg"
-    expected_eval_path      = "./testFiles/replog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  #########################
-  #  WILDCARD REWRITES RDLOG  #
-  ########################
-  # tests rewriting rdlog
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_rdlog( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/rdlog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/rdlog_iapyx_wildcard_rewrites.olg"
-    expected_eval_path      = "./testFiles/rdlog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  ###########################
-  #  WILDCARD REWRITES SIMPLOG  #
-  ###########################
-  # tests rewriting simplog
-  #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_simplog( self ) :
-
-    # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/simplog_driver.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/simplog_iapyx_wildcard_rewrites.olg"
-    expected_eval_path      = "./testFiles/simplog_molly_eval.txt"
-
-    # get argDict
-    argDict = self.getArgDict( inputfile )
-
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path )
-
-
-  #############################
-  #  WILDCARD REWRITES EXAMPLE 1  #
-  #############################
+  ##########
+  #  EX 1  #
+  ##########
   # tests rewriting the example 1 program
   #@unittest.skip( "working on different example" )
-  def test_wildcard_rewrites_example_1( self ) :
+  def test_ex_1( self ) :
+
+    test_id = "ex_1"
+    logging.info( "  TEST_WILDCARD_REWRITES : " + test_id + "..." )
 
     # specify input and output paths
-    inputfile               = os.getcwd() + "/testFiles/example_1.ded"
-    expected_iapyx_wildcard_rewrites_path = "./testFiles/example_1.olg"
+    inputfile                             = os.getcwd() + "/testFiles/" + test_id + ".ded"
+    expected_iapyx_wildcard_rewrites_path = os.getcwd() + "/testFiles/" + test_id + ".olg"
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "nodes" ]    = [ "a", "b" ]
+    argDict[ "settings" ] = os.getcwd() + "/settings_files/settings_wild.ini"
 
-    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, None )
+    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, None, "wildcard_rewrites_" + test_id )
+    logging.info( "  TEST_WILDCARD_REWRITES : ...done." )
 
 
   #########################
   #  COMPARISON WORKFLOW  #
   #########################
-  # defines iapyx wildcard_rewrites comparison workflow
-  def comparison_workflow( self, argDict, expected_iapyx_wildcard_rewrites_path, expected_eval_path ) :
+  # defines iapyx iedb_rewrites comparison workflow
+  def comparison_workflow( self, argDict, expected_iapyx_iedb_rewrites_path, expected_eval_path, db_name_append ) :
 
     # --------------------------------------------------------------- #
     # testing set up.
 
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+    if os.path.isfile( "./IR*.db*" ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR*.db* files." )
+      os.remove( "./IR*.db*" )
 
-    testDB = "./IR.db"
+    testDB = "./IR_" + db_name_append + ".db"
     IRDB    = sqlite3.connect( testDB )
     cursor  = IRDB.cursor()
 
@@ -190,7 +85,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     # runs through function to make sure it finishes with expected error
 
     # run translator
-    programData = dedt.translateDedalus( argDict, cursor )
+    programData, factMeta, ruleMeta = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
     iapyx_results = self.getActualResults( programData[0] )
@@ -206,7 +101,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
 
     if self.COMPARE_PROGS :
       expected_iapyx_results = None
-      with open( expected_iapyx_wildcard_rewrites_path, 'r' ) as expectedFile :
+      with open( expected_iapyx_iedb_rewrites_path, 'r' ) as expectedFile :
         expected_iapyx_results = expectedFile.read()
 
       self.assertEqual( iapyx_results, expected_iapyx_results )
@@ -214,7 +109,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     # ========================================================== #
     # EVALUATION COMPARISON
 
-    self.evaluate( programData, expected_eval_path )
+    self.evaluate( programData, expected_eval_path, argDict )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -228,11 +123,11 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, programData, expected_eval_path ) :
+  def evaluate( self, programData, expected_eval_path, argDict ) :
 
     noOverlap = False
 
-    results_array = c4_evaluator.runC4_wrapper( programData )
+    results_array = c4_evaluator.runC4_wrapper( programData, argDict )
 
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
@@ -252,7 +147,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     self.assertFalse( self.hasOverlap( rule_pairs, eval_results_dict ) )
 
     # ----------------------------------------------------------------- #
-    # make sure wildcard_rewrites positive relation results are identical to molly
+    # make sure iedb_rewrites positive relation results are identical to molly
     # relation results
 
     if expected_eval_path :
@@ -412,7 +307,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ 'crashes' ]                  = 0
     argDict[ 'solver' ]                   = None
     argDict[ 'disable_dot_rendering' ]    = False
-    argDict[ 'settings' ]                 = "./settings_files/settings_wildcard_rewrites.ini"
+    argDict[ 'settings' ]                 = "./settings_files/settings_iedb_rewrites.ini"
     argDict[ 'negative_support' ]         = False
     argDict[ 'strategy' ]                 = None
     argDict[ 'file' ]                     = inputfile
@@ -421,12 +316,17 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
+    argDict[ 'data_save_path' ]           = "./data"
 
     return argDict
 
 
 if __name__ == "__main__" :
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
   unittest.main()
+  if os.path.exists( "./IR*.db*" ) :
+    os.remove( "./IR*.db*" )
 
 
 #########

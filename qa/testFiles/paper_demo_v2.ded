@@ -1,0 +1,73 @@
+
+// ================================================================== //
+// the protocol succeeds if the job hits the backup
+
+post( B, J ) :- send_to_backup( B, J ) ;
+pre( B, J )  :- backups( B ), job( _, J ) ;
+
+// ================================================================== //
+// scheduler sends jobs to the primary unless the primary fails.
+
+send_to_primary( P, J )@async :- job( S, J ), notin primary_failure( S, P ), primary( P ) ;
+
+// ================================================================== //
+// scheduler sends jobs to the backup if the primary fails.
+
+send_to_backup( B, J )@async :- job( S, J ),
+                                primary_failure( S, P ),
+                                primary( P ),
+                                backups( B ) ;
+
+backups( B )@next :- backups( B ) ;
+//backups( "b" )@1 ;  // the correct backup identifier. appears in clock.
+backups( "c" )@1 ;  // the corrupt backup identifier. does not appear in clock.
+
+// ================================================================== //
+// scheduler decides a primary fails if the scheduler doesn't
+// recieve a heartbeat from the primary after some THRESH number
+// of time steps.
+
+primary_failure( Scheduler, Primary )@next :- primary_failure( Scheduler, Primary ) ;
+
+primary_failure( Scheduler, Primary )      :- primary( Primary ),
+                                              notin heartbeat( Scheduler, Primary, Heartbeat ),
+                                              all_times( _, Heartbeat ),
+                                              current_time( Scheduler, Time ),
+                                              threshold( Scheduler, THRESH ),
+                                              Time - Heartbeat > THRESH ;
+
+// makes Heartbeat att safe in primary_failure
+all_times( AString, Time+1 )@next :- all_times( AString, Time ) ;
+all_times( "astring", 1 )@1 ;
+
+current_time( Scheduler, Time+1 )@next :- current_time( Scheduler, Time ) ;
+current_time( "jobscheduler", 1 )@1 ;
+
+threshold( Scheduler, THRESH )@next :- threshold( Scheduler, THRESH ) ;
+threshold( "jobscheduler", 1 )@1 ; // scheduler has very little patience.
+
+// ================================================================== //
+// primary sends a heartbeat to the scheduler according to some time
+// interval.
+
+heartbeat( Scheduler, Primary, Time )@async :- primary( Primary ),
+                                               scheduler( Primary, Scheduler, Time ),
+                                               a_timer( Primary, Time ) ;
+
+scheduler( Primary, Scheduler, Time+1 )@next :- scheduler( Primary, Scheduler, Time ) ;
+scheduler( "a", "jobscheduler", 1 )@1 ;
+
+a_timer( Primary, Time+1 )@next :- a_timer( Primary, Time ) ;
+a_timer( "a", 1 )@1 ;
+
+// ================================================================== //
+// edbs and persistence rules.
+
+primary( P )@next :- primary( P ) ;
+primary( "a" )@1 ;
+
+job( "jobscheduler", "job1" )@1 ;
+
+// ======= //
+//   EOF   //
+// ======= //

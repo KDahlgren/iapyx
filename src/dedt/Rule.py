@@ -77,15 +77,17 @@ class Rule :
     # map of original goal att strings to uniform att strings in aggregate rewrites (dm rewrites).
     self.orig_rule_attMapper_aggRewrites = {}
 
-    self.cursor              = None
-    self.relationName        = ""
-    self.goalAttList         = []
-    self.orig_goalAttList    = []
-    self.goalTimeArg         = None
-    self.orig_goal_time_type = None
-    self.subgoalListOfDicts  = []
-    self.eqnDict             = {}
-    self.ruleData            = {}
+    self.cursor                = None
+    self.relationName          = ""
+    self.goalAttList           = []
+    self.orig_goalAttList      = []
+    self.goalTimeArg           = None
+    self.orig_goal_time_type   = ""
+    self.subgoalListOfDicts    = []
+    self.eqnDict               = {}
+    self.ruleData              = {}
+    self.rule_type             = "UNDEFINED_RULE_TYPE"
+    self.hitUniformityRewrites = False
 
     # =========================================== #
 
@@ -247,6 +249,8 @@ class Rule :
     logging.debug( "self.subgoalListOfDicts = " + str( self.subgoalListOfDicts ) )
 
     for sub in self.subgoalListOfDicts :
+
+      logging.debug( "  SAVE SUBGOALS : sub = " + str( sub ) )
 
       # ----------------------------- #
       # grab relevant data

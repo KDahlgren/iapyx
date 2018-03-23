@@ -11,6 +11,8 @@ import sympy
 import itertools
 import ConfigParser
 
+import dm_time_att_replacement
+
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
@@ -29,7 +31,8 @@ from utils      import clockTools, tools, dumpers, setTypes
 #  GLOBALS  #
 #############
 
-arithOps = [ "+", "-", "*", "/" ]
+arithOps   = [ "+", "-", "*", "/" ]
+arithFuncs = [ "count", "avg", "min", "max", "sum" ]
 
 
 ########
@@ -48,13 +51,17 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # rewrite rules with fixed data 
   # in the head
 
-  ruleMeta, factMeta = fixed_data_head_rewrites( ruleMeta, factMeta, settings_path )
+  ruleMeta, factMeta = fixed_data_head_rewrites( ruleMeta, factMeta, argDict )
 
   # ----------------------------------------- #
   # rewrite rules with aggregate functions
   # in the head
 
-  ruleMeta = aggRewrites( ruleMeta, settings_path )
+  ruleMeta = aggRewrites( ruleMeta, argDict )
+
+  for rule in ruleMeta :
+    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
+  #sys.exit( "blah" )
 
   # ----------------------------------------- #
   # enforce a uniform goal attribute lists
@@ -65,7 +72,8 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
 
   for rule in ruleMeta :
     logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
-    
+  #sys.exit( "blah" )
+
   # ----------------------------------------- #
   # enforce unique existential attributes
   # per rule
@@ -73,10 +81,18 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   ruleMeta = setUniqueExistentialVars( ruleMeta )
 
   logging.debug( "  DM : len( ruleMeta ) after setUniqueExistentialVars = " + str( len( ruleMeta ) ) )
-
   for rule in ruleMeta :
     logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
-    
+
+  # ----------------------------------------- #
+  # replace time att references
+
+  ruleMeta = dm_time_att_replacement.dm_time_att_replacement( ruleMeta, cursor, argDict )
+
+  logging.debug( "  DM : len( ruleMeta ) after dm_time_att_replacement= " + str( len( ruleMeta ) ) )
+  for rule in ruleMeta :
+    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
+
   # ----------------------------------------- #
   # build all de morgan's rules
 
@@ -85,7 +101,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
 
     logging.debug( "  DM : COUNTER = " + str( COUNTER ) )
 
-    #if COUNTER==2 :
+    #if COUNTER==1 :
     #  for rule in ruleMeta :
     #    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
 
@@ -136,6 +152,16 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
 
     COUNTER += 1
 
+    #if COUNTER==2 :
+    #  for rule in ruleMeta :
+    #    logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
+
+    #  logging.debug( "  DM : still contains negated idbs = " + str( stillContainsNegatedIDBs( ruleMeta, cursor ) ) )
+    #  logging.debug( "  DM : remaining negated idbs : " )
+    #  for r in remainingIDBs( ruleMeta, cursor ) :
+    #    logging.debug( "  DM : contains negated idb : " + r )
+    #  sys.exit( "blah" )
+
   logging.debug( "  DM : ...done." )
   return factMeta, ruleMeta
 
@@ -166,7 +192,9 @@ def head_contains_fixed_data( rule ) :
 # => t( X, Y ) :- m( X ), fdhr_4( Y ) ;
 #    fdhr_4( 4 ) ;
 #
-def fixed_data_head_rewrites( ruleMeta, factMeta, settings_path ) :
+def fixed_data_head_rewrites( ruleMeta, factMeta, argDict ) :
+
+  settings_path = argDict[ "settings" ]
 
   for rule in ruleMeta :
 
@@ -272,7 +300,7 @@ def fixed_data_head_rewrites( ruleMeta, factMeta, settings_path ) :
         newFact.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
         factMeta.append( newFact )
   
-        setTypes.setTypes( rule.cursor, settings_path )
+        setTypes.setTypes( rule.cursor, argDict )
 
   logging.debug( "  FIXED DATA HEAD REWRITES : len( ruleMeta )     = " + str( len( ruleMeta ) ) )
   logging.debug( "  FIXED DATA HEAD REWRITES : len( factMeta )     = " + str( len( factMeta ) ) )
@@ -283,16 +311,25 @@ def fixed_data_head_rewrites( ruleMeta, factMeta, settings_path ) :
 #  AGG REWRITES  #
 ##################
 # perform aggregate rewrites
-def aggRewrites( ruleMeta, settings_path ) :
+def aggRewrites( ruleMeta, argDict ) :
+
+  logging.debug( "  AGG REWRITES : running process..." )
+
+  settings_path = argDict[ "settings" ]
 
   new_ruleMeta = []
   new_relationNames = []
 
   for rule in ruleMeta :
 
-    logging.debug( "  AGG REWRITES : rule.ruleData = " + str( rule.ruleData ) )
+    logging.debug( "  AGG REWRITES : ======================================" )
+    logging.debug( "  AGG REWRITES : rule.ruleData           = " + str( rule.ruleData ) )
+    logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
+    logging.debug( "  AGG REWRITES : rule                    = " + str( rule ) )
 
     if containsAgg_rule( rule ) :
+
+      #rule.hitUniformityRewrites = True
 
       orig_name = copy.copy( rule.relationName )
 
@@ -302,87 +339,94 @@ def aggRewrites( ruleMeta, settings_path ) :
       # get goal att list
       goalAttList = copy.deepcopy( rule.goalAttList )
 
-      # build new goal att list
-      new_goalAttList = []
-      index           = 0
-      attMapper       = {} # maps old goal att strings to new goal att strings.
-      aggIndexes      = []
-      for gatt in goalAttList :
-
-        if extractAtt( gatt ) in attMapper :
-          new_gatt = attMapper[ gatt ]
-        else :
-          new_gatt = "Att" + str( index )
-
-        if containsAgg( gatt ) :
-          rhs            = extractRHS( gatt )
-          final_new_gatt = new_gatt + rhs
-          aggIndexes.append( index )
-
-        else :
-          final_new_gatt = new_gatt
-
-        new_goalAttList.append( final_new_gatt )
-        attMapper[ extractAtt( gatt ) ] = extractAtt( new_gatt )
-        index += 1
-
-      rule.orig_rule_attMapper_aggRewrites = attMapper
-
-      logging.debug( "  AGG REWRITE : new_goalAttList = " + str( new_goalAttList ) )
-      logging.debug( "  AGG REWRITE : attMapper       = " + str( attMapper ) )
-
-      # save new goal attribute list
-      rule.ruleData[ "goalAttList" ] = new_goalAttList
-      rule.goalAttList               = new_goalAttList
-      rule.saveToGoalAtt()
-
-      # replace attribute in body
-      subgoalListOfDicts = rule.subgoalListOfDicts
-
-      new_subgoalListOfDicts = []
-      for sub in subgoalListOfDicts :
-
-        subgoalAttList     = sub[ "subgoalAttList" ]
-        new_subgoalAttList = []
-
-        for satt in subgoalAttList :
-
-          if satt in attMapper :
-            new_subgoalAttList.append( attMapper[ satt ] )
-          else :
-            new_subgoalAttList.append( satt )
-
-        logging.debug( "  AGG REWRITE : new_subgoalAttList = " + str( new_subgoalAttList ) )
-
-        new_sub_dict = {}
-        new_sub_dict[ "subgoalName" ]    = sub[ "subgoalName" ]
-        new_sub_dict[ "subgoalAttList" ] = new_subgoalAttList
-        new_sub_dict[ "polarity" ]       = sub[ "polarity" ]
-        new_sub_dict[ "subgoalTimeArg" ] = sub[ "subgoalTimeArg" ]
-        new_subgoalListOfDicts.append( new_sub_dict )
-
-      logging.debug( "  AGG REWRITES : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
-
-      # save new subgoals
-      rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
-      rule.subgoalListOfDicts               = new_subgoalListOfDicts
-      rule.saveSubgoals()
+#      # build new goal att list
+#      new_goalAttList = []
+#      index           = 0
+#      attMapper       = {} # maps old goal att strings to new goal att strings.
+#      aggIndexes      = []
+#      for gatt in goalAttList :
+#        print "gatt = " + gatt
+#        if containsAgg( gatt ) :
+#          new_gatt = '"INT"'
+#        elif extractAtt( gatt ) in attMapper :
+#          new_gatt = attMapper[ gatt ]
+#        else :
+#          new_gatt = "Att" + str( index )
+#
+#        if containsAgg( gatt ) :
+#          rhs            = extractRHS( gatt )
+#          final_new_gatt = new_gatt + rhs
+#          aggIndexes.append( index )
+#
+#        else :
+#          final_new_gatt = new_gatt
+#
+#        new_goalAttList.append( final_new_gatt )
+#        attMapper[ extractAtt( gatt ) ] = extractAtt( new_gatt )
+#        index += 1
+#
+#      rule.orig_rule_attMapper_aggRewrites = attMapper
+#
+#      logging.debug( "  AGG REWRITE  : new_goalAttList         = " + str( new_goalAttList ) )
+#      logging.debug( "  AGG REWRITE  : attMapper               = " + str( attMapper ) )
+#      logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
+#
+#      # save new goal attribute list
+#      rule.ruleData[ "goalAttList" ] = new_goalAttList
+#      rule.goalAttList               = new_goalAttList
+#      rule.saveToGoalAtt()
+#
+#      # replace attribute in body
+#      subgoalListOfDicts = rule.subgoalListOfDicts
+#
+#      new_subgoalListOfDicts = []
+#      for sub in subgoalListOfDicts :
+#
+#        subgoalAttList     = sub[ "subgoalAttList" ]
+#        new_subgoalAttList = []
+#
+#        for satt in subgoalAttList :
+#
+#          if satt in attMapper :
+#            new_subgoalAttList.append( attMapper[ satt ] )
+#          else :
+#            new_subgoalAttList.append( satt )
+#
+#        logging.debug( "  AGG REWRITE : new_subgoalAttList = " + str( new_subgoalAttList ) )
+#
+#        new_sub_dict = {}
+#        new_sub_dict[ "subgoalName" ]    = sub[ "subgoalName" ]
+#        new_sub_dict[ "subgoalAttList" ] = new_subgoalAttList
+#        new_sub_dict[ "polarity" ]       = sub[ "polarity" ]
+#        new_sub_dict[ "subgoalTimeArg" ] = sub[ "subgoalTimeArg" ]
+#        new_subgoalListOfDicts.append( new_sub_dict )
+#
+#      logging.debug( "  AGG REWRITES : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
+#      logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
+#
+#      # save new subgoals
+#      rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
+#      rule.subgoalListOfDicts               = new_subgoalListOfDicts
+#      rule.saveSubgoals()
 
       # ----------------------------------------- #
       # rename rule with _agg + index number 
       # convention
 
-      new_relationName                = rule.relationName + "_agg" + "".join( str( x ) for x in aggIndexes )
+      #new_relationName                = rule.relationName + "_agg" + "".join( str( x ) for x in aggIndexes )
+      new_relationName                = rule.relationName + "_agg" + str( rule.rid )
       rule.ruleData[ "relationName" ] = new_relationName
       rule.relationName               = new_relationName
       rule.saveToRule()
 
       new_ruleMeta.append( rule )
+      logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
 
       # ----------------------------------------- #
       # add new agg relation rule
       # for original rule definition
 
+      orig_goalAttList = copy.deepcopy( rule.orig_goalAttList )
       new_goalAttList = [ "Att" + str( i ) for i in range( 0, len( goalAttList ) ) ]
 
       gattMapper = {}
@@ -398,12 +442,15 @@ def aggRewrites( ruleMeta, settings_path ) :
   
       rid = tools.getIDFromCounters( "rid" )
   
-      newRule        = copy.deepcopy( Rule.Rule( rid, newRuleData, rule.cursor ) )
+      newRule                                 = copy.deepcopy( Rule.Rule( rid, newRuleData, rule.cursor ) )
       newRule.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
       newRule.orig_rule_attMapper_aggRewrites = gattMapper
+      newRule.orig_goalAttList                = orig_goalAttList # maintain original goal att list
+      newRule.rule_type                       = rule.rule_type
+      newRule.hitUniformityRewrites           = True
       new_ruleMeta.append( newRule )
 
-      setTypes.setTypes( rule.cursor, settings_path )
+      setTypes.setTypes( rule.cursor, argDict )
 
     else :
       new_ruleMeta.append( rule )
@@ -446,6 +493,8 @@ def containsAgg_rule( rule ) :
 # of universal variables per relation definition
 def setUniformAttList( ruleMeta, cursor ) :
 
+  logging.debug( "  SET UNIFORM ATT LIST : running process..." )
+
   for rule in ruleMeta :
     logging.debug( "  SET UNIFORM ATT LIST : " + str( rule.ruleData ) )
 
@@ -468,6 +517,8 @@ def setUniformAttList( ruleMeta, cursor ) :
     ruleSet = ruleSet_dict[ relName ]
 
     if differentAttSchemas( ruleSet ) :
+      for rule in ruleSet :
+        rule.hitUniformityRewrites = True
       new_ruleMeta.extend( makeUniform( ruleSet, cursor ) )
 
     else :
@@ -479,6 +530,7 @@ def setUniformAttList( ruleMeta, cursor ) :
   # add the skipped rules
   new_ruleMeta.extend( other_rules )
 
+  logging.debug( "  SET UNIFORM ATT LIST : ...done." )
   return new_ruleMeta
 
 
@@ -504,6 +556,13 @@ def makeUniform( ruleSet, cursor ) :
   # atts in subgoals
 
   for rule in ruleSet :
+
+    logging.debug( "  MAKE UNIFORM : rule.relationName = " + rule.relationName )
+
+    # ----------------------------------------- #
+    # record hitting uniform rewrites
+
+    rule.hitUniformRewrites = True
 
     # ----------------------------------------- #
     # save cursor or else it breaks
@@ -719,6 +778,8 @@ def differentAttSchemas( ruleSet ) :
   logging.debug( "  DIFFERENT ATT SCHEMAS : ruleSet = " + str( ruleSet ) )
 
   for rule1 in ruleSet :
+
+    logging.debug( "  DIFFERENT ATT SCHEMAS : rule1 = " + str( rule1.ruleData ) )
 
     # ----------------------------------------- #
     # get goal att list
@@ -1119,9 +1180,11 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
   for ruleSet in targetRuleMetaSets :
 
     for rule in ruleSet :
+      logging.debug( "//////////////////////////////////////////////////" )
       logging.debug( "  DO DEMORGANS : rule.ruleData     = " + str( rule.ruleData ) )
       logging.debug( "  DO DEMORGANS : rule.relationName = " + str( rule.relationName ) )
       logging.debug( "  DO DEMORGANS : rule.rid          = " + str( rule.rid ) )
+      logging.debug( "//////////////////////////////////////////////////" )
 
     # ----------------------------------------- #
     # get an original rule id to reference types
@@ -1133,7 +1196,7 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     # ----------------------------------------- #
     # get new rule name
 
-    orig_name = ruleSet[0].ruleData[ "relationName" ]
+    orig_name = ruleSet[0].relationName
     not_name  = "not_" + orig_name
 
     # ----------------------------------------- #
@@ -1200,7 +1263,56 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
 
     ruleMeta = resolveDoubleNegations( ruleMeta )
 
+    # ----------------------------------------- #
+    # order recursive rules last
+
+    ruleMeta = sortDMRules( ruleMeta )
+
   return ruleMeta
+
+
+###################
+#  SORT DM RULES  #
+###################
+# order DM rules with recursive rules last
+def sortDMRules( ruleMeta ) :
+
+  regularRules   = []
+  recursiveRules = []
+
+  for r in ruleMeta :
+    if is_dm_and_recursive( r ) :
+      recursiveRules.append( r )
+    else :
+      regularRules.append( r )
+
+  for r in regularRules :
+    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
+  logging.debug( "-----" )
+  for r in recursiveRules :
+    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
+
+  sorted_ruleMeta = []
+  sorted_ruleMeta.extend( regularRules )
+  sorted_ruleMeta.extend( recursiveRules )
+
+  for r in sorted_ruleMeta :
+    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
+  #sys.exit( "blah" )
+
+  return sorted_ruleMeta
+
+
+#########################
+#  IS DM AND RECURSIVE  #
+#########################
+def is_dm_and_recursive( rule ) :
+  goalName = rule.relationName
+  for sub in rule.subgoalListOfDicts :
+    subName = sub[ "subgoalName" ]
+    if subName == goalName and subName.startswith( "not_" ) :
+      return True
+  return False
 
 
 ##############################
@@ -1275,6 +1387,9 @@ def replaceSubgoalNegations( ruleMeta ) :
     # skip domcomp rules
 
     if rule.relationName.startswith( "domcomp_" ) :
+      pass
+
+    elif rule.relationName.startswith( "dom_" ) :
       pass
 
     else :
@@ -1427,8 +1542,11 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
           else :
             subgoalAttList.append( "_" )
 
-        thisSubgoalDict[ "subgoalAttList" ] = subgoalAttList
-        base_subgoalListOfDicts.append( thisSubgoalDict )
+        if not onlyWildcards( subgoalAttList ) :
+          thisSubgoalDict[ "subgoalAttList" ] = subgoalAttList
+          base_subgoalListOfDicts.append( thisSubgoalDict )
+        #thisSubgoalDict[ "subgoalAttList" ] = subgoalAttList
+        #base_subgoalListOfDicts.append( thisSubgoalDict )
 
       # ----------------------------------------- #
       # build a table of 0s and 1s marking the binary
@@ -1450,6 +1568,11 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
       ruleData[ "relationName" ] = "dom_" + orig_name + "_"
       for att in existentialAttList :
         ruleData[ "relationName" ] += att.lower()
+
+      #if ruleData[ "relationName" ] == "dom_primary_failure_timethresh" :
+      #  for sub in base_subgoalListOfDicts :
+      #    print sub
+      #  sys.exit( "blah" )
 
       for row in patternMap :
 
@@ -1483,6 +1606,16 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
     logging.debug( "  BUILD EXISTENTIAL VARS RULES : >>> returning existential rule with ruleData = " + str( rule.ruleData ) )
 
   return existentialDomRules
+
+
+####################
+#  ONLY WILDCARDS  #
+####################
+def onlyWildcards( subgoalAttList ) :
+  if subgoalAttList.count( "_" ) < len( subgoalAttList ) :
+    return False
+  else :
+    return True
 
 
 #############
@@ -1739,6 +1872,10 @@ def containsAgg( att ) :
   for op in arithOps :
     if op in att :
       return True
+  for op in arithFuncs :
+    if att.startswith( op + "<" ) and att.endswith( ">" ) :
+      return True
+
   return False
 
 
@@ -1926,12 +2063,49 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule,
     # ----------------------------------------- #
     # build ruleData for new rule and save
 
+#    tmp = []
+#    for a in goalAttList :
+#      if not a == "NRESERVED" :
+#        tmp.append( a )
+#    goalAttList = copy.copy( tmp )
+
     ruleData = {}
     ruleData[ "relationName" ]       = not_name
     ruleData[ "goalAttList" ]        = goalAttList
     ruleData[ "goalTimeArg" ]        = goalTimeArg
     ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts
     ruleData[ "eqnDict" ]            = eqnDict_combined
+
+    # ----------------------------------------- #
+    # add MRESERVED = NRESERVED + 1 eqn, 
+    # if necessary
+
+    # get list of all atts in body
+    att_list_all = []
+    for sub in ruleData[ "subgoalListOfDicts" ] :
+      att_list_all.extend( sub[ "subgoalAttList" ] )
+
+#    if "NRESERVED" in att_list_all and \
+#       "MRESERVED" in att_list_all :
+#      ruleData[ "eqnDict" ][ "MRESERVED>NRESERVED" ] = [ "MRESERVED", "NRESERVED" ]
+#      ruleData[ "eqnDict" ][ "MRESERVED<NRESERVED" ] = [ "MRESERVED", "NRESERVED" ]
+#      ruleData[ "eqnDict" ][ "MRESERVED==NRESERVED" ] = [ "MRESERVED", "NRESERVED" ]
+
+#    if "NRESERVED" in att_list_all and \
+#       "MRESERVED" in att_list_all :
+#      clock_sub_dict = {}
+#      clock_sub_dict[ "subgoalName" ]    = "clock"
+#      clock_sub_dict[ "subgoalAttList" ] = [ "_", "_", "NRESERVED", "MRESERVED" ]
+#      clock_sub_dict[ "polarity" ]       = ""
+#      clock_sub_dict[ "subgoalTimeArg" ] = ""
+#      ruleData[ "subgoalListOfDicts" ].append( clock_sub_dict )
+
+#    if "NRESERVED" in att_list_all and \
+#       "MRESERVED" in att_list_all :
+#      ruleData[ "goalTimeArg" ] = "async"
+
+    # ----------------------------------------- #
+    # save rule
 
     rid = tools.getIDFromCounters( "rid" )
 
@@ -1942,6 +2116,9 @@ def dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule,
 
   for newRule in newDMRules :
     logging.debug( "  DNF TO DATALOG : returing newDMRule.ruleData = " + str( newRule.ruleData ) )
+
+  #if not_name == "not_primary_failure" :
+  #  sys.exit( "blah" )
 
   return newDMRules
 
@@ -2098,6 +2275,9 @@ def getNegatedNameList( ruleMeta ) :
     # ----------------------------------------- #
     # ignore domcomp rules
     if rule.relationName.startswith( "domcomp_" ) :
+      pass
+
+    elif rule.relationName.startswith( "dom_" ) :
       pass
 
     else :
@@ -2380,7 +2560,7 @@ def resolveDoubleNegatives( rid, fromName, cursor ) :
 def stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
   for rule in ruleMeta :
-    if not rule.relationName.startswith( "domcomp_" ) :
+    if not rule.relationName.startswith( "domcomp_" ) and not rule.relationName.startswith( "dom_" ) :
       if ruleContainsNegatedIDB( rule.rid, cursor ) :
         logging.debug( "  STILL CONTAINS NEGATED IDBs : rule contains negated idb : " + dumpers.reconstructRule( rule.rid, cursor ) )
         return True
@@ -2746,6 +2926,13 @@ def getAllRuleRIDs( cursor ) :
 ###############################
 # check if the given rule contains a negated IDB
 def ruleContainsNegatedIDB( rid, cursor ) :
+
+  cursor.execute( "SELECT goalName FROM Rule WHERE rid=='" + str( rid ) + "'" )
+  goalName = cursor.fetchone()
+  goalName = tools.toAscii_str( goalName )
+
+  if goalName.startswith( "domcomp_" ) or goalName.startswith( "dom_" ) :
+    return False
 
   cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + str( rid ) + "' AND subgoalPolarity=='notin'" )
   negatedSubgoals = cursor.fetchall()

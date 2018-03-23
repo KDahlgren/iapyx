@@ -7,6 +7,7 @@ dedalusParser.py
 
 import inspect, logging, os, re, string, sys, traceback
 from pyparsing import *
+import ConfigParser
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -57,7 +58,7 @@ def cleanResult( result ) :
 #                   eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
 #                               ... , 
 #                               'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } } ]
-def parse( dedLine ) :
+def parse( dedLine, settings_path ) :
 
   logging.debug( "  PARSE : dedLine = '" + dedLine + "'" )
 
@@ -182,7 +183,7 @@ def parse( dedLine ) :
     logging.debug( "  PARSE : subgoalListOfDicts = " + str( subgoalListOfDicts ) )
     logging.debug( "  PARSE : eqnDict            = " + str( eqnDict ) )
 
-    if not sanityCheckSyntax_rule_postChecks( dedLine, ruleData ) :
+    if not sanityCheckSyntax_rule_postChecks( dedLine, ruleData, settings_path ) :
       sys.exit( "  PARSE : ERROR : invalid syntax in fact '" + dedLine + "'" )
 
     logging.debug( "  PARSE : returning " + str( [ "rule", ruleData ] ) )
@@ -267,35 +268,64 @@ def isFixedInt( att ) :
   else :
     return False
 
+###########################################
+#  CHECK MIN ONE POS SUBGOAL NO TIME ARG  #
+###########################################
+# make sure at least one positive subgoal
+# has no numeric time argument
+def check_min_one_pos_subgoal_no_time_arg( ruleLine, ruleData ) :
+  if not hasPosSubgoalWithoutIntegerTimeArg( ruleData ) :
+    raise Exception( "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : " + \
+                     " invalid syntax in line \n'" + ruleLine + \
+                     "'\n    line at least one positive subgoal " + \
+                     "must not be annotated with a numeric time argument." )
+
+
+################################
+#  CHECK IDENTICAL FIRST ATTS  #
+################################
+# make sure all subgoals 
+# have identical first attributes
+def check_identical_first_atts( ruleLine, ruleData ) :
+  subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
+  firstAtts          = []
+  for sub in subgoalListOfDicts :
+    subgoalAttList = sub[ "subgoalAttList" ]
+    firstAtts.append( subgoalAttList[0] )
+    
+  firstAtts = set( firstAtts )
+  if not len( firstAtts ) < 2 :
+    raise Exception( "  SANITY CHECK SYNTAX RULE : ERROR : " + \
+                     "invalid syntax in line \n'" + ruleLine + \
+                     "'\n    all subgoals in next and async " + \
+                     "rules must have identical first attributes.\n" )
 
 ##########################################
 #  SANITY CHECK SYNTAX RULE POST CHECKS  #
 ##########################################
 # make sure contents of rule make sense.
-def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData ) :
-
-  # ------------------------------------------ #
-  # make sure at least one positive subgoal
-  # has no numeric time argument
-
-  if not hasPosSubgoalWithoutIntegerTimeArg( ruleData ) :
-    sys.exit( "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line '" + ruleLine + "'\n    line contains no negative subgoal NOT annotated with a numeric time argument." )
-
+def sanityCheckSyntax_rule_postChecks( ruleLine, ruleData, settings_path ) :
 
   # ------------------------------------------ #
   # make sure all subgoals in next and async 
   # rules have identical first attributes
 
-  if ruleData[ "goalTimeArg" ] == "next" or ruleData[ "goalTimeArg" ] == "async" :
-    subgoalListOfDicts = ruleData[ "subgoalListOfDicts" ]
-    firstAtts          = []
-    for sub in subgoalListOfDicts :
-      subgoalAttList = sub[ "subgoalAttList" ]
-      firstAtts.append( subgoalAttList[0] )
+  try :
+    use_hacks = tools.getConfig( settings_path, "DEFAULT", "USE_HACKS", bool )
+    if use_hacks :
+      if ruleData[ "goalTimeArg" ] == "next" :
+        check_identical_first_atts( ruleLine, ruleData )
+    else :
+      check_min_one_pos_subgoal_no_time_arg( ruleData )
+      if ruleData[ "goalTimeArg" ] == "next" or ruleData[ "goalTimeArg" ] == "async" :
+        check_identical_first_atts( ruleLine, ruleData )
+    
+  except ConfigParser.NoOptionError :
+    logging.warning( "WARNING : no 'USE_HACKS' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
 
-    firstAtts = set( firstAtts )
-    if not len( firstAtts ) < 2 :
-      sys.exit( "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + ruleLine + "'\n    all subgoals in next and async rules must have identical first attributes.\n" )
+    check_min_one_pos_subgoal_no_time_arg( ruleLine, ruleData )
+    if ruleData[ "goalTimeArg" ] == "next" or ruleData[ "goalTimeArg" ] == "async" :
+      check_identical_first_atts( ruleLine, ruleData )
 
   # ------------------------------------------ #
   # make sure all goal and subgoal attribute 
@@ -703,7 +733,7 @@ def isString( testString ) :
 ###################
 # input name of raw dedalus file
 # output array of arrays containing the contents of parsed ded lines
-def parseDedalus( dedFile ) :
+def parseDedalus( dedFile, settings_path ) :
 
   logging.debug( "  PARSE DEDALUS : dedFile = " + dedFile )
 
@@ -719,7 +749,7 @@ def parseDedalus( dedFile ) :
   # iterate over each line and parse
 
   for line in lineList :
-    result = parse( line ) # parse returns None on empty lines
+    result = parse( line, settings_path ) # parse returns None on empty lines
     if result :
       parsedLines.append( result )
 

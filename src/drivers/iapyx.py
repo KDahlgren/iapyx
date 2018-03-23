@@ -56,12 +56,14 @@ def iapyx_driver( argDict ) :
   c.run_workflow()
   program_array = c.program_array
   table_array   = c.table_array
+  factMeta      = c.factMeta
+  ruleMeta      = c.ruleMeta
 
   os.system( "rm IR.db" ) # delete db from previous run, if appicable
 
   logging.info( "PROGRAM ENDED SUCESSFULLY." )
 
-  return [ program_array, table_array ]
+  return [ program_array, table_array, cursor, factMeta, ruleMeta ]
 
 
 ###########

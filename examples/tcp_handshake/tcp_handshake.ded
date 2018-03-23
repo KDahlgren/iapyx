@@ -1,0 +1,33 @@
+// correctness conditions pre=>post
+post( X ) :- local_data( Y, X ), global_data( Z, X ), Y=="a", Z=="b" ;
+pre( X )  :- local_data( Y, X ), Y=="a" ;
+
+// tcp handshake
+connections( Node1, Node2 ) :- syn( Node1, Node2 ), syn_ack( Node2, Node1 ), ack( Node1, Node2 ) ;
+global_data( Node2, Data ) :- connections( Node1, Node2 ), local_data( Node1, Data ) ;
+
+// connection model
+connections( Node1, Node2 )@next :- connections( Node1, Node2 ) ; // version 1
+connections( Node1, Node2 )@async :- connections( Node1, Node2 ), notin i_think_its_crashed( Node2 ) ; // version 2
+
+syn( "a", "b" )@1 ;
+syn_ack( "b", "a" )@1 ;
+ack( "a", "b" )@1 ;
+
+i_think_its_crashed( Node ) :- nodes( Node ), notin im_alive( Node ) ;
+i_think_its_crashed( Node )@next :- i_think_its_crashed( Node ) ;
+
+// base data
+nodes( "a" )@1 ;
+nodes( "b" )@1 ;
+
+local_data( "a", "imadata" )@1 ;
+local_data( X, Y )@next :- local_data( X, Y ) ;
+
+im_alive( "a" )@1 ;
+im_alive( "a" )@2 ;
+im_alive( "a" )@3 ;
+im_alive( "b" )@1 ;
+im_alive( "b" )@2 ;
+//im_alive( "b" )@3 ;
+

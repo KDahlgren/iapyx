@@ -1,0 +1,12 @@
+
+a( "astring0" )@1 ;
+b( "astring1" )@1 ;
+c( "astring2" )@1 ;
+c( X )@next :- c( X ) ;
+
+m( X ) :- a( X ) ;
+m( X )@next :- m( X ) ;
+m( X )@async :- b( X ) ;
+
+post( X ) :- c( X ), notin m( X ) ;
+pre( X ) :- post( X ) ;

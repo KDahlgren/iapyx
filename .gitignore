@@ -1,8 +1,4 @@
-**/*.aux
-**/*.ent
-**/*.log
-**/*.pdf
-**/*.gz
+examples/omissionProblem/com*.ded
 
 qa/data/*
 qa/tmp_data

@@ -5,7 +5,7 @@ dumpers_c4.py
    Methods for dumping specific contents from the database.
 '''
 
-import logging, inspect, os, sys
+import logging, inspect, os, string, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -67,7 +67,7 @@ def dumpIR( cursor, db_dump_save_path ) :
 
 #########################
 #  DUMP SINGLE FACT C4  #
-#########################
+########################
 # input fid and IR db cursor
 # output a single fact
 
@@ -140,9 +140,10 @@ def dumpSingleRule_c4( rid, cursor ) :
       rule += goalList[j] + ","
     else :
       rule += goalList[j] + ")"
+  #KD
   if not goalTimeArg == "" :
-    #rule += "@" + goalTimeArg + " :- "
-    sys.exit( "ERROR: leftover timeArg in goal: " + rule + "@" + goalTimeArg )
+    rule += "@" + goalTimeArg + " :- "
+    #sys.exit( "ERROR: leftover timeArg in goal: " + rule + "@" + goalTimeArg )
   else :
     rule += " :- "
 
@@ -158,7 +159,8 @@ def dumpSingleRule_c4( rid, cursor ) :
   subIDs = prioritizeDoms( rid, subIDs, cursor )
 
   # prioritize negated subgoals last.
-  subIDs = prioritizeNegatedLast( rid, subIDs, cursor )
+  #subIDs = prioritizeNegatedLast( rid, subIDs, cursor )
+  subIDs, clockSubIDs, negSubIDs = prioritizeNegatedLast_2( rid, subIDs, cursor )
 
   subTimeArg = None
   # iterate over subgoal ids
@@ -191,7 +193,8 @@ def dumpSingleRule_c4( rid, cursor ) :
       cursor.execute( "SELECT subgoalPolarity FROM Subgoals WHERE rid == '" + rid + "' AND sid == '" + s + "'" )
       subPolarity  = cursor.fetchone() # assume only one additional arg
       subPolarity  = tools.toAscii_str( subPolarity )
-      subPolarity += " "
+      if subPolarity == "notin" :
+        subPolarity += " "
       newSubgoal  += subPolarity
 
       # all subgoals have a name and open paren
@@ -217,6 +220,10 @@ def dumpSingleRule_c4( rid, cursor ) :
 
     rule += newSubgoal
 
+  # cap with comma
+  if len( subIDs ) > 0 :
+    rule += ","
+
   # --------------------------------------------------------------- #
   #                         EQUATIONS                               #
 
@@ -224,6 +231,12 @@ def dumpSingleRule_c4( rid, cursor ) :
   cursor.execute( "SELECT eid FROM Equation" ) # get list of eids for this rule
   eqnIDs = cursor.fetchall()
   eqnIDs = tools.toAscii_list( eqnIDs )
+
+#  if   len( subIDs )      > 0 and \
+#     ( len( eqnIDs )      > 0 or \
+#       len( clockSubIDs ) > 0 or \
+#       len( negSubIDs )   > 0 ):
+#    rule += ","
 
   for e in range(0,len(eqnIDs)) :
     currEqnID = eqnIDs[e]
@@ -238,20 +251,217 @@ def dumpSingleRule_c4( rid, cursor ) :
         # convert eqn info to pretty string
         rule += "," + str(eqn)
 
+#  if len( eqnIDs ) > 0 and len( clockSubIDs ) > 0 :
+#    rule += ","
+
   # add SndTime eqn (only works for one subgoal time annotation)
   #if not subTimeArg == None and not subTimeArg == "" :
   #  rule += ",SndTime==" + str( subTimeArg )
 
+  # cap with comma
+  if len( eqnIDs ) > 0 :
+    rule += ","
+
   # --------------------------------------------------------------- #
 
-  rule += " ;" + "\n" # end all rules with a semicolon
+  if len( clockSubIDs ) > 0 :
+  
+    subTimeArg = None
+    # iterate over subgoal ids
+    for k in range(0,len(clockSubIDs)) :
+      newSubgoal = ""
+  
+      s = clockSubIDs[k]
+  
+      # get subgoal name
+      cursor.execute( "SELECT subgoalName \
+                       FROM   Subgoals \
+                       WHERE rid == '" + str(rid) + "' AND \
+                             sid == '" + str(s) + "'" )
+      subgoalName = cursor.fetchone()
+  
+      if not subgoalName == None :
+        subgoalName = tools.toAscii_str( subgoalName )
+  
+        logging.debug( "subgoalName = " + subgoalName )
+  
+  
+        # get subgoal attribute list
+        subAtts = cursor.execute( "SELECT attName \
+                                   FROM   SubgoalAtt \
+                                   WHERE rid == '" + rid + "' AND \
+                                         sid == '" + s + "'" )
+        subAtts = cursor.fetchall()
+        subAtts = tools.toAscii_list( subAtts )
+  
+        # get subgoal time arg
+        cursor.execute( "SELECT subgoalTimeArg \
+                         FROM   Subgoals \
+                         WHERE rid == '" + rid + "' AND \
+                               sid == '" + s + "'" )
+        subTimeArg = cursor.fetchone() # assume only one time arg
+        subTimeArg = tools.toAscii_str( subTimeArg )
+  
+        # get subgoal polarity
+        cursor.execute( "SELECT subgoalPolarity \
+                         FROM   Subgoals \
+                         WHERE rid == '" + rid + "' AND \
+                               sid == '" + s + "'" )
+        subPolarity  = cursor.fetchone() # assume only one additional arg
+        subPolarity  = tools.toAscii_str( subPolarity )
+        subPolarity += " "
+        newSubgoal  += subPolarity
+  
+        # all subgoals have a name and open paren
+        newSubgoal += subgoalName + "("
+  
+        # add in all attributes
+        for j in range(0,len(subAtts)) :
+  
+          currAtt = subAtts[j]
+  
+          # replace SndTime in subgoal with subTimeArg, if applicable
+          if not subTimeArg == "" and "SndTime" in currAtt :
+            currAtt = str( subTimeArg )
+  
+          if j < (len(subAtts) - 1) :
+            newSubgoal += currAtt + ","
+          else :
+            newSubgoal += currAtt + ")"
+  
+        # cap with a comma, if applicable
+        if k < len( clockSubIDs ) - 1 :
+          newSubgoal += ","
+  
+      rule += newSubgoal
 
-  # .................................. #
-  #if goalName == "pre" :
-  #  tools.bp( __name__, inspect.stack()[0][3], "rule = " + rule )
-  # .................................. #
+  #if len( clockSubIDs ) > 0 and len( negSubIDs ) > 0 :
+  #  rule += ","
+
+  # cap with comma
+  if len( clockSubIDs ) > 0 :
+    rule += ","
+
+  # --------------------------------------------------------------- #
+
+  if len( negSubIDs ) > 0 :
+  
+    subTimeArg = None
+    # iterate over subgoal ids
+    for k in range(0,len(negSubIDs)) :
+      newSubgoal = ""
+  
+      s = negSubIDs[k]
+  
+      # get subgoal name
+      cursor.execute( "SELECT subgoalName \
+                       FROM   Subgoals \
+                       WHERE rid == '" + str(rid) + "' AND \
+                             sid == '" + str(s) + "'" )
+      subgoalName = cursor.fetchone()
+  
+      if not subgoalName == None :
+        subgoalName = tools.toAscii_str( subgoalName )
+  
+        logging.debug( "subgoalName = " + subgoalName )
+  
+  
+        # get subgoal attribute list
+        subAtts = cursor.execute( "SELECT attName \
+                                   FROM   SubgoalAtt \
+                                   WHERE rid == '" + rid + "' AND \
+                                         sid == '" + s + "'" )
+        subAtts = cursor.fetchall()
+        subAtts = tools.toAscii_list( subAtts )
+  
+        # get subgoal time arg
+        cursor.execute( "SELECT subgoalTimeArg \
+                         FROM   Subgoals \
+                         WHERE rid == '" + rid + "' AND \
+                               sid == '" + s + "'" )
+        subTimeArg = cursor.fetchone() # assume only one time arg
+        subTimeArg = tools.toAscii_str( subTimeArg )
+  
+        # get subgoal polarity
+        cursor.execute( "SELECT subgoalPolarity \
+                         FROM   Subgoals \
+                         WHERE rid == '" + rid + "' AND \
+                               sid == '" + s + "'" )
+        subPolarity  = cursor.fetchone() # assume only one additional arg
+        subPolarity  = tools.toAscii_str( subPolarity )
+        subPolarity += " "
+        newSubgoal  += subPolarity
+  
+        # all subgoals have a name and open paren
+        newSubgoal += subgoalName + "("
+  
+        # add in all attributes
+        for j in range(0,len(subAtts)) :
+  
+          currAtt = subAtts[j]
+  
+          # replace SndTime in subgoal with subTimeArg, if applicable
+          if not subTimeArg == "" and "SndTime" in currAtt :
+            currAtt = str( subTimeArg )
+  
+          if j < (len(subAtts) - 1) :
+            newSubgoal += currAtt + ","
+          else :
+            newSubgoal += currAtt + ")"
+  
+        # cap with a comma, if applicable
+        if k < len( negSubIDs ) - 1 :
+          newSubgoal += ","
+  
+      rule += newSubgoal
+
+  # --------------------------------------------------------------- #
+
+  if rule.endswith( "," ) :
+    rule = rule[:-1]
+
+  rule += " ;" + "\n" # end all rules with a semicolon
+  rule = rule.replace( " ,", "" )
+  rule = rule.replace( ",,", "," )
+  rule = rule.translate( None, string.whitespace )
+  rule = rule.replace( ",;", ";" )
+  rule = rule.replace( "notin", "notin " )
+
+  logging.debug( "  >>> rule = " + rule )
 
   return rule
+
+
+###############################
+#  PRIORITIZE NEGATED LAST 2  #
+###############################
+def prioritizeNegatedLast_2( rid, subIDs, cursor ) :
+
+  posSubs   = []
+  clockSubs = []
+  negSubs   = []
+
+  # check if subgoal is negated
+  # branch on result.
+  for subID in subIDs :
+
+    cursor.execute( "SELECT subgoalName,subgoalPolarity \
+                     FROM   Subgoals \
+                     WHERE rid=='" + rid + "' AND \
+                           sid=='" + subID + "'" )
+    data = cursor.fetchall()
+    data = tools.toAscii_multiList( data )
+    name = data[0][0]
+    sign = data[0][1]
+
+    if name == "clock" :
+      clockSubs.append( subID )
+    elif not sign == "notin" :
+      posSubs.append( subID )
+    else :
+      negSubs.append( subID )
+
+  return posSubs, clockSubs, negSubs
 
 
 #############################

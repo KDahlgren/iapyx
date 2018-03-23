@@ -156,7 +156,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -175,7 +175,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -194,7 +194,7 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
-    argDict[ "settings" ] = "./settings_files/settings_setTypes_dm.ini"
+    argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -203,6 +203,7 @@ class Test_dm( unittest.TestCase ) :
   #  DM TOY 3 AGG REWRITES  #
   ############################
   # tests rewriting the second toy program
+  # observe previous version of agg rewrites included fewer rules.
   #@unittest.skip( "working on different example" )
   def test_dm_toy3_aggRewrites( self ) :
 
@@ -288,7 +289,7 @@ class Test_dm( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    iapyx_results = self.getActualResults( programData[0] )
+    iapyx_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print iapyx_results
@@ -309,7 +310,7 @@ class Test_dm( unittest.TestCase ) :
     # ========================================================== #
     # EVALUATION COMPARISON
 
-    self.evaluate( programData, expected_eval_path )
+    self.evaluate( programData, expected_eval_path, argDict )
 
     # --------------------------------------------------------------- #
     #clean up testing
@@ -324,11 +325,11 @@ class Test_dm( unittest.TestCase ) :
   ##############
   # evaluate the datalog program using some datalog evaluator
   # return some data structure or storage location encompassing the evaluation results.
-  def evaluate( self, programData, expected_eval_path ) :
+  def evaluate( self, programData, expected_eval_path, argDict ) :
 
     noOverlap = False
 
-    results_array = c4_evaluator.runC4_wrapper( programData )
+    results_array = c4_evaluator.runC4_wrapper( programData[0], argDict )
 
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
@@ -856,15 +857,6 @@ class Test_dm( unittest.TestCase ) :
     return str( sysInfo[1] )
 
 
-  ########################
-  #  GET ACTUAL RESULTS  #
-  ########################
-  def getActualResults( self, programLines ) :
-    program_string  = "\n".join( programLines )
-    program_string += "\n" # add extra newline to align with read() parsing
-    return program_string
-
-
   ##################
   #  GET ARG DICT  #
   ##################
@@ -888,6 +880,7 @@ class Test_dm( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
+    argDict[ 'data_save_path' ]           = "./data"
 
     return argDict
 
@@ -2631,7 +2624,7 @@ class Test_dm( unittest.TestCase ) :
   #  GET ACTUAL RESULTS  #
   ########################
   def getActualResults( self, programLines ) :
-    program_string  = "\n".join( programLines )
+    program_string  = "\n".join( programLines[0][0] )
     program_string += "\n" # add extra newline to align with read() parsing
     return program_string
 

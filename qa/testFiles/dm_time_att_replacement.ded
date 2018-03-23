@@ -1,0 +1,53 @@
+
+post( X, Y ) :- c_dedindasy( X, Y ) ;
+pre( X,Y )   :- post( X, Y ) ;
+
+// CASE 0 : deductive rules only
+c_agg( X, count<Y> )@async :- a( X ), b( X, Y ) ;
+c_agg( P, Q+1 )            :- g( P, Q ) ;
+c_agg( P, Q+2)@next        :- h( P, Q ) ;
+
+g( "astring", 2 )@1 ;
+h( "astring", 3 )@1 ;
+
+// CASE 1 : deductive rules only
+//c_ded( X, Y ) :- a( X ), b( X, Y ) ;
+//c_ded( P, Q ) :- d( P, Q ) ;
+//c_ded( X, Z ) :- e( X, Y ), f( X, Y, Z ) ;
+
+c_ded( X, Y ) :- a( X ), b( X, Y ) ;
+c_ded( X, Y ) :- d( X, Y ) ;
+c_ded( X, Y ) :- e( X, Z ), f( X, Z, Y ) ;
+
+// CASE 2 : inductive rules only
+c_ind( X, Y )@next :- a( X ), b( X, Y ) ;
+c_ind( P, Q )@next :- d( P, Q ) ;
+c_ind( X, Z )@next :- e( X, Y ), f( X, Y, Z ) ;
+
+// CASE 3 : async rules only 
+c_asy( X, Y )@async :- a( X ), b( X, Y ) ;
+c_asy( P, Q )@async :- d( P, Q ) ;
+c_asy( X, Z )@async :- e( X, Y ), f( X, Y, Z ) ;
+
+// CASE 4 : deductive and inductive mix
+c_dedind( X, Y )      :- a( X ), b( X, Y ) ;
+c_dedind( P, Q )@next :- d( P, Q ) ;
+c_dedind( X, Z )      :- e( X, Y ), f( X, Y, Z ) ;
+
+// CASE 5 : deductive and async mix
+c_dedasy( X, Y )       :- a( X ), b( X, Y ) ;
+c_dedasy( P, Q )@async :- d( P, Q ) ;
+c_dedasy( X, Z )       :- e( X, Y ), f( X, Y, Z ) ;
+
+// CASE 6 : deductive, inductive, and async mix
+c_dedindasy( X, Y )       :- a( X ), b( X, Y ) ;
+c_dedindasy( P, Q )@next  :- d( P, Q ) ;
+c_dedindasy( X, Z )@async :- e( X, Y ), f( X, Y, Z ) ;
+
+a( "astring" )@1 ;
+b( "astring", "astring" )@1 ;
+
+d( "astring1", "astring2" )@1 ;
+
+e( "astring3", "astring4" )@1 ;
+f( "astring3", "astring4", "astring5" )@1 ;

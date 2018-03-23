@@ -36,12 +36,12 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 ###################
 class Test_vs_molly( unittest.TestCase ) :
 
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP    = False
-  COMPARE_PROGS = True
+  PRINT_STOP          = False
+  COMPARE_IAPYX_PROGS = False
 
   ####################
   #  EXAMPLE TOKENS  #
@@ -336,15 +336,15 @@ class Test_vs_molly( unittest.TestCase ) :
   ###################
   # tests ded to c4 datalog for kafka
   #
-  # sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
-  #     src/test/resources/examples_ft/kafka.ded \
-  #     --EOT 4 \
-  #     --EFF 2 \
-  #     --nodes a,b,c \
-  #     --crashes 0 \
-  #     --prov-diagrams"
+  #  sbt "run-main edu.berkeley.cs.boom.molly.SyncFTChecker \
+  #      src/test/resources/examples_ft/kafka.ded \
+  #      --EOT 7 \
+  #      --EFF 4 \
+  #      --nodes a,b,c,C,Z \
+  #      --crashes 0 \
+  #      --prov-diagrams"
   #
-  @unittest.skip( "   SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line 'clients(Z,C)@async:-client(C),zookeeper(M,Z);' all subgoals in next and async rules must have identical first attributes.." )
+  #@unittest.skip( "   SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line 'clients(Z,C)@async:-client(C),zookeeper(M,Z);' all subgoals in next and async rules must have identical first attributes.." )
   def test_kafka( self ) :
 
     # specify input and output paths
@@ -780,11 +780,14 @@ class Test_vs_molly( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    if db_name_append == "_kafka_" :
+      argDict[ "settings" ] = "./settings_files/settings_kafka.ini"
+
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    iapyx_results = self.getActualResults( programData[0] )
+    iapyx_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print iapyx_results
@@ -794,14 +797,13 @@ class Test_vs_molly( unittest.TestCase ) :
     # IAPYX COMPARISON
     #
     # grab expected output results as a string
-    #
-    #expected_iapyx_path    = "./testFiles/simplog_iapyx.olg"
-    expected_iapyx_results = None
-    with open( expected_iapyx_path, 'r' ) as expectedFile :
-      expected_iapyx_results = expectedFile.read()
 
-    if self.COMPARE_PROGS :
-      self.assertEqual( iapyx_results, expected_iapyx_results )
+    if self.COMPARE_IAPYX_PROGS :
+      #expected_iapyx_path    = "./testFiles/simplog_iapyx.olg"
+      expected_iapyx_results = None
+      with open( expected_iapyx_path, 'r' ) as expectedFile :
+        expected_iapyx_results = expectedFile.read()
+        self.assertEqual( iapyx_results, expected_iapyx_results )
 
     # ========================================================== #
     # MOLLY COMPARISON
@@ -1329,7 +1331,7 @@ class Test_vs_molly( unittest.TestCase ) :
   #  GET ACTUAL RESULTS  #
   ########################
   def getActualResults( self, programLines ) :
-    program_string  = "\n".join( programLines )
+    program_string  = "\n".join( programLines[0][0] )
     program_string += "\n" # add extra newline to align with read() parsing
     return program_string
 

@@ -147,7 +147,7 @@ def iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) :
       ruleMeta.append( new_rule )
   
       # set the types!
-      #setTypes.setTypes( cursor, settings_path )
+      #setTypes.setTypes( cursor, argDict )
 
     logging.debug( "  IEDB REWRITES : done on rel_name = " + rel_name )
 

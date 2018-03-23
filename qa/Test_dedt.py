@@ -67,7 +67,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -120,7 +120,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -173,7 +173,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -226,7 +226,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -279,7 +279,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -332,7 +332,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -385,7 +385,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -438,7 +438,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -490,7 +490,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -542,7 +542,7 @@ class Test_dedt( unittest.TestCase ) :
       print actual_ruleData
 
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['8', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['9', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['17', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '3': {'goalName': 'role_x_vars', 'goalAttData': [[0, 'N', 'string'], [1, 'I', 'int'], [2, 'R', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['13', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int'], [3, 'NRESERVED', 'int']]], ['15', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['11', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['12', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'new_term_prov1', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['24', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['25', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['26', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'role_x_prov0', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['16', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '6': {'goalName': 'lclock_register_prov2', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['31', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['32', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
+    expected_ruleData = {'1': {'goalName': 'new_term', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['8', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['9', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'role_x', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['17', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '3': {'goalName': 'role_x_vars', 'goalAttData': [[0, 'N', 'string'], [1, 'I', 'int'], [2, 'R', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['13', 'role_change', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'rank', [[0, 'N', 'string'], [1, 'R', 'string'], [2, 'I', 'int'], [3, 'NRESERVED', 'int']]], ['15', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'lclock_register', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['11', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['12', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'new_term_prov1', 'goalAttData': [[0, 'N', 'string'], [1, 'T+1', 'int'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['18', 'term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'stall', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'role_x_prov0', 'goalAttData': [[0, 'N', 'string'], [1, 'max<I>', 'int'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['16', 'role_x_vars', [[0, 'N', 'string'], [1, 'I', 'int'], [2, '_', 'string'], [3, 'NRESERVED', 'int']]]]}, '6': {'goalName': 'lclock_register_prov2', 'goalAttData': [[0, 'N', 'string'], [1, '"Localtime"', 'string'], [2, 'T', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'new_term', [[0, 'N', 'string'], [1, 'T', 'int'], [2, 'NRESERVED', 'int']]], ['22', 'clock', [[0, 'N', 'string'], [1, 'N', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -624,7 +624,7 @@ class Test_dedt( unittest.TestCase ) :
       print actual_ruleData
 
     # expected rules
-    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['9', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['11', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['6', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['7', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['8', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '3': {'goalName': 'c_prov0', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['22', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['23', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['12', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['13', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'e_prov2', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['39', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['40', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['41', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'd_prov1', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['30', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['31', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['32', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
+    expected_ruleData = {'1': {'goalName': 'd', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['9', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['10', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['11', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '0': {'goalName': 'c', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['6', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['7', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['8', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '3': {'goalName': 'c_prov0', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['15', 'a', [[0, 'X', 'string'], [1, '_', 'int'], [2, 'NRESERVED', 'int']]], ['16', 'd', [[0, '_', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['17', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '2': {'goalName': 'e', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']], 'subgoalAttData': [['12', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['13', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['14', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '5': {'goalName': 'e_prov2', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'string'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['21', 'c', [[0, 'X', 'string'], [1, 'Z', 'string'], [2, 'NRESERVED', 'int']]], ['22', 'd', [[0, 'Z', 'string'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['23', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}, '4': {'goalName': 'd_prov1', 'goalAttData': [[0, 'X', 'string'], [1, 'Y', 'string'], [2, 'Z', 'int'], [3, 'NRESERVED', 'int']], 'subgoalAttData': [['18', 'a', [[0, 'X', 'string'], [1, 'Z', 'int'], [2, 'NRESERVED', 'int']]], ['19', 'b', [[0, 'Z', 'int'], [1, 'Y', 'string'], [2, 'NRESERVED', 'int']]], ['20', 'clock', [[0, 'X', 'string'], [1, 'X', 'string'], [2, 'NRESERVED', 'int'], [3, '_', 'int']]]]}}
 
     self.assertEqual( actual_ruleData, expected_ruleData )
 
@@ -775,9 +775,10 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify input file path
     inputfile = "./testFiles/example10.ded"
+    argDict = self.getArgDict( inputfile )
 
     # run translator
-    actual_parsedLines = dedalusParser.parseDedalus( inputfile )
+    actual_parsedLines = dedalusParser.parseDedalus( inputfile, argDict[ "settings" ] )
 
     # expected parsed lines
     expected_parsedLines = [['rule', {'relationName': 'role_x', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'role_change', 'subgoalAttList': ['N', 'R'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'rank', 'subgoalAttList': ['N', 'R', 'I'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'max<I>'], 'goalTimeArg': ''}], ['rule', {'relationName': 'new_term', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'stall', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', 'T+1'], 'goalTimeArg': ''}], ['rule', {'relationName': 'lclock_register', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'new_term', 'subgoalAttList': ['N', 'T'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['N', '"Localtime"', 'T'], 'goalTimeArg': ''}]]
@@ -796,9 +797,10 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify input file path
     inputfile = "./testFiles/examples_ft/delivery/deliv_assert.ded"
+    argDict   = self.getArgDict( inputfile )
 
     # run translator
-    actual_parsedLines = dedalusParser.parseDedalus( inputfile )
+    actual_parsedLines = dedalusParser.parseDedalus( inputfile, argDict[ "settings" ] )
 
     # expected parsed lines
     expected_parsedLines = [['rule', {'relationName': 'missing_log', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': '', 'subgoalName': 'node', 'subgoalAttList': ['X', 'A'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'log', 'subgoalAttList': ['A', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['A', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'pre', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'bcast', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': '1'}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}], ['rule', {'relationName': 'post', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'log', 'subgoalAttList': ['X', 'Pl'], 'subgoalTimeArg': ''}, {'polarity': 'notin', 'subgoalName': 'missing_log', 'subgoalAttList': ['_', 'Pl'], 'subgoalTimeArg': ''}], 'eqnDict': {}, 'goalAttList': ['X', 'Pl'], 'goalTimeArg': ''}]]
@@ -818,8 +820,9 @@ class Test_dedt( unittest.TestCase ) :
     # specify input file path
 
     inputfile = "./testFiles/example8_0.ded"
+    argDict   = self.getArgDict( inputfile )
 
-    actualParsedLines   = dedalusParser.parseDedalus( inputfile )
+    actualParsedLines   = dedalusParser.parseDedalus( inputfile, argDict[ "settings" ] )
     expectedParsedLines = [['fact', {'dataList': ['"a"', '"b"'], 'relationName': 'node', 'factTimeArg': '1'}]]
     self.assertEqual( actualParsedLines, expectedParsedLines )
 
@@ -831,7 +834,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -850,7 +853,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -869,7 +872,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -888,7 +891,7 @@ class Test_dedt( unittest.TestCase ) :
     
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
   
     # something broke. save output as a single string
     except :
@@ -907,7 +910,7 @@ class Test_dedt( unittest.TestCase ) :
    
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -926,7 +929,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -945,7 +948,7 @@ class Test_dedt( unittest.TestCase ) :
     
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -963,7 +966,7 @@ class Test_dedt( unittest.TestCase ) :
     dedLine = "node(1,'b')@1;"
    
     # run program
-    actualParsedLines = dedalusParser.parse( dedLine )
+    actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # grab expected error
     expectedParsedLines = ['fact', {'dataList': ['1', "'b'"], 'relationName': 'node', 'factTimeArg': '1'}]
@@ -978,7 +981,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -997,7 +1000,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -1016,7 +1019,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -1035,7 +1038,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program
     try :
-      actualParsedLines = dedalusParser.parse( dedLine )
+      actualParsedLines = dedalusParser.parse( dedLine, argDict[ "settings" ] )
 
     # something broke. save output as a single string
     except :
@@ -1053,7 +1056,7 @@ class Test_dedt( unittest.TestCase ) :
     dedLine = "a(X,Y)@async:-X>Y,b(X,Y)@2,X==Y, notin c(X,Y)@1,X>=Y;"
     
     # run program
-    actualParse = dedalusParser.parse( dedLine )
+    actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
   
     # grab expected parse
     expectedParse = ['rule', {'relationName': 'a', 'subgoalListOfDicts': [{'polarity': '', 'subgoalName': 'b', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '2'}, {'polarity': 'notin', 'subgoalName': 'c', 'subgoalAttList': ['X', 'Y'], 'subgoalTimeArg': '1'}], 'eqnDict': {'X>Y': ['X', 'Y'], 'X>=Y': ['X', 'Y'], 'X==Y': ['X', 'Y']}, 'goalAttList': ['X', 'Y'], 'goalTimeArg': 'async'}]
@@ -1068,7 +1071,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1085,7 +1088,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1102,7 +1105,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1119,7 +1122,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1136,7 +1139,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1153,7 +1156,7 @@ class Test_dedt( unittest.TestCase ) :
     
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1170,7 +1173,7 @@ class Test_dedt( unittest.TestCase ) :
     
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1186,7 +1189,7 @@ class Test_dedt( unittest.TestCase ) :
    
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
@@ -1203,12 +1206,12 @@ class Test_dedt( unittest.TestCase ) :
    
     # run program and catch error
     try :
-      actualParse = dedalusParser.parse( dedLine )
+      actualParse = dedalusParser.parse( dedLine, argDict[ "settings" ] )
     except :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line '" + dedLine + "'\n    all subgoals in next and async rules must have identical first attributes.\n"
+    expected_error = '  SANITY CHECK SYNTAX RULE : ERROR : invalid syntax in line \n\'a(Xasdf,Yasdf)@next:-Xasdf>Yasdf,b(Xasdf,Blah)@2,Xadsf=="thing", notin Cat(Yasdf)@1,Xasdf>=Yasd;\'\n    all subgoals in next and async rules must have identical first attributes.\n'
 
     self.assertEqual( actual_results, expected_error )
 
@@ -1287,7 +1290,7 @@ class Test_dedt( unittest.TestCase ) :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected parse
-    expected_error = "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR : invalid syntax in line 'f(X):-e(X)@1;'\n    line contains no negative subgoal NOT annotated with a numeric time argument."
+    expected_error = "  SANITY CHECK SYNTAX RULE POST CHECKS : ERROR :  invalid syntax in line \n'f(X):-e(X)@1;'\n    line at least one positive subgoal must not be annotated with a numeric time argument."
 
     self.assertEqual( actual_results, expected_error )
 
@@ -1330,7 +1333,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -1383,7 +1386,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -1436,7 +1439,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     if self.PRINT_STOP :
       print actual_results
@@ -1491,7 +1494,7 @@ class Test_dedt( unittest.TestCase ) :
       programData = dedt.translateDedalus( argDict, cursor )
 
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0] )
+      actual_results = self.getActualResults( programData )
 
     # something broke. save output as a single string
     except :
@@ -1543,7 +1546,7 @@ class Test_dedt( unittest.TestCase ) :
       programData = dedt.translateDedalus( argDict, cursor )
 
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0] )
+      actual_results = self.getActualResults( programData )
 
     # something broke. save output as a single string
     except :
@@ -1594,7 +1597,7 @@ class Test_dedt( unittest.TestCase ) :
     try :
       programData = dedt.translateDedalus( argDict, cursor )
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0] )
+      actual_results = self.getActualResults( programData )
 
     # something broke. save output as a single string
     except :
@@ -1644,7 +1647,7 @@ class Test_dedt( unittest.TestCase ) :
     try :
       programData = dedt.translateDedalus( argDict, cursor )
       # portray actual output program lines as a single string
-      actual_results = self.getActualResults( programData[0] )
+      actual_results = self.getActualResults( programData )
 
     # something broke. save output as a single string
     except :
@@ -1694,7 +1697,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example1.olg"
@@ -1743,7 +1746,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example_empty.olg"
@@ -1793,7 +1796,7 @@ class Test_dedt( unittest.TestCase ) :
     programData = dedt.translateDedalus( argDict, cursor )
 
     # portray actual output program lines as a single string
-    actual_results = self.getActualResults( programData[0] )
+    actual_results = self.getActualResults( programData )
 
     # grab expected output results as a string
     expected_results_path = "./testFiles/example_empty_with_comments.olg"
@@ -1821,8 +1824,8 @@ class Test_dedt( unittest.TestCase ) :
   ########################
   #  GET ACTUAL RESULTS  #
   ########################
-  def getActualResults( self, programLines ) :
-    program_string  = "\n".join( programLines )
+  def getActualResults( self, programData ) :
+    program_string  = "\n".join( programData[0][0] )
     program_string += "\n" # add extra newline to align with read() parsing
     return program_string
 

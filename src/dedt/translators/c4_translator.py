@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-c4.py
+c4_translator.py
    Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
@@ -221,7 +221,6 @@ def c4datalog( argDict, cursor ) :
   for fid in fidList :
     newFact = dumpers_c4.dumpSingleFact_c4( fid, cursor )
     factList.append( newFact )
-
 
   # ----------------------------------------------------------- #
   # add clock facts

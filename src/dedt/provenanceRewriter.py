@@ -6,7 +6,7 @@ provenanceRewriter.py
    to the datalog program.
 '''
 
-import copy, inspect, logging, os, sys
+import ConfigParser, copy, inspect, logging, os, sys
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -114,7 +114,7 @@ def aggProv( aggRule, provid, cursor ) :
     bindings_goalAttList.append( bindings_goalAttList_last )
 
   # save to rule data
-  bindings_goalAttList = sortGoalAttList( bindings_goalAttList )
+  bindings_goalAttList                   = sortGoalAttList( bindings_goalAttList )
   bindingsmeta_ruleData[ "goalAttList" ] = bindings_goalAttList
 
   # ------------------------------------------------------ #
@@ -122,6 +122,7 @@ def aggProv( aggRule, provid, cursor ) :
   # as a Rule
 
   bindings_rule = Rule.Rule( bindings_rid, bindingsmeta_ruleData, cursor )
+  bindings_rule.rule_type = aggRule.rule_type
 
   # ------------------------------------------------------ #
   #              BUILD THE AGG PROVENANCE RULE             #
@@ -192,6 +193,7 @@ def aggProv( aggRule, provid, cursor ) :
   # as a Rule
 
   aggprovmeta_rule = Rule.Rule( aggprovmeta_rid, aggprovmeta_ruleData, cursor )
+  aggprovmeta_rule.rule_type = aggRule.rule_type
 
   # ------------------------------------------------------ #
   #               REWRITE ORIGINAL AGG RULE                #
@@ -254,9 +256,11 @@ def getAllGoalAtts_noAggs( attList ) :
 #              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
 #                          ... , 
 #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
-def regProv( regRule, nameAppend, cursor ) :
+def regProv( regRule, nameAppend, cursor, argDict ) :
 
   logging.debug( "  REG PROV : running regProv..." )
+  logging.debug( "  REG PROV : regRule              = " + str( regRule ) )
+  logging.debug( "  REG PROV : regRule.relationName = " + regRule.relationName )
 
   # ------------------------------------------------------ #
   # generate a random ID for the new provenance rule
@@ -290,25 +294,39 @@ def regProv( regRule, nameAppend, cursor ) :
 #  provGoalAttList_last = provGoalAttList[-1]
 #  provGoalAttList      = provGoalAttList[:-1]
 
+  # ------------------------------------------------------------------ #
   # grab all subgoal atts
+
   subgoalListOfDicts = new_provmeta_ruleData[ "subgoalListOfDicts" ]
   for subgoal in subgoalListOfDicts :
     subgoalAttList = subgoal[ "subgoalAttList" ]
     for att in subgoalAttList :
 
+      logging.debug( "  REG PROV : att in subgoalAttList = " + att )
+
       # don't duplicate atts in the prov head
       if not att in provGoalAttList :
+
+        logging.debug( "  REG PROV : att not in " + str( provGoalAttList ) )
 
         # do not add wildcards and fixed integer inputs
         if not att == "_" and not att.isdigit() :
 
+          logging.debug( "  REG PROV : att not '_' and not isdigit" )
+
           # do not add fixed string inputs
+          # do not add unused variables (huh? why? messes up not_rule arities)
+          #if not isFixedString( att ) and not isUnused( subgoalListOfDicts, new_provmeta_ruleData[ "eqnDict" ], att ) :
           if not isFixedString( att ) :
             provGoalAttList.append( att )
 
+  # ------------------------------------------------------------------ #
   # add the time argument last
+
 #  if not provGoalAttList_last in provGoalAttList :
 #    provGoalAttList.append( provGoalAttList_last )
+
+  # ------------------------------------------------------------------ #
 
   logging.debug( "  REG PROV : new_provmeta_ruleData['relationName'] = " + new_provmeta_ruleData[ "relationName" ]  )
   logging.debug( "  REG PROV : provGoalAttList                       = " + str( provGoalAttList ) )
@@ -327,30 +345,67 @@ def regProv( regRule, nameAppend, cursor ) :
 
   provRule               = Rule.Rule( rid, new_provmeta_ruleData, cursor )
   provRule.orig_rule_ptr = regRule
+  provRule.rule_type     = regRule.rule_type
 
+  logging.debug( "  REG PROV : regRule                  = " + str( regRule ) )
+  logging.debug( "  REG PROV : regRule.orig_goalAttList = " + str( regRule.orig_goalAttList ) )
+  logging.debug( "  REG PROV : provRule.orig_rule_ptr   = " + str( provRule.orig_rule_ptr ) )
+  logging.debug( "  REG PROV : provRule.orig_rule_ptr.orig_goalAttList = " + str( provRule.orig_rule_ptr.orig_goalAttList ) )
   logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
   logging.debug( "  REG PROV : provRule.relationName       = " + provRule.relationName )
   logging.debug( "  REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
   logging.debug( "  REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
   logging.debug( "  REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
   logging.debug( "  REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
+  logging.debug( "  REG PROV : provRule.orig_rule_ptr      = " + str( provRule.orig_rule_ptr ) )
+  logging.debug( "  REG PROV : provRule.orig_rule_ptr.goalAttList = " + str( provRule.orig_rule_ptr.goalAttList ) )
+
+  #if provRule.relationName == "not_missing_log_prov8" :
+  #  sys.exit( "blah" )
 
   # ------------------------------------------------------ #
   # replace original time goal atts
 
-  provRule = replaceTimeAtts( provRule )
-
-  logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
-  logging.debug( "  REG PROV : provRule.relationName       = " + provRule.relationName )
-  logging.debug( "  REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
-  logging.debug( "  REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
-  logging.debug( "  REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
-  logging.debug( "  REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
-
-#  if provRule.relationName == "a_agg2_prov1" :
-#    sys.exit( "blah" )
+#  if tools.getConfig( argDict[ "settings" ], "DEFAULT", "DM", bool ) :
+#    provRule = replaceTimeAtts( provRule )
+#
+#  logging.debug( "  REG PROV : returning prov rule id " + str( rid ) + " provRule.ruleData = " + str( provRule.ruleData ) )
+#  logging.debug( "  REG PROV : provRule.relationName       = " + provRule.relationName )
+#  logging.debug( "  REG PROV : provRule.goalAttList        = " + str( provRule.goalAttList ) )
+#  logging.debug( "  REG PROV : provRule.goalTimeArg        = " + provRule.goalTimeArg )
+#  logging.debug( "  REG PROV : provRule.subgoalListOfDicts = " + str( provRule.subgoalListOfDicts ) )
+#  logging.debug( "  REG PROV : provRule.eqnDict            = " + str( provRule.eqnDict ) )
 
   return provRule
+
+
+###############
+#  IS UNUSED  #
+###############
+# check if the input subgoal attribute is unused.
+def isUnused( subgoalListOfDicts, eqn_dict, satt ) :
+
+  # get list of all subgoal attributes
+  all_satts = []
+  for sub in subgoalListOfDicts :
+    all_satts.extend( sub[ "subgoalAttList" ] )
+
+  for eq in eqn_dict :
+    for var in eqn_dict[ eq ] :
+      if not isFixedString( var ) :
+        all_satts.extend( eqn_dict[ eq ] )
+
+  # time refs are always copied to the goal att list
+  if satt == "NRSERVED" or \
+     satt == "MRESERVED" :
+    return False
+
+  if all_satts.count( satt ) > 1 :
+    logging.debug( " IS UNUSED : returning False" )
+    return False
+  else :
+    logging.debug( " IS UNUSED : returning True" )
+    return True
 
 
 #######################
@@ -364,16 +419,19 @@ def regProv( regRule, nameAppend, cursor ) :
 # also, replace all unused variables with wildcards.
 def replaceTimeAtts( rule ) :
 
+  logging.debug( "  REPLACE TIME ATTS : running process..." )
+
   logging.debug( "  REPLACE TIME ATTS : ======================================" )
   logging.debug( "  REPLACE TIME ATTS : running process..." )
   logging.debug( "  REPLACE TIME ATTS : rule.relationName  = " + str( rule.relationName ) )
   logging.debug( "  REPLACE TIME ATTS : rule.ruleData      = " + str( rule.ruleData ) )
   logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr = " + str( rule.orig_rule_ptr ) )
+  logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr.orig_goal_time_type = " + str( rule.orig_rule_ptr.orig_goal_time_type ) )
   logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr.orig_rule_attMapper  = " + str( rule.orig_rule_ptr.orig_rule_attMapper ) )
   logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr.orig_rule_attMapper_aggRewrites  = " + str( rule.orig_rule_ptr.orig_rule_attMapper_aggRewrites ) )
   logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr.orig_goal_time_type  = " + str( rule.orig_rule_ptr.orig_goal_time_type ) )
   logging.debug( "  REPLACE TIME ATTS : rule.goalAttList = " + str( rule.goalAttList ) )
-  logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr.goalAttList = " + str( rule.orig_rule_ptr.goalAttList ) )
+  logging.debug( "  REPLACE TIME ATTS : rule.orig_rule_ptr._orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
 
   goalAttList = copy.deepcopy( rule.goalAttList )
 
@@ -429,55 +487,56 @@ def replaceTimeAtts( rule ) :
   # (this probably breaks in async model)
   # not_ rules only!
 
-  if rule.relationName.startswith( "not_" ) :
-
-    logging.debug( "  REPLACE TIME ATTS : time att replacement in not_ rule..." )
-
-    orig_rightmost = rule.orig_rule_ptr.goalAttList[ -1 ]
-    orig_rightmost = orig_rightmost.split( "+" )[ 0 ] # next time args always use '+'
-  
-    new_goalAttList = []
-    for gatt in rule.goalAttList :
-      if gatt == orig_rightmost :
-        new_goalAttList.append( "MRESERVED" )
-      elif gatt == orig_rightmost + "+1" :
-        new_goalAttList.append( "MRESERVED" )
-      else :
-        new_goalAttList.append( gatt )
-  
-    new_goalAttList = sortGoalAttList( new_goalAttList )
-  
-    rule.ruleData[ "goalAttList" ] = new_goalAttList
-    rule.goalAttList               = new_goalAttList
-    rule.saveToGoalAtt()
-  
-    subgoalListOfDicts     = copy.deepcopy( rule.subgoalListOfDicts )
-    new_subgoalListOfDicts = []
-    for subgoal in subgoalListOfDicts :
-      new_subgoalDict = {}
-      new_subgoalDict[ "subgoalName" ]    = subgoal[ "subgoalName" ]
-      new_subgoalDict[ "polarity" ]       = subgoal[ "polarity" ]
-      new_subgoalDict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
-      new_subgoalDict[ "subgoalAttList" ] = []
-  
-      orig_subgoalAttList = subgoal[ "subgoalAttList" ]
-      for satt in orig_subgoalAttList :
-        if satt == orig_rightmost :
-          new_subgoalDict[ "subgoalAttList" ].append( "MRESERVED" )
-        else :
-          new_subgoalDict[ "subgoalAttList" ].append( satt )
-  
-      new_subgoalListOfDicts.append( copy.deepcopy( new_subgoalDict ) )
-
-    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
-    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
-    rule.saveSubgoals()
-
-#  if rule.relationName == "not_a_prov4" :
+#  if rule.relationName.startswith( "not_" ) :
+#
+#    logging.debug( "  REPLACE TIME ATTS : time att replacement in not_ rule..." )
+#
+#    orig_rightmost = rule.orig_rule_ptr.goalAttList[ -1 ]
+#    orig_rightmost = orig_rightmost.split( "+" )[ 0 ] # next time args always use '+'
+#  
+#    new_goalAttList = []
+#    for gatt in rule.goalAttList :
+##      if gatt == orig_rightmost :
+##        new_goalAttList.append( "MRESERVED" )
+##      elif gatt == orig_rightmost + "+1" :
+#      if gatt == orig_rightmost + "+1" :
+#        new_goalAttList.append( "MRESERVED" )
+#      else :
+#        new_goalAttList.append( gatt )
+#  
+#    new_goalAttList = sortGoalAttList( new_goalAttList )
+#  
+#    rule.ruleData[ "goalAttList" ] = new_goalAttList
+#    rule.goalAttList               = new_goalAttList
+#    rule.saveToGoalAtt()
+#  
+#    subgoalListOfDicts     = copy.deepcopy( rule.subgoalListOfDicts )
+#    new_subgoalListOfDicts = []
+#    for subgoal in subgoalListOfDicts :
+#      new_subgoalDict = {}
+#      new_subgoalDict[ "subgoalName" ]    = subgoal[ "subgoalName" ]
+#      new_subgoalDict[ "polarity" ]       = subgoal[ "polarity" ]
+#      new_subgoalDict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
+#      new_subgoalDict[ "subgoalAttList" ] = []
+#  
+#      orig_subgoalAttList = subgoal[ "subgoalAttList" ]
+#      for satt in orig_subgoalAttList :
+#        if satt == orig_rightmost :
+#          new_subgoalDict[ "subgoalAttList" ].append( "MRESERVED" )
+#        else :
+#          new_subgoalDict[ "subgoalAttList" ].append( satt )
+#  
+#      new_subgoalListOfDicts.append( copy.deepcopy( new_subgoalDict ) )
+#
+#    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+#    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+#    rule.saveSubgoals()
+#
+#  logging.debug( "  REPLACE TIME ATTS : ...time att replacement in not_ rule done." )
+#
+#  if rule.relationName == "not_a_timer_agg1_prov43" :
 #    logging.debug( rule.ruleData )
-#    sys.exit( "blah" ) 
-
-    logging.debug( "  REPLACE TIME ATTS : ...time att replacement in not_ rule done." )
+#    sys.exit( "blah_replaceTimeAtt" )
 
   # ----------------------------------------- #
   # replace all uniform attributes 
@@ -563,9 +622,13 @@ def replaceTimeAtts( rule ) :
 
     logging.debug( "  REPLACE TIME ATTS : hit deductive rule ..." )
 
-    orig_rightmost = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
-    new_rightmost  = rule.orig_rule_ptr.goalAttList[ -1 ]
-    #new_rightmost  = rule.goalAttList[ -1 ]
+    if rule.relationName.startswith( "not_" ) :
+      orig_rightmost = "MRESERVED"
+    else :
+      orig_rightmost = rule.orig_rule_ptr.orig_goalAttList[ -1 ]
+
+    new_rightmost = rule.orig_rule_ptr.goalAttList[ -1 ]
+    new_rightmost = new_rightmost.split( "+" )[0]
 
     logging.debug( " rule.relationName                   = " + rule.relationName )
     logging.debug( " rule.orig_rule_ptr.orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
@@ -576,8 +639,11 @@ def replaceTimeAtts( rule ) :
     # replace the time reference in the goal
     new_goalAttList = []
     for gatt in rule.goalAttList :
-      if gatt.startswith( new_rightmost ) :
+      logging.debug( "> gatt = " + gatt )
+      if gatt == new_rightmost :
         new_goalAttList.append( orig_rightmost )
+      elif gatt == new_rightmost + "+1" :
+        new_goalAttList.append( orig_rightmost + "+1" )
       else :
         new_goalAttList.append( gatt )
 
@@ -586,6 +652,12 @@ def replaceTimeAtts( rule ) :
     rule.ruleData[ "goalAttList" ] = new_goalAttList
     rule.goalAttList               = new_goalAttList
     rule.saveToGoalAtt()
+
+    logging.debug( " rule.relationName                   = " + rule.relationName )
+    logging.debug( " rule.orig_rule_ptr.orig_goalAttList = " + str( rule.orig_rule_ptr.orig_goalAttList ) )
+    logging.debug( " rule.goalAttList                    = " + str( rule.goalAttList ) )
+    logging.debug( " orig_rightmost                      = " + str( orig_rightmost ) )
+    logging.debug( " new_rightmost                       = " + str( new_rightmost ) )
 
     # replace the time reference in the subgoals
     new_subgoalListOfDicts = []
@@ -599,8 +671,13 @@ def replaceTimeAtts( rule ) :
       # replace all instances of new_rightmost with orig_rightmost
       orig_subgoalAttList = subgoal[ "subgoalAttList" ]
       for satt in orig_subgoalAttList :
-        if satt.startswith( new_rightmost ) :
-          new_subgoalDict[ "subgoalAttList" ].append( orig_rightmost )
+        if satt == new_rightmost :
+          if orig_rightmost == "NRESERVED+1" :
+            new_subgoalDict[ "subgoalAttList" ].append( "NRESERVED" )
+          elif orig_rightmost == "NRESERVED" :
+            new_subgoalDict[ "subgoalAttList" ].append( "NRESERVED" )
+          elif orig_rightmost == "MRESERVED" :
+            new_subgoalDict[ "subgoalAttList" ].append( "MRESERVED" )
         else :
           new_subgoalDict[ "subgoalAttList" ].append( satt )
 
@@ -673,10 +750,6 @@ def replaceTimeAtts( rule ) :
       rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
       rule.saveSubgoals()
 
-#  if rule.relationName == "a_agg2_prov1" :
-#    logging.debug( rule.ruleData )
-#    sys.exit( "blah" )
-
   logging.debug( "  REPLACE TIME ATTS : ...done." )
   return rule
 
@@ -698,6 +771,7 @@ def sortGoalAttList( provGoalAttList ) :
   flag_nreserved     = False
   flag_nreserved_agg = False
   flag_mreserved     = False
+  flag_mreserved_agg = False
   for gatt in provGoalAttList :
     if gatt == "NRESERVED+1" :
       flag_nreserved_agg = True
@@ -705,12 +779,15 @@ def sortGoalAttList( provGoalAttList ) :
       flag_nreserved = True
     elif gatt == "MRESERVED" :
       flag_mreserved = True
+    elif gatt == "MRESERVED+1" :
+      flag_mreserved_agg = True
     else :
       tmp.append( gatt )
 
   logging.debug( "flag_nreserved     = " + str( flag_nreserved ) )
   logging.debug( "flag_nreserved_agg = " + str( flag_nreserved_agg ) )
   logging.debug( "flag_mreserved     = " + str( flag_mreserved ) )
+  logging.debug( "flag_mreserved_agg = " + str( flag_mreserved_agg ) )
 
   if flag_nreserved :
     tmp.append( "NRESERVED" )
@@ -718,6 +795,8 @@ def sortGoalAttList( provGoalAttList ) :
     tmp.append( "NRESERVED+1" )
   if flag_mreserved :
     tmp.append( "MRESERVED" )
+  if flag_mreserved_agg :
+    tmp.append( "MRESERVED+1" )
 
   logging.debug( "  SORT GOAL ATT LIST : returning " + str( tmp ) ) 
 
@@ -727,7 +806,7 @@ def sortGoalAttList( provGoalAttList ) :
 ########################
 #  REWRITE PROVENANCE  #
 ########################
-def rewriteProvenance( ruleMeta, cursor ) :
+def rewriteProvenance( ruleMeta, cursor, argDict ) :
 
   logging.debug( " REWRITE PROVENANCE : running process..." ) 
   logging.debug( " REWRITE PROVENANCE : len( ruleMeta ) = " + str( len( ruleMeta ) ) ) 
@@ -777,7 +856,7 @@ def rewriteProvenance( ruleMeta, cursor ) :
     #        in the head
 
     else :
-      provRule = regProv( rule, "_prov" + str( provid ), cursor )
+      provRule = regProv( rule, "_prov" + str( provid ), cursor, argDict )
       prov_ruleMeta.append( provRule )
 
     # -------------------------------------------------- #
