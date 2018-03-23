@@ -40,9 +40,15 @@ timeAtt = "SndTime"
 #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
 #
 
-def aggProv( aggRule, provid, cursor ) :
+def aggProv( aggRule, provid, cursor, argDict ) :
 
   logging.debug( "  AGG PROV : running aggProv..." )
+
+  try :
+    USING_MOLLY = tools.getConfig( argDict[ "settings" ], "DEFAULT", "USING_MOLLY", bool )
+  except ConfigParser.NoOptionError :
+    logging.warning( "WARNING : no 'USING_MOLLY' defined in 'DEFAULT' section of settings.ini ...assume running without molly." )
+    USING_MOLLY = False
 
   orig_aggRule_goalAttList = aggRule.ruleData[ "goalAttList" ]
 
@@ -114,7 +120,8 @@ def aggProv( aggRule, provid, cursor ) :
     bindings_goalAttList.append( bindings_goalAttList_last )
 
   # save to rule data
-  bindings_goalAttList                   = sortGoalAttList( bindings_goalAttList )
+  if USING_MOLLY :
+    bindings_goalAttList                   = sortGoalAttList( bindings_goalAttList )
   bindingsmeta_ruleData[ "goalAttList" ] = bindings_goalAttList
 
   # ------------------------------------------------------ #
@@ -147,7 +154,8 @@ def aggProv( aggRule, provid, cursor ) :
   # ------------------------------------------------------ #
   # the goal att list consists of all subgoal atts
 
-  orig_aggRule_goalAttList = sortGoalAttList( orig_aggRule_goalAttList )
+  if USING_MOLLY :
+    orig_aggRule_goalAttList = sortGoalAttList( orig_aggRule_goalAttList )
 
   aggprovmeta_ruleData[ "goalAttList" ] = orig_aggRule_goalAttList
 
@@ -258,6 +266,12 @@ def getAllGoalAtts_noAggs( attList ) :
 #                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
 def regProv( regRule, nameAppend, cursor, argDict ) :
 
+  try :
+    USING_MOLLY = tools.getConfig( argDict[ "settings" ], "DEFAULT", "USING_MOLLY", bool )
+  except ConfigParser.NoOptionError :
+    logging.warning( "WARNING : no 'USING_MOLLY' defined in 'DEFAULT' section of settings.ini ...assume running without molly." )
+    USING_MOLLY = False
+
   logging.debug( "  REG PROV : running regProv..." )
   logging.debug( "  REG PROV : regRule              = " + str( regRule ) )
   logging.debug( "  REG PROV : regRule.relationName = " + regRule.relationName )
@@ -332,7 +346,8 @@ def regProv( regRule, nameAppend, cursor, argDict ) :
   logging.debug( "  REG PROV : provGoalAttList                       = " + str( provGoalAttList ) )
 
   # sort goal atts to ensure NRESERVED, NRESERVED+1, and MRESERVED are rightmost
-  provGoalAttList = sortGoalAttList( provGoalAttList )
+  if USING_MOLLY :
+    provGoalAttList = sortGoalAttList( provGoalAttList )
 
   logging.debug( "  REG PROV : provGoalAttList (after sorting)       = " + str( provGoalAttList ) )
 
@@ -585,7 +600,8 @@ def replaceTimeAtts( rule ) :
       for i in range( 0, len( rule.goalAttList ) ) :
         gattMapper[ rule.goalAttList[ i ] ] = new_goalAttList[ i ]
 
-      new_goalAttList = sortGoalAttList( new_goalAttList )
+      if USING_MOLLY :
+        new_goalAttList = sortGoalAttList( new_goalAttList )
   
       rule.ruleData[ "goalAttList" ] = new_goalAttList
       rule.goalAttList               = new_goalAttList
@@ -647,7 +663,8 @@ def replaceTimeAtts( rule ) :
       else :
         new_goalAttList.append( gatt )
 
-    new_goalAttList = sortGoalAttList( new_goalAttList )
+    if USING_MOLLY :
+      new_goalAttList = sortGoalAttList( new_goalAttList )
 
     rule.ruleData[ "goalAttList" ] = new_goalAttList
     rule.goalAttList               = new_goalAttList
@@ -712,8 +729,9 @@ def replaceTimeAtts( rule ) :
           new_goalAttList.append( "NRESERVED+1" )
         else :
           new_goalAttList.append( gatt )
-  
-      new_goalAttList = sortGoalAttList( new_goalAttList )
+ 
+      if USING_MOLLY : 
+        new_goalAttList = sortGoalAttList( new_goalAttList )
   
       rule.ruleData[ "goalAttList" ] = new_goalAttList
       rule.goalAttList               = new_goalAttList
@@ -848,7 +866,7 @@ def rewriteProvenance( ruleMeta, cursor, argDict ) :
     # CASE : rule contains aggregate calls in the head
 
     if containsAggInHead( rule ) :
-      provRules = aggProv( rule, provid, cursor )
+      provRules = aggProv( rule, provid, cursor, argDict )
       prov_ruleMeta.extend( provRules )
 
     # -------------------------------------------------- #
