@@ -365,7 +365,7 @@ def runTranslator( cursor, dedFile, argDict, evaluator ) :
   try :
     if argDict[ "data_save_path" ] :
       logging.debug( "  RUN TRANSLATOR : using data_save_path '" + argDict[ "data_save_path" ] + "'" )
-      fo = open( argDict[ "data_save_path" ] + "final_initial_program.olg", "w" )
+      fo = open( os.path.abspath( argDict[ "data_save_path" ] ) + "final_initial_program.olg", "w" )
       program = allProgramLines[0]
       for line in program :
         fo.write( line + "\n" )
