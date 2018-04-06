@@ -42,6 +42,58 @@ class Test_molly_ldfi( unittest.TestCase ) :
   TABLE_PATH = os.getcwd() + "/tmp_data/iapyx_tables.data" # filename hard-coded in molly
   TYPE_PATH  = os.getcwd() + "/tmp_data/iapyx_types.data"  # filename hard-coded in molly
 
+  ####################
+  #  SMALLER DEMO 2  #
+  ####################
+  #@unittest.skip( "working on different example." )
+  def test_smaller_demo_2( self ) :
+
+    test_id    = "smaller_demo_2"
+    input_file = "smaller_demo_2.ded"
+
+    logging.debug( "  TEST MOLLY LDFI : running " + test_id )
+
+    program_path  = os.getcwd() + "/tmp_data/iapyx_program.olg"
+    metrics_path  = "./metrics_data/metrics.data"
+    tmp_path      = "./tmp_data/"
+
+    # define parameters
+    driver_path   = "./testFiles/" + input_file
+    crashes       = "0"
+    node_list     = [ "noaa", "myapp", "sunny" ]
+    eot           = "3"
+    eff           = "2"
+    evaluator     = "c4"
+    settings_path = "./settings_files/settings_smaller_demo_dm.ini"
+
+    argDict = {  "file"           : driver_path, \
+                 "crashes"        : crashes, \
+                 "nodes"          : node_list, \
+                 "EOT"            : eot, \
+                 "EFF"            : eff, \
+                 "evaluator"      : evaluator, \
+                 "settings"       : settings_path, \
+                 "data_save_path" : "./data" }
+
+    self.experiment_workflow( program_path, \
+                              metrics_path, \
+                              tmp_path, \
+                              driver_path, \
+                              argDict )
+
+    if not self.SKIP_ASSERTS :
+
+      # insert asserts here:
+      actual_json_results_path   = self.MOLLY_PATH + "output/runs.json"
+      expected_json_results_path = os.getcwd() + "/testFiles/runs_" + test_id + ".json"
+
+      actual_num_iterations, actual_conclusion     = self.get_molly_results( actual_json_results_path )
+      expected_num_iterations, expected_conclusion = self.get_molly_results( expected_json_results_path )
+
+      self.assertEqual( actual_num_iterations, expected_num_iterations )
+      self.assertEqual( actual_conclusion, expected_conclusion )
+
+    logging.debug( "  TEST MOLLY LDFI : " + test_id + " ...done." )
 
   ###################
   #  TCP HANDSHAKE  #
@@ -574,7 +626,7 @@ class Test_molly_ldfi( unittest.TestCase ) :
   def test_paper_demo_v3_dm( self ) :
 
     test_id    = "paper_demo_v3_dm"
-    input_file = "paper_demo_v3.ded"
+    input_file = "paper_demo_v3_fix_wilds.ded"
 
     logging.debug( "  TEST MOLLY LDFI : running " + test_id )
 
@@ -585,19 +637,21 @@ class Test_molly_ldfi( unittest.TestCase ) :
     # define parameters
     driver_path   = "./testFiles/" + input_file
     crashes       = "0"
-    node_list     = [ "a", "c", "jobscheduler" ]
+    #node_list     = [ "a", "c", "job1", "jobscheduler" ] # failure-free case
+    node_list     = [ "a", "job1", "jobscheduler" ]  # fail case Set(MessageLoss(a,jobscheduler,1))
     eot           = "5"
     eff           = "4"
     evaluator     = "c4"
     settings_path = "./settings_files/settings_dm.ini"
 
-    argDict = {  "file"      : driver_path, \
-                 "crashes"   : crashes, \
-                 "nodes"     : node_list, \
-                 "EOT"       : eot, \
-                 "EFF"       : eff, \
-                 "evaluator" : evaluator, \
-                 "settings"  : settings_path }
+    argDict = {  "file"           : driver_path, \
+                 "crashes"        : crashes, \
+                 "nodes"          : node_list, \
+                 "EOT"            : eot, \
+                 "EFF"            : eff, \
+                 "evaluator"      : evaluator, \
+                 "settings"       : settings_path, \
+                 "data_save_path" : "./data" }
 
     self.experiment_workflow( program_path, \
                               metrics_path, \
@@ -638,19 +692,21 @@ class Test_molly_ldfi( unittest.TestCase ) :
     # define parameters
     driver_path   = "./testFiles/" + input_file
     crashes       = "0"
-    node_list     = [ "a", "c", "jobscheduler" ]
+    #node_list     = [ "a", "c", "job1", "jobscheduler" ] # failure-free case
+    node_list     = [ "a", "job1", "jobscheduler" ]  # fail case Set(MessageLoss(a,jobscheduler,1))
     eot           = "5"
     eff           = "4"
     evaluator     = "c4"
     settings_path = "./settings_files/settings_regular.ini"
 
-    argDict = {  "file"      : driver_path, \
-                 "crashes"   : crashes, \
-                 "nodes"     : node_list, \
-                 "EOT"       : eot, \
-                 "EFF"       : eff, \
-                 "evaluator" : evaluator, \
-                 "settings"  : settings_path }
+    argDict = {  "file"           : driver_path, \
+                 "crashes"        : crashes, \
+                 "nodes"          : node_list, \
+                 "EOT"            : eot, \
+                 "EFF"            : eff, \
+                 "evaluator"      : evaluator, \
+                 "settings"       : settings_path, \
+                 "data_save_path" : "./data" }
 
     self.experiment_workflow( program_path, \
                               metrics_path, \
@@ -1014,8 +1070,8 @@ class Test_molly_ldfi( unittest.TestCase ) :
   	--nodes ' + ",".join( argDict[ "nodes" ] ) + ' \
   	--crashes ' + str( argDict[ "crashes" ] ) + ' \
   	--ignore-prov-nodes domcomp_,dom_ \
-  	--negative-support \
   	--prov-diagrams"' )
+  	#--negative-support \
   
     # ----------------------------------- #
     # save metrics to file

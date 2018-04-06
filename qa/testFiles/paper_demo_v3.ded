@@ -10,7 +10,6 @@ pre(J )  :- job( _, J )@3 ;
 //post(X) :- pre(X);
 
 
-
 a_job_is_done(P, J) :- send_to_primary(P, J);
 a_job_is_done(B, J) :- send_to_backup(B, J);
 a_job_is_done(N, X)@next :- a_job_is_done(N, X);
