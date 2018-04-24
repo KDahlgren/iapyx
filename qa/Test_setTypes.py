@@ -1010,6 +1010,9 @@ class Test_setTypes( unittest.TestCase ) :
   # defines iapyx program comparison workflow
   def comparison_workflow( self, argDict, expected_iapyx_settypes_path, expected_eval_path, db_name_append ) :
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, db_name_append )
+
     # --------------------------------------------------------------- #
     # testing set up.
 
@@ -1243,6 +1246,17 @@ class Test_setTypes( unittest.TestCase ) :
               pair_list.append( [ relName1, relName2 ] )
 
     return pair_list
+
+
+  ##########################
+  #  GET CUSTOM SAVE PATH  #
+  ##########################
+  def custom_save_path( self, argDict, test_id ) :
+    custom_save_path  = argDict[ 'data_save_path' ]
+    custom_save_path += test_id
+    if not os.path.exists( custom_save_path ) :
+      os.system( "mkdir " + custom_save_path )
+    return custom_save_path
 
 
   ###############

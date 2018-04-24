@@ -41,6 +41,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_fixed_data_2( self ) :
 
+    test_id = "fixed_data_2"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -62,6 +64,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -94,6 +99,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy4_agg_with_eqn( self ) :
 
+    test_id = "toy4_agg_with_eqn"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -115,6 +122,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -147,6 +157,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_use_next_clock_dm( self ) :
 
+    test_id = "toy2_use_next_clock_dm"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -168,6 +180,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_use_next_clock_dm.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -200,6 +215,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_use_next_clock( self ) :
 
+    test_id = "toy2_use_next_clock"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -221,6 +238,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_use_next_clock.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -253,6 +273,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_sync_assumption_dm( self ) :
 
+    test_id = "toy2_sync_assumption_dm"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -274,6 +296,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_sync_assumption_dm.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -306,6 +331,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_sync_assumption( self ) :
 
+    test_id = "toy2_sync_assumption"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -327,6 +354,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_sync_assumption.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -359,6 +389,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_use_aggs_dm( self ) :
 
+    test_id = "toy2_use_aggs_dm"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -380,6 +412,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_use_aggs_dm.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -412,6 +447,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_toy2_use_aggs( self ) :
 
+    test_id = "toy2_use_aggs"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -433,6 +470,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # specify settings file
     argDict[ "settings" ] = "./settings_files/settings_use_aggs.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -467,6 +507,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_example16( self ) :
 
+    test_id = "example16"
+
     # --------------------------------------------------------------- #
     # testing set up.
     testDB = "./IR.db"
@@ -485,6 +527,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1813,6 +1858,17 @@ class Test_dedt( unittest.TestCase ) :
     os.remove( testDB )
 
 
+  ##########################
+  #  GET CUSTOM SAVE PATH  #
+  ##########################
+  def custom_save_path( self, argDict, test_id ) :
+    custom_save_path  = argDict[ 'data_save_path' ]
+    custom_save_path += test_id
+    if not os.path.exists( custom_save_path ) :
+      os.system( "mkdir " + custom_save_path )
+    return custom_save_path
+
+
   ###############
   #  GET ERROR  #
   ###############
@@ -1853,6 +1909,7 @@ class Test_dedt( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
+    argDict[ 'data_save_path' ]           = "./data/"
 
     return argDict
 

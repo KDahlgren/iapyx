@@ -56,6 +56,9 @@ class Test_dm( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_files/settings_dm_concise.ini"
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
@@ -76,6 +79,9 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
@@ -98,6 +104,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
@@ -119,6 +128,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
 
@@ -139,6 +151,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
@@ -157,6 +172,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -177,6 +195,9 @@ class Test_dm( unittest.TestCase ) :
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
@@ -195,6 +216,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
     argDict[ "settings" ] = "./settings_files/settings_dm_setTypes.ini"
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -217,6 +241,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
@@ -237,6 +264,9 @@ class Test_dm( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
@@ -256,6 +286,9 @@ class Test_dm( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
@@ -2610,6 +2643,17 @@ class Test_dm( unittest.TestCase ) :
 
     IRDB.close()
     os.remove( testDB )
+
+
+  ##########################
+  #  GET CUSTOM SAVE PATH  #
+  ##########################
+  def custom_save_path( self, argDict, test_id ) :
+    custom_save_path  = argDict[ 'data_save_path' ]
+    custom_save_path += test_id
+    if not os.path.exists( custom_save_path ) :
+      os.system( "mkdir " + custom_save_path )
+    return custom_save_path
 
 
   ###############

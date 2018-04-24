@@ -780,6 +780,9 @@ class Test_vs_molly( unittest.TestCase ) :
     # get argDict
     argDict = self.getArgDict( inputfile )
 
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, db_name_append )
+
     if db_name_append == "_kafka_" :
       argDict[ "settings" ] = "./settings_files/settings_kafka.ini"
 
@@ -1336,6 +1339,17 @@ class Test_vs_molly( unittest.TestCase ) :
     return program_string
 
 
+  ##########################
+  #  GET CUSTOM SAVE PATH  #
+  ##########################
+  def custom_save_path( self, argDict, test_id ) :
+    custom_save_path  = argDict[ 'data_save_path' ]
+    custom_save_path += test_id
+    if not os.path.exists( custom_save_path ) :
+      os.system( "mkdir " + custom_save_path )
+    return custom_save_path
+
+
   ##################
   #  GET ARG DICT  #
   ##################
@@ -1359,6 +1373,7 @@ class Test_vs_molly( unittest.TestCase ) :
     argDict[ 'nodes' ]                    = [ "a", "b", "c" ]
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
+    argDict[ 'data_save_path' ]           = "./data/"
 
     return argDict
 
