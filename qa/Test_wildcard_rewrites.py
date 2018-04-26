@@ -56,6 +56,8 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ "settings" ] = os.getcwd() + "/settings_files/settings_wild.ini"
 
     # get custom save path
+    if not os.path.exists( argDict[ "data_save_path" ] ) :
+      os.system( "mkdir " + argDict[ 'data_save_path' ] )
     argDict[ 'data_save_path' ] += test_id
     if not os.path.exists( argDict[ 'data_save_path' ] ) :
       os.system( "mkdir " + argDict[ 'data_save_path' ] )

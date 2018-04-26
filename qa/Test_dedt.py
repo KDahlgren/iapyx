@@ -564,6 +564,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_example15( self ) :
 
+    test_id = "example15"
+
     # --------------------------------------------------------------- #
     # build empty IR db
 
@@ -579,6 +581,9 @@ class Test_dedt( unittest.TestCase ) :
     inputfile = "./testFiles/example15.ded"
     argDict   = self.getArgDict( inputfile )
     dedt.runTranslator( cursor, inputfile, argDict, "c4" )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
@@ -646,6 +651,8 @@ class Test_dedt( unittest.TestCase ) :
   #@unittest.skip( "working on different example" )
   def test_example13( self ) :
 
+    test_id = "example13"
+
     # --------------------------------------------------------------- #
     # build empty IR db
 
@@ -661,6 +668,9 @@ class Test_dedt( unittest.TestCase ) :
     inputfile = "./testFiles/example13.ded"
     argDict   = self.getArgDict( inputfile )
     dedt.runTranslator( cursor, inputfile, argDict, "c4" )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
@@ -1715,7 +1725,9 @@ class Test_dedt( unittest.TestCase ) :
   # test input of one good fact
   #@unittest.skip( "working on different example" )
   def test_example1( self ) :
-  
+ 
+    test_id = "example1"
+ 
     # --------------------------------------------------------------- #
     #testing set up. dedToIR has dependency
     #on createDedalusIRTables so that's
@@ -1737,6 +1749,9 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
