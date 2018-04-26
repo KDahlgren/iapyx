@@ -1862,6 +1862,8 @@ class Test_dedt( unittest.TestCase ) :
   #  GET CUSTOM SAVE PATH  #
   ##########################
   def custom_save_path( self, argDict, test_id ) :
+    if not os.path.exists( argDict[ 'data_save_path' ] ) :
+      os.system( "mkdir " + argDict[ 'data_save_path' ] )
     custom_save_path  = argDict[ 'data_save_path' ]
     custom_save_path += test_id
     if not os.path.exists( custom_save_path ) :
