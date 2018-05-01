@@ -430,7 +430,7 @@ def translateDedalus( argDict, cursor ) :
   # ----------------------------------------------------------------- #
   # parse each file
 
-  evaluator      = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
+  evaluator = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
 
   complete_file_path = tools.compile_full_program_and_save( fileList )
 

@@ -17,6 +17,9 @@ def parseCommandLineInput( ) :
   parser = argparse.ArgumentParser()
 
   # define all possible arguments here
+  parser.add_argument("--debug", help="set logging level to debug (default warning)", action="store_true")
+  parser.add_argument("--info", help="set logging level to info (default warning)", action="store_true")
+  parser.add_argument("--warning", help="set logging level to warning (default warning)", action="store_true")
   parser.add_argument("-t", "--EOT", type=int, help="end of time (default 3)", default = 3)
   parser.add_argument("-ff", "--EFF", type=int, help="end of finite failures (default 2)", default = 2)
   parser.add_argument("-f", "--file", help="input dedalus file (1 minimum required)", required=True) 
@@ -31,7 +34,7 @@ def parseCommandLineInput( ) :
   parser.add_argument("--disable-dot-rendering", help="disable automatic rendering of `dot` diagrams", action="store_true")
   parser.add_argument("--find-all-counterexamples", help="continue after finding the first counterexample", action="store_true")
   parser.add_argument("--negative-support", help="Negative support.  Slow, but necessary for completeness", action="store_true")
-  parser.add_argument("--data_save_path", help="Data save path.  directory for saving data produced by iapyx (optional).", required=True )
+  parser.add_argument("--data_save_path", help="Data save path.  directory for saving data produced by iapyx.", required=True )
 
   args = parser.parse_args()
 
