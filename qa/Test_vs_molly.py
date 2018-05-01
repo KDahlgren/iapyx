@@ -40,7 +40,7 @@ class Test_vs_molly( unittest.TestCase ) :
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
-  PRINT_STOP          = True
+  PRINT_STOP          = False
   COMPARE_IAPYX_PROGS = False
 
   ####################
