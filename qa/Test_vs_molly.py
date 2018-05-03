@@ -36,12 +36,12 @@ eqnOps = [ "==", "!=", ">=", "<=", ">", "<" ]
 ###################
 class Test_vs_molly( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP          = False
-  COMPARE_IAPYX_PROGS = False
+  COMPARE_IAPYX_PROGS = True
 
   ####################
   #  EXAMPLE TOKENS  #
@@ -1047,15 +1047,59 @@ class Test_vs_molly( unittest.TestCase ) :
     subgoalList1 = self.getSubgoalList( body1, eqnList1 )
     subgoalList2 = self.getSubgoalList( body2, eqnList2 )
 
-    if len( subgoalList1 ) == len( subgoalList2 ) :
-      subListLen = True
+    # branch on presence of clock subgoal
+    if self.same_sub_lists_minus_clock( subgoalList1, subgoalList2 ) :
+      if len( subgoalList1 ) == len( subgoalList2 ) - 1 or \
+         len( subgoalList2 ) == len( subgoalList1 ) - 1 or \
+         len( subgoalList1 ) == len( subgoalList2 ) :
+        subListLen = True
+      else :
+        subListLen = False
+      sameSubgoals = True
+      for e1 in subgoalList1 :
+        if not e1.startswith( "clock(" ) and not e1 in subgoalList2 :
+          sameSubgoals = False
     else :
-      subListLen = False
-
-    sameSubgoals = False
-    for e1 in subgoalList1 :
-      if e1 in subgoalList2 :
-        sameSubgoals = True
+      if len( subgoalList1 ) == len( subgoalList2 ) :
+        subListLen = True
+      else :
+        subListLen = False
+      sameSubgoals = False
+      for e1 in subgoalList1 :
+        if "_vars(" in e1 :
+          # check name match and subgoal att containment
+          e1_name = e1[ : e1.find( "(" ) ]
+          e1_atts = e1[ e1.find( "(" ) : e1.find( ")" ) ].split( "," )
+          flag1 = False
+          flag2 = True
+          for e2 in subgoalList2 :
+            e2_name = e2[ : e2.find( "(" ) ]
+            e2_atts = e2[ e2.find( "(" ) : e2.find( ")" ) ].split( "," )
+            if e1_name == e2_name :
+              flag1 = True
+              if len( e1_atts ) == len( e2_atts ) :
+                e1_att_dict = {}
+                for att in e1_atts :
+                  if not att in e1_att_dict :
+                    e1_att_dict[ att ] = 1
+                  else :
+                    e1_att_dict[ att ] += 1
+                e2_att_dict = {}
+                for att in e2_atts :
+                  if not att in e2_att_dict :
+                    e2_att_dict[ att ] = 1
+                  else :
+                    e2_att_dict[ att ] += 1
+                for att in e1_att_dict :
+                  if not att in e2_att_dict or \
+                     not e1_att_dict[ att ] == e2_att_dict[ att ] :
+                    flag2 = False
+          if flag1 and flag2 :
+            sameSubgoals = True
+          
+        else :
+          if e1 in subgoalList2 :
+            sameSubgoals = True
 
     logging.debug( "  SAME BODIES : eqnList1     = " + str( eqnList1 ) )
     logging.debug( "  SAME BODIES : eqnList2     = " + str( eqnList2 ) )
@@ -1070,6 +1114,19 @@ class Test_vs_molly( unittest.TestCase ) :
       return True
     else :
       return False
+
+
+  ################################
+  #  SAME SUB LISTS MINUS CLOCK  #
+  ################################
+  def same_sub_lists_minus_clock( self, list1, list2 ) :
+    flag = True
+    for elem in list1 :
+      if not elem.startswith( "clock(" ) and \
+         not elem in list2 :
+        flag = False
+    logging.debug( "  SAME SUB LISTS MINUS CLOCK : returning " + str( flag ) )
+    return flag
 
 
   ######################

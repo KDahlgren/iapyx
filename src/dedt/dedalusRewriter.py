@@ -114,7 +114,15 @@ def rewriteDeductive( metarule, cursor ) :
   # ------------------------------------------------------ #
   # add the clock subgoal to the subgoal list for this rule
 
-  new_metarule_ruleData[ "subgoalListOfDicts" ].append( clock_subgoalDict )
+  flag = False
+  for subgoal in new_metarule_ruleData[ "subgoalListOfDicts" ] :
+    if subgoal[ "subgoalAttList" ][-1] == "NRESERVED" :
+      flag = True
+
+  # make sure at least one subgoal references NRESERVED.
+  # need the clock reference otherwise.
+  if not flag :
+    new_metarule_ruleData[ "subgoalListOfDicts" ].append( clock_subgoalDict )
 
   # ------------------------------------------------------ #
   # preserve adjustments by instantiating the new meta rule

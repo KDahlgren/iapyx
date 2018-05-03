@@ -223,9 +223,9 @@ class Test_dm( unittest.TestCase ) :
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, None, test_id )
 
 
-  ############################
+  ###########################
   #  DM TOY 3 AGG REWRITES  #
-  ############################
+  ###########################
   # tests rewriting the second toy program
   # observe previous version of agg rewrites included fewer rules.
   #@unittest.skip( "working on different example" )
