@@ -58,10 +58,10 @@ def rewrite_wildcards( ruleMeta, cursor ) :
         logging.debug( "  REWRITE WILDCARDS : subgoal = " + str( subgoal ) )
  
         # ------------------------------------------- #
-        # examine all negated subgoals
+        # examine all negated subgoals with wildcards
   
-        if subgoal[ "polarity" ] == "notin" :
-          logging.debug( "  REWRITE WILDCARDS : hit a notin" )
+        if subgoal[ "polarity" ] == "notin" and "_" in subgoal[ "subgoalAttList" ] :
+          logging.debug( "  REWRITE WILDCARDS : hit a notin with wilds" )
   
           # ------------------------------------------- #
           # generate new subgoal name

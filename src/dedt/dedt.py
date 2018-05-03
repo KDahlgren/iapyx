@@ -204,6 +204,28 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     logging.debug( "  DEDT : goal_atts (1) = " + str( goal_atts ) )
 
   # ----------------------------------------------------------------------------- #
+  # wilcard rewrites
+
+  logging.debug( "  REWRITE : calling wildcard rewrites..." )
+
+  try :
+    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "WILDCARD_REWRITES", bool )
+    if rewriteWildcards :
+      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
+
+  except ConfigParser.NoOptionError :
+    logging.warning( "WARNING : no 'WILDCARD_REWRITES' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
+    pass
+
+  for rule in ruleMeta :
+    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+  #sys.exit( "blah2" )
+
+  # be sure to fill in all the type info for the new rule definitions
+  setTypes.setTypes( cursor, argDict )
+
+  # ----------------------------------------------------------------------------- #
   # dm rewrites
 
   # be sure to fill in all the type info for the new rule definitions
@@ -271,23 +293,6 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
     logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
   #sys.exit( "blah2" )
-
-  # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor, argDict )
-
-  # ----------------------------------------------------------------------------- #
-  # wilcard rewrites
-
-  logging.debug( "  REWRITE : calling wildcard rewrites..." )
-
-  try :
-    rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "WILDCARD_REWRITES", bool )
-    if rewriteWildcards :
-      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
-
-  except ConfigParser.NoOptionError :
-    logging.warning( "WARNING : no 'WILDCARD_REWRITES' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
-    pass
 
   # be sure to fill in all the type info for the new rule definitions
   setTypes.setTypes( cursor, argDict )
