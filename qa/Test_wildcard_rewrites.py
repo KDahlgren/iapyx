@@ -36,6 +36,36 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
   PRINT_STOP    = False
   COMPARE_PROGS = True
 
+  #####################
+  #  NEG SUB WILDS 1  #
+  #####################
+  # tests rewriting the example 1 program
+  #@unittest.skip( "working on different example" )
+  def test_neg_sub_wilds_1( self ) :
+
+    test_id = "neg_sub_wilds_1"
+    logging.info( "  TEST WILDCARD REWRITES : " + test_id + "..." )
+
+    # specify input and output paths
+    inputfile                             = os.getcwd() + "/testFiles/" + test_id + ".ded"
+    expected_iapyx_wildcard_rewrites_path = os.getcwd() + "/testFiles/" + test_id + ".olg"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "nodes" ]    = [ "a", "b", "x", "y", "thing" ]
+    argDict[ "settings" ] = os.getcwd() + "/settings_files/settings_wild.ini"
+
+    # get custom save path
+    if not os.path.exists( argDict[ "data_save_path" ] ) :
+      os.system( "mkdir " + argDict[ 'data_save_path' ] )
+    argDict[ 'data_save_path' ] += test_id
+    if not os.path.exists( argDict[ 'data_save_path' ] ) :
+      os.system( "mkdir " + argDict[ 'data_save_path' ] )
+
+    self.comparison_workflow( argDict, expected_iapyx_wildcard_rewrites_path, None, "wildcard_rewrites_" + test_id )
+    logging.info( "  TEST WILDCARD REWRITES : ...done." )
+
+
   ##########
   #  EX 1  #
   ##########

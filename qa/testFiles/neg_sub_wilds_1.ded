@@ -1,0 +1,17 @@
+post( X, Y ) :- a( X, Y ) ;
+pre( X, Y ) :- post( X, Y ) ;
+
+a( X1, Y1 ) :- b( X1, Y1 ), notin c( _, Y1 ) ;
+a( X2, Y2 ) :- b( X2, Y2 ), notin d( X2, Y2 ) ;
+d( X3, Y3 ) :- e( X3, Y3 ), notin c( X3, _ ) ;
+c( X4, Y4+1 ) :- f( X4, Z4 ), i( Z4, Y4 ) ;
+c( X4, count<Y7> ) :- f( X4, Z4 ), i( Z4, Y7 ) ;
+c( X5, Y5 ) :- g( X5, Y5 ) ;
+c( X6, Y6 ) :- h( X6, Y6 ) ;
+
+b( "a", 3 )@1 ;
+e( "b", 1 )@1 ;
+f( "a", "thing" )@1 ;
+g( "x", 5 )@1 ;
+h( "y", 6 )@1 ;
+i( "thing", 2 )@1 ;
