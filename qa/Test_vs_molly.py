@@ -882,6 +882,7 @@ class Test_vs_molly( unittest.TestCase ) :
     match_elements_flag_iapyx = False
     for iapyx_line in iapyx_line_array :
 
+      logging.debug( "  COMPARE IAPYX AND MOLLY : checking iapyx program containment." )
       logging.debug( "  COMPARE IAPYX AND MOLLY : iapyx_line = " + iapyx_line )
 
       # skip all crash facts from iapyx.
@@ -917,14 +918,15 @@ class Test_vs_molly( unittest.TestCase ) :
             logging.debug( "  COMPARE IAPYX AND MOLLY (2) : iapyx_line '" + iapyx_line+ "' not found in molly program." )
             match_elements_flag_iapyx = False
 
-    if not match_elements_flag_iapyx :
-      sys.exit( "blah" )
+    assert( match_elements_flag_iapyx == True )
 
     # -------------------------------------------------------------------------------- #
     # make sure all lines in the molly program have a match in the iapyx program
 
     match_elements_flag_molly = False
     for molly_line in molly_line_array :
+
+      logging.debug( "  COMPARE IAPYX AND MOLLY : checking molly program containment." )
 
       # skip all defines since molly's using some weird rule to 
       # order goal atts in prov rules.
@@ -949,6 +951,8 @@ class Test_vs_molly( unittest.TestCase ) :
             logging.debug( "  COMPARE IAPYX AND MOLLY (2) : molly_line '" + molly_line+ "' not found in iapyx program." )
             match_elements_flag_molly = False
 
+    assert( match_elements_flag_molly == True )
+
     logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_iapyx = " + str( match_elements_flag_iapyx ) )
     logging.debug( "  COMPARE IAPYX AND MOLLY : match_elements_flag_molly = " + str( match_elements_flag_molly ) )
     return match_elements_flag_iapyx, match_elements_flag_molly
@@ -957,62 +961,62 @@ class Test_vs_molly( unittest.TestCase ) :
   ##################
   #  MATCH EXISTS  #
   ##################
-  # check if the iapyx_rule appears in the molly_line_array
-  def matchExists( self, iapyx_rule, molly_line_array ) :
+  # check if the rule appears in the rule array
+  def matchExists( self, a_rule, rule_array ) :
 
     logging.debug( "-------------------------------------------------------------" )
-    logging.debug( "  MATCH EXISTS : iapyx_rule        = " + iapyx_rule )
+    logging.debug( "  MATCH EXISTS : considering a_rule = " + a_rule )
 
-    iapyx_goalName    = self.getGoalName( iapyx_rule )
-    iapyx_goalAttList = self.getGoalAttList( iapyx_rule )
-    iapyx_body        = self.getBody( iapyx_rule )
+    rule_goalName    = self.getGoalName( a_rule )
+    rule_goalAttList = self.getGoalAttList( a_rule )
+    rule_body        = self.getBody( a_rule )
 
-    logging.debug( "  MATCH EXISTS : iapyx_goalName    = " + iapyx_goalName )
-    logging.debug( "  MATCH EXISTS : iapyx_goalAttList = " + str( iapyx_goalAttList ) )
-    logging.debug( "  MATCH EXISTS : iapyx_body        = " + iapyx_body )
+    logging.debug( "  MATCH EXISTS : rule_goalName    = " + rule_goalName )
+    logging.debug( "  MATCH EXISTS : rule_goalAttList = " + str( rule_goalAttList ) )
+    logging.debug( "  MATCH EXISTS : rule_body        = " + rule_body )
 
-    for line in molly_line_array :
+    for line in rule_array :
 
       if self.isRule( line ) :
 
-        molly_goalName    = self.getGoalName( line )
-        molly_goalAttList = self.getGoalAttList( line )
-        molly_body        = self.getBody( line )
+        line_goalName    = self.getGoalName( line )
+        line_goalAttList = self.getGoalAttList( line )
+        line_body        = self.getBody( line )
  
-        logging.debug( "  MATCH EXISTS : molly_goalName    = " + molly_goalName )
-        logging.debug( "  MATCH EXISTS : molly_goalAttList = " + str( molly_goalAttList ) )
-        logging.debug( "  MATCH EXISTS : molly_body        = " + molly_body )
+        logging.debug( "  MATCH EXISTS : line_goalName    = " + line_goalName )
+        logging.debug( "  MATCH EXISTS : line_goalAttList = " + str( line_goalAttList ) )
+        logging.debug( "  MATCH EXISTS : line_body        = " + line_body )
 
         # goal names and bodies match 
-        if self.sameName( iapyx_goalName, molly_goalName ) :
+        if self.sameName( rule_goalName, line_goalName ) :
 
           logging.debug( "  MATCH EXISTS : identical goalNames." )
 
-          if self.sameBodies( iapyx_body, molly_body ) :
+          if self.sameBodies( rule_body, line_body ) :
 
             logging.debug( "  MATCH EXISTS : identical goalNames." )
 
-            # make sure all iapyx atts appear in the molly att list
-            iapyx_match = False
-            for iapyx_att in iapyx_goalAttList :
-              if iapyx_att in molly_goalAttList :
-                iapyx_match = True
+            # make sure all rule atts appear in the line att list
+            rule_match = False
+            for rule_att in rule_goalAttList :
+              if rule_att in line_goalAttList :
+                rule_match = True
 
             # make sure all molly atts appear in the iapyx att list
-            molly_match = False
-            for molly_att in molly_goalAttList :
-              if molly_att in iapyx_goalAttList :
-                molly_match = True
+            line_match = False
+            for line_att in line_goalAttList :
+              if line_att in rule_goalAttList :
+                line_match = True
 
-            if iapyx_match or molly_match :
+            if rule_match and line_match :
               logging.debug( "  MATCH EXISTS : returning True" )
               return True
 
           else :
-            logging.debug( "  MATCH EXISTS : different bodies : iapyx_body = " + iapyx_body + ", molly_body = " + molly_body  )
+            logging.debug( "  MATCH EXISTS : different bodies : rule_body = " + rule_body + ", line_body = " + line_body )
 
         else :
-          logging.debug( "  MATCH EXISTS : different goalNames (sans _prov# appends) : iapyx_goalName = " + iapyx_goalName + ", molly_goalName = " + molly_goalName  )
+          logging.debug( "  MATCH EXISTS : different goalNames (sans _prov# appends) : rule_goalName = " + rule_goalName + ", line_goalName = " + line_goalName  )
 
 
     logging.debug( "  MATCH EXISTS : returning False" )
@@ -1059,6 +1063,9 @@ class Test_vs_molly( unittest.TestCase ) :
       for e1 in subgoalList1 :
         if not e1.startswith( "clock(" ) and not e1 in subgoalList2 :
           sameSubgoals = False
+    elif self.same_sub_lists_vars( subgoalList1, subgoalList2 ) :
+      subListLen   = True
+      sameSubgoals = True
     else :
       if len( subgoalList1 ) == len( subgoalList2 ) :
         subListLen = True
@@ -1066,40 +1073,8 @@ class Test_vs_molly( unittest.TestCase ) :
         subListLen = False
       sameSubgoals = False
       for e1 in subgoalList1 :
-        if "_vars(" in e1 :
-          # check name match and subgoal att containment
-          e1_name = e1[ : e1.find( "(" ) ]
-          e1_atts = e1[ e1.find( "(" ) : e1.find( ")" ) ].split( "," )
-          flag1 = False
-          flag2 = True
-          for e2 in subgoalList2 :
-            e2_name = e2[ : e2.find( "(" ) ]
-            e2_atts = e2[ e2.find( "(" ) : e2.find( ")" ) ].split( "," )
-            if e1_name == e2_name :
-              flag1 = True
-              if len( e1_atts ) == len( e2_atts ) :
-                e1_att_dict = {}
-                for att in e1_atts :
-                  if not att in e1_att_dict :
-                    e1_att_dict[ att ] = 1
-                  else :
-                    e1_att_dict[ att ] += 1
-                e2_att_dict = {}
-                for att in e2_atts :
-                  if not att in e2_att_dict :
-                    e2_att_dict[ att ] = 1
-                  else :
-                    e2_att_dict[ att ] += 1
-                for att in e1_att_dict :
-                  if not att in e2_att_dict or \
-                     not e1_att_dict[ att ] == e2_att_dict[ att ] :
-                    flag2 = False
-          if flag1 and flag2 :
-            sameSubgoals = True
-          
-        else :
-          if e1 in subgoalList2 :
-            sameSubgoals = True
+        if e1 in subgoalList2 :
+          sameSubgoals = True
 
     logging.debug( "  SAME BODIES : eqnList1     = " + str( eqnList1 ) )
     logging.debug( "  SAME BODIES : eqnList2     = " + str( eqnList2 ) )
@@ -1114,6 +1089,71 @@ class Test_vs_molly( unittest.TestCase ) :
       return True
     else :
       return False
+
+
+  #########################
+  #  SAME SUB LISTS VARS  #
+  #########################
+  def same_sub_lists_vars( self, list1, list2 ) :
+    logging.debug( "  SAME SUB LISTS VARS : running process..." )
+    logging.debug( "  SAME SUB LISTS VARS : list1 = " + str( list1 ) )
+    logging.debug( "  SAME SUB LISTS VARS : list2 = " + str( list2 ) )
+    if not len( list1 ) == len( list2 ) :
+      logging.debug( "  SAME SUB LISTS VARS : (1) returning False" )
+      return False
+    elif not self.is_var_sub( list1 ) or not self.is_var_sub( list2 ) :
+      logging.debug( "  SAME SUB LISTS VARS : (2) returning False" )
+      return False
+    else :
+      var1 = list1[0]
+      var2 = list2[0]
+      # check names match
+      if not var1[ : var1.find( "(" ) ] == var2[ : var2.find( "(" ) ] :
+        logging.debug( "  SAME SUB LISTS VARS : (3) returning False" )
+        return False
+      else :
+        # make sure number of each attribute matches
+        att_list_1 = var1[ var1.find( "(" ) : var1.find( ")" ) ]
+        att_list_2 = var2[ var2.find( "(" ) : var2.find( ")" ) ]
+        att_dict_1 = {}
+        for att in att_list_1 :
+          if not att in att_dict_1 :
+            att_dict_1[ att ] = 1
+          else :
+            att_dict_1[ att ] += 1
+        att_dict_2 = {}
+        for att in att_list_2 :
+          if not att in att_dict_2 :
+            att_dict_2[ att ] = 1
+          else :
+            att_dict_2[ att ] += 1
+        same_contents = True
+        for att in att_list_1 :
+          if not att in att_list_2 :
+            same_contents = False
+            break
+          else :
+            if not att_dict_1[ att ] == att_dict_2[ att ] :
+              same_contents = False
+              break
+        logging.debug( "  SAME SUB LISTS VARS : (4) returning " + str( same_contents ) )
+        return same_contents
+
+
+  ################
+  #  IS VAR SUB  #
+  ################
+  def is_var_sub( self, list1 ) :
+    logging.debug( "  IS VAR SUB : " + str( list1 ) )
+    if not len( list1 ) == 1 :
+      logging.debug( "IS VAR SUB : (1) returning False" )
+      return False
+    else :
+      if not "_vars(" in list1[0] :
+        logging.debug( "IS VAR SUB : (2) returning False" )
+        return False
+    logging.debug( "IS VAR SUB : (3) returning True" )
+    return True
 
 
   ################################
