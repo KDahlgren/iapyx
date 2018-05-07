@@ -329,8 +329,6 @@ def aggRewrites( ruleMeta, argDict ) :
 
     if containsAgg_rule( rule ) :
 
-      #rule.hitUniformityRewrites = True
-
       orig_name = copy.copy( rule.relationName )
 
       # ----------------------------------------- #
@@ -339,81 +337,10 @@ def aggRewrites( ruleMeta, argDict ) :
       # get goal att list
       goalAttList = copy.deepcopy( rule.goalAttList )
 
-#      # build new goal att list
-#      new_goalAttList = []
-#      index           = 0
-#      attMapper       = {} # maps old goal att strings to new goal att strings.
-#      aggIndexes      = []
-#      for gatt in goalAttList :
-#        print "gatt = " + gatt
-#        if containsAgg( gatt ) :
-#          new_gatt = '"INT"'
-#        elif extractAtt( gatt ) in attMapper :
-#          new_gatt = attMapper[ gatt ]
-#        else :
-#          new_gatt = "Att" + str( index )
-#
-#        if containsAgg( gatt ) :
-#          rhs            = extractRHS( gatt )
-#          final_new_gatt = new_gatt + rhs
-#          aggIndexes.append( index )
-#
-#        else :
-#          final_new_gatt = new_gatt
-#
-#        new_goalAttList.append( final_new_gatt )
-#        attMapper[ extractAtt( gatt ) ] = extractAtt( new_gatt )
-#        index += 1
-#
-#      rule.orig_rule_attMapper_aggRewrites = attMapper
-#
-#      logging.debug( "  AGG REWRITE  : new_goalAttList         = " + str( new_goalAttList ) )
-#      logging.debug( "  AGG REWRITE  : attMapper               = " + str( attMapper ) )
-#      logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
-#
-#      # save new goal attribute list
-#      rule.ruleData[ "goalAttList" ] = new_goalAttList
-#      rule.goalAttList               = new_goalAttList
-#      rule.saveToGoalAtt()
-#
-#      # replace attribute in body
-#      subgoalListOfDicts = rule.subgoalListOfDicts
-#
-#      new_subgoalListOfDicts = []
-#      for sub in subgoalListOfDicts :
-#
-#        subgoalAttList     = sub[ "subgoalAttList" ]
-#        new_subgoalAttList = []
-#
-#        for satt in subgoalAttList :
-#
-#          if satt in attMapper :
-#            new_subgoalAttList.append( attMapper[ satt ] )
-#          else :
-#            new_subgoalAttList.append( satt )
-#
-#        logging.debug( "  AGG REWRITE : new_subgoalAttList = " + str( new_subgoalAttList ) )
-#
-#        new_sub_dict = {}
-#        new_sub_dict[ "subgoalName" ]    = sub[ "subgoalName" ]
-#        new_sub_dict[ "subgoalAttList" ] = new_subgoalAttList
-#        new_sub_dict[ "polarity" ]       = sub[ "polarity" ]
-#        new_sub_dict[ "subgoalTimeArg" ] = sub[ "subgoalTimeArg" ]
-#        new_subgoalListOfDicts.append( new_sub_dict )
-#
-#      logging.debug( "  AGG REWRITES : new_subgoalListOfDicts = " + str( new_subgoalListOfDicts ) )
-#      logging.debug( "  AGG REWRITES : **rule.orig_goalAttList = " + str( rule.orig_goalAttList ) )
-#
-#      # save new subgoals
-#      rule.ruleData[ "subgoalListOfDicts" ] = new_subgoalListOfDicts
-#      rule.subgoalListOfDicts               = new_subgoalListOfDicts
-#      rule.saveSubgoals()
-
       # ----------------------------------------- #
       # rename rule with _agg + index number 
       # convention
 
-      #new_relationName                = rule.relationName + "_agg" + "".join( str( x ) for x in aggIndexes )
       new_relationName                = rule.relationName + "_agg" + str( rule.rid )
       rule.ruleData[ "relationName" ] = new_relationName
       rule.relationName               = new_relationName
@@ -438,7 +365,8 @@ def aggRewrites( ruleMeta, argDict ) :
       newRuleData[ "goalAttList" ]        = new_goalAttList
       newRuleData[ "goalTimeArg" ]        = rule.goalTimeArg
       newRuleData[ "subgoalListOfDicts" ] = [ { "subgoalName": new_relationName, "subgoalAttList": new_goalAttList, "polarity": "", "subgoalTimeArg": "" } ]
-      newRuleData[ "eqnDict" ]            = rule.eqnDict
+      #newRuleData[ "eqnDict" ]            = rule.eqnDict
+      newRuleData[ "eqnDict" ]            = {}
   
       rid = tools.getIDFromCounters( "rid" )
   
