@@ -270,17 +270,24 @@ def c4datalog( argDict, cursor ) :
   # grab the next rule handling method
 
   try :
-    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
+    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], \
+                                          "DEFAULT", \
+                                          "NEXT_RULE_HANDLING", \
+                                          str )
 
   except ConfigParser.NoOptionError :
     logging.info( "WARNING : no 'NEXT_RULE_HANLDING' defined in 'DEFAULT' section of settings file." )
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+    tools.bp( __name__, inspect.stack()[0][3], \
+             "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # sanity check next rule handling value
-  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+  if NEXT_RULE_HANDLING == "USE_AGGS" or \
+     NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or \
+     NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
     pass
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+    tools.bp( __name__, inspect.stack()[0][3], \
+              "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # ----------------------------------------------------------- #
   # add next_clock, if necessary
@@ -320,11 +327,25 @@ def c4datalog( argDict, cursor ) :
   logging.debug( "*******************************************" )
   logging.debug( "ruleList :\n" + str( ruleList ) )
 
-  #listOfStatementLists = [ definesList, factList, ruleList, clockFactList ]
-  listOfStatementLists = [ definesList, factList, ruleList, crashFactList, clockFactList ]
-
+  # NOTE: listOfStatementLists controls the ordering of statements
+  #       in the final c4 program.
   if NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
-    listOfStatementLists = [ definesList, factList, ruleList, crashFactList, next_clock_factList, clockFactList ]
+    listOfStatementLists = [ definesList, \
+                             ruleList, \
+                             factList, \
+                             crashFactList, \
+                             next_clock_factList, \
+                             clockFactList ]
+  else :
+    #listOfStatementLists = [ definesList, \
+    #                         factList, \
+    #                         ruleList, \
+    #                         clockFactList ]
+    listOfStatementLists = [ definesList, \
+                             ruleList, \
+                             factList, \
+                             crashFactList, \
+                             clockFactList ]
 
   program = tools.combineLines( listOfStatementLists )
 

@@ -1,0 +1,19 @@
+
+
+post( X ) :- a( X ) ;
+pre( X ) :- a( X ) ;
+
+a( X )@next :- a( X ) ;
+a( X ) :- b(X), notin c( X ) ;
+
+b( "thing" )@1 ;
+
+c( X ) :- d( X, Y ), e( Y, X ), notin f( X ) ;
+
+d( X, Y ) :- g( X, Y ) ;
+e( Y, X ) :- h( Y, X ) ;
+f( X ) :- i( X ) ;
+
+g( "blah", "blee" )@1 ;
+h( "blee", "blah" )@1 ;
+i( "blech" )@1 ;

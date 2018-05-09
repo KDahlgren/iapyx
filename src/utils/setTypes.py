@@ -401,7 +401,6 @@ def get_rules( goal_data, cursor ) :
         tmp.append( [ index, '"INT"' ] )
       else :
         tmp.append( [ index, gatt ] )
-#      tmp.append( [ index, gatt ] )
     goal_atts = copy.copy( tmp )
 
     logging.debug( "  GET RULES : goal_atts (1) = " + str( goal_atts ) )
@@ -502,7 +501,8 @@ def get_rules( goal_data, cursor ) :
       # only need positive subgoals because only using safe rules.
       if subgoalPolarity == "" :
 
-        if not subgoalName.startswith( "not_" ) :
+        #if not subgoalName.startswith( "not_" ) :
+        if True :
 
           rule += " " + subgoalName + "("
   

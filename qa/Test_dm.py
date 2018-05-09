@@ -29,12 +29,41 @@ import dm
 ##############
 class Test_dm( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
   COMPARE_PROGS = True
+
+
+  ########################
+  #  OPTIMIZE NOT RULES  #
+  ########################
+  def test_optimize_not_rules( self ) :
+
+    test_id = "optimize_not_rules"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile              = os.getcwd() + "/testFiles/optimize_not_rules.ded"
+    expected_iapyx_dm_path = "./testFiles/optimize_not_rules.olg"
+    expected_eval_path     = "./testFiles/optimize_not_rules_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+    argDict[ "settings" ] = "./settings_files/settings_dm_optimizenot.ini"
+    argDict[ "nodes" ]    = [ "blah", "blee", "blech", "thing" ]
+    argDict[ "EOT" ]      = 3
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+
+    self.comparison_workflow( argDict, \
+                              inputfile, \
+                              expected_iapyx_dm_path, \
+                              expected_eval_path, \
+                              test_id )
 
 
   ########################
@@ -988,7 +1017,9 @@ class Test_dm( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # get the targeted rule meta list
 
-    targetRuleMeta = dm.replaceSubgoalNegations( ruleMeta )
+    argDict = self.getArgDict( "" )
+    argDict[ "settings" ] = "./settings_files/settings.ini"
+    targetRuleMeta = dm.replaceSubgoalNegations( ruleMeta, argDict )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -1805,7 +1836,19 @@ class Test_dm( unittest.TestCase ) :
       # get new dm rules
       negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
       pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
-      newDMRules       = dm.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
+
+      argDict = self.getArgDict( "" )
+      argDict[ "settings" ] = "./settings_files/settings.ini"
+
+      newDMRules = dm.dnfToDatalog( not_name, \
+                                    goalAttList, \
+                                    goalTimeArg, \
+                                    pos_dnf_fmla, \
+                                    domcompRule, \
+                                    existentialVarsRules, \
+                                    ruleSet, \
+                                    cursor, \
+                                    argDict )
 
       # collect ruleData for test
       for rule in newDMRules :
@@ -2011,7 +2054,19 @@ class Test_dm( unittest.TestCase ) :
       # get new dm rules
       negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
       pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
-      newDMRules       = dm.dnfToDatalog( not_name, goalAttList, goalTimeArg, pos_dnf_fmla, domcompRule, existentialVarsRules, ruleSet, cursor )
+
+      argDict = self.getArgDict( "" )
+      argDict[ "settings" ] = "./settings_files/settings.ini"
+
+      newDMRules = dm.dnfToDatalog( not_name, \
+                                    goalAttList, \
+                                    goalTimeArg, \
+                                    pos_dnf_fmla, \
+                                    domcompRule, \
+                                    existentialVarsRules, \
+                                    ruleSet, \
+                                    cursor, \
+                                    argDict )
 
       # collect ruleData for test
       for rule in newDMRules :

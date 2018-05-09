@@ -58,7 +58,8 @@ class Core :
     # ---------------------------------------------------------------- #
 
     # allProgramData := [ allProgramLines, tableListArray ]
-    allProgramData, self.factMeta, self.ruleMeta = self.dedalus_to_datalog( self.argDict, self.cursor )
+    allProgramData, self.factMeta, self.ruleMeta = self.dedalus_to_datalog( self.argDict, \
+                                                                            self.cursor )
     self.program_array                           = allProgramData[0]
     self.table_array                             = allProgramData[1]
 
