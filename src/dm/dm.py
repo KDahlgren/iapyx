@@ -144,8 +144,147 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
 
     COUNTER += 1
 
+  # ----------------------------------------- #  
+  #  apply filters
+
+  try :
+    OPTIMIZE_NOT = tools.getConfig( settings_path, "DEFAULT", "OPTIMIZE_NOT", bool )
+  except ConfigParser.NoOptionError :
+    OPTIMIZE_NOT = False
+    logging.warning( "WARNING : no 'OPTIMIZE_NOT' defined in 'DEFAULT' section of settings.ini ...running with OPTIMIZE_NOT=False." )
+
+  if OPTIMIZE_NOT :
+    for rule in ruleMeta :
+      if rule.ruleData[ "relationName" ].startswith( "not_" ) :
+        # observe all negated subgoals, at this point, will be edb.
+        remove_any_unnecessary_constraint_subgoals( rule )
+
   logging.debug( "  DM : ...done." )
   return factMeta, ruleMeta
+
+
+################################################
+#  REMOVE ANY UNNECESSARY CONSTRAINT SUBGOALS  #
+################################################
+def remove_any_unnecessary_constraint_subgoals( rule ) :
+
+  logging.debug( "----------------------------------------------------" )
+  logging.debug( "  REMOVE ANY UNNECESSARY CONSTRAINT SUBGOALS : (before) rule = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+
+  # ----------------------------------------------------------- #
+  # apply filter
+
+  subgoalListOfDicts_tmp = []
+  for sub in rule.ruleData[ "subgoalListOfDicts" ] :
+    #if sub[ "subgoalName" ].startswith( "domcomp_") and not is_necessary( sub, rule ) :
+    #  pass # excluding these makes the results incorrect
+    if sub[ "subgoalName" ].startswith( "dom_") and not is_necessary( sub, rule ) :
+      pass
+    else :
+      # keep it.
+      subgoalListOfDicts_tmp.append( sub )
+
+  # ----------------------------------------------------------- #
+  # check if filter applied
+
+  logging.debug( "  REMOVE ANY UNNECESSARY CONSTRAINT SUBGOALS : subgoalListOfDicts_tmp = " )
+  for sub in subgoalListOfDicts_tmp :
+    logging.debug( "  " + str( sub ) )
+
+  if len( rule.ruleData[ "subgoalListOfDicts" ] ) > len( subgoalListOfDicts_tmp ) :
+    # save new subgoal list
+    rule.ruleData[ "subgoalListOfDicts" ] = subgoalListOfDicts_tmp
+    rule.subgoalListOfDicts               = subgoalListOfDicts_tmp
+    rule.saveSubgoals()
+    logging.debug( "  REMOVE ANY UNNECESSARY CONSTRAINT SUBGOALS : (after) rule = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+
+  else :
+    pass # do not mess with the input rule
+
+  logging.debug( "  REMOVE ANY UNNECESSARY CONSTRAINT SUBGOALS : (after) rule = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+
+
+##################
+#  IS NECESSARY  #
+##################
+def is_necessary( constraint_subgoal_dict, rule_obj ) :
+
+  # ----------------------------------------------------------- #
+  # collect list of all atts in all positive, 
+  # non-constraint subgoals
+
+  #pos_subgoal_att_list = get_pos_subgoal_att_list( rule_obj )
+  subgoal_att_list = get_subgoal_att_list( rule_obj )
+
+  logging.debug( "  IS NECESSARY : constraint_subgoal_dict[ 'subgoalAttList' ] = " )
+  logging.debug( "     " + str( constraint_subgoal_dict[ "subgoalAttList" ] ) )
+  #logging.debug( "  IS NECESSARY : pos_subgoal_att_list    = " + str( pos_subgoal_att_list ) )
+  logging.debug( "  IS NECESSARY : pos_subgoal_att_list    = " + str( subgoal_att_list ) )
+
+  for satt in constraint_subgoal_dict[ "subgoalAttList" ] :
+    #if not satt in pos_subgoal_att_list :
+    if not satt in subgoal_att_list :
+      # then the existential var is not needed
+      logging.debug( "  IS NECESSARY : returning False" )
+      return False
+
+  # otherwise, the existential var is essential for safety
+  logging.debug( "  IS NECESSARY : returning True" )
+  return True
+
+#  # ----------------------------------------------------------- #
+#  # check if constraint subgoal contains atts not already
+#  # contained by a positive, non-constraint subgoal
+#
+#  for satt in constraint_subgoal_dict[ "subgoalAttList" ] :
+#    if not satt in pos_subgoal_att_list :
+#      logging.debug( "  IS NECESSARY : returning True" )
+#      return True
+#
+#  logging.debug( "  IS NECESSARY : returning False" )
+#  return False
+
+
+##############################
+#  GET SUBGOAL ATT LIST  #
+##############################
+def get_subgoal_att_list( rule_obj ) :
+  subgoal_att_list = []
+  for sub in rule_obj.ruleData[ "subgoalListOfDicts" ] :
+    if not sub[ "subgoalName" ].startswith( "dom_" ) and \
+       not sub[ "subgoalName" ].startswith( "domcomp_" ) :
+      for satt in sub[ "subgoalAttList" ] :
+        if not satt in subgoal_att_list :
+          subgoal_att_list.append( satt )
+  return subgoal_att_list
+
+
+##############################
+#  GET POS SUBGOAL ATT LIST  #
+##############################
+def get_pos_subgoal_att_list( rule_obj ) :
+  pos_subgoal_att_list = []
+  for sub in rule_obj.ruleData[ "subgoalListOfDicts" ] :
+    if not sub[ "subgoalName" ].startswith( "dom_" ) and \
+       not sub[ "subgoalName" ].startswith( "domcomp_" ) and \
+       not sub[ "polarity" ]    == "notin" :
+      for satt in sub[ "subgoalAttList" ] :
+        if not satt in pos_subgoal_att_list :
+          pos_subgoal_att_list.append( satt )
+  return pos_subgoal_att_list
+
+
+############
+#  IS IDB  #
+############
+def is_idb( name, cursor ) :
+  cursor.execute( "SELECT goalName FROM Rule" )
+  idb_list = cursor.fetchall()
+  idb_list = tools.toAscii_list( idb_list )
+  if name in idb_list :
+    return True
+  else :
+    return False
 
 
 ##############################
@@ -1375,71 +1514,16 @@ def replaceSubgoalNegations( ruleMeta, argDict ) :
           new_subgoalListOfDicts.append( copy.deepcopy( subgoal )  )
 
       # ----------------------------------------- #
-      # remove any newly unnecessary dom_ and
-      # domcomp_ subgoals
-
-      try :
-        OPTIMIZE_NOT = tools.getConfig( settings_path, "DEFAULT", "OPTIMIZE_NOT", bool )
-      except ConfigParser.NoOptionError :
-        OPTIMIZE_NOT = False
-        logging.warning( "WARNING : no 'OPTIMIZE_NOT' defined in 'DEFAULT' section of " +\
-                         " settings.ini ...running with OPTIMIZE_NOT=False." )
-
-      if OPTIMIZE_NOT :
-        new_subgoalListOfDicts_tmp = []
-        for sub in new_subgoalListOfDicts :
-          # stricter :
-          #if sub[ "subgoalName" ].startswith( "dom_" ) or \
-          #   sub[ "subgoalName" ].startswith( "domcomp_" ) :
-          # allow constraints on existential vars :
-          if sub[ "subgoalName" ].startswith( "domcomp_" ) :
-            if is_necessary( sub[ "subgoalAttList" ], new_subgoalListOfDicts ) :
-              new_subgoalListOfDicts_tmp.append( copy.deepcopy( sub ) )
-          else :
-            new_subgoalListOfDicts_tmp.append( copy.deepcopy( sub ) )
-
-      # ----------------------------------------- #
       # save new subgoal list
 
-      if OPTIMIZE_NOT :
-        logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_subgoalListOfDicts_tmp = " + \
-                       str( new_subgoalListOfDicts_tmp ) )
-        rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts_tmp )
-        rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts_tmp )
-
-      else :
-        logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_subgoalListOfDicts_tmp = " + \
-                       str( new_subgoalListOfDicts ) )
-        rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
-        rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
+      logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_subgoalListOfDicts_tmp = " + \
+                     str( new_subgoalListOfDicts ) )
+      rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
+      rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
 
       rule.saveSubgoals()
 
   return ruleMeta
-
-
-##################
-#  IS NECESSARY  #
-##################
-# return True if the subgoal contains an attribute appearing
-# only in negated subgoals
-def is_necessary( subgoalAttList, subgoalListOfDicts ) :
-  for satt in subgoalAttList :
-    print satt
-    flag = False # assume satt only appears in negated subgoals
-    for sub in subgoalListOfDicts :
-      if not sub[ "subgoalName" ].startswith( "dom_" ) and \
-         not sub[ "subgoalName" ].startswith( "domcomp_" ) :
-        print sub
-        if not sub[ "polarity" ] == "notin" and \
-           satt in sub[ "subgoalAttList" ] :
-          flag = True # this satt appears in a positive subgoal
-    print "flag = " + str( flag )
-    if flag :
-      continue
-    else :
-      return True # found a subgoal appearing in only negated subgoals
-  return False
 
 
 #############
@@ -2029,55 +2113,44 @@ def dnfToDatalog( not_name, \
     # ----------------------------------------- #
     # add dom comp subgoal, if applicable
 
-    try :
-      OPTIMIZE_NOT = tools.getConfig( settings_path, "DEFAULT", "OPTIMIZE_NOT", bool )
-    except ConfigParser.NoOptionError :
-      OPTIMIZE_NOT = False
-      logging.warning( "WARNING : no 'OPTIMIZE_NOT' defined in 'DEFAULT' section of settings.ini ...running with OPTIMIZE_NOT=False." )
-
-    if ( OPTIMIZE_NOT and not rule_is_already_safe( goalAttList, subgoalListOfDicts ) ) or \
-       not OPTIMIZE_NOT :
-
-      domcompSubgoal_dict = {}
-      domcompSubgoal_dict[ "subgoalName" ]    = domcompRule.ruleData[ "relationName" ]
-      domcompSubgoal_dict[ "subgoalAttList" ] = domcompRule.ruleData[ "goalAttList" ]
-      domcompSubgoal_dict[ "polarity" ]       = ""
-      domcompSubgoal_dict[ "subgoalTimeArg" ] = ""
+    domcompSubgoal_dict = {}
+    domcompSubgoal_dict[ "subgoalName" ]    = domcompRule.ruleData[ "relationName" ]
+    domcompSubgoal_dict[ "subgoalAttList" ] = domcompRule.ruleData[ "goalAttList" ]
+    domcompSubgoal_dict[ "polarity" ]       = ""
+    domcompSubgoal_dict[ "subgoalTimeArg" ] = ""
   
-      logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalName    = " + \
-                     domcompSubgoal_dict[ "subgoalName" ] )
-      logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalAttList = " + \
-                     str( domcompSubgoal_dict[ "subgoalAttList" ] ) )
-      logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict polarity       = " + \
-                     domcompSubgoal_dict[ "polarity" ] )
-      logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalTimeArg = " + \
-                     domcompSubgoal_dict[ "subgoalTimeArg" ] )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalName    = " + \
+                   domcompSubgoal_dict[ "subgoalName" ] )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalAttList = " + \
+                   str( domcompSubgoal_dict[ "subgoalAttList" ] ) )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict polarity       = " + \
+                   domcompSubgoal_dict[ "polarity" ] )
+    logging.debug( "  DNF TO DATALOG : domcompSubgoal_dict subgoalTimeArg = " + \
+                   domcompSubgoal_dict[ "subgoalTimeArg" ] )
   
-      subgoalListOfDicts.append( domcompSubgoal_dict )
+    subgoalListOfDicts.append( domcompSubgoal_dict )
 
     # ----------------------------------------- #
     # add existential domain subgoal,
     # if applicable
 
-    if ( OPTIMIZE_NOT and rule_contains_existential_vars( goalAttList, subgoalListOfDicts ) ) or \
-       not OPTIMIZE_NOT :
+    prevRules = []
+    for currRule in existentialVarsRules :
 
-      prevRules = []
-      for currRule in existentialVarsRules :
+      if currRule.relationName in prevRules :
+        pass
 
-        if currRule.relationName in prevRules :
-          pass
+      else :
+        prevRules.append( currRule.relationName )
 
-        else :
-          prevRules.append( currRule.relationName )
-
-          existentialVarSubgoal_dict = {}
-          existentialVarSubgoal_dict[ "subgoalName" ]    = currRule.ruleData[ "relationName" ]
-          existentialVarSubgoal_dict[ "subgoalAttList" ] = currRule.ruleData[ "goalAttList" ]
-          existentialVarSubgoal_dict[ "polarity" ]       = ""
-          existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
+        existentialVarSubgoal_dict = {}
+        existentialVarSubgoal_dict[ "subgoalName" ]    = currRule.ruleData[ "relationName" ]
+        existentialVarSubgoal_dict[ "subgoalAttList" ] = currRule.ruleData[ "goalAttList" ]
+        existentialVarSubgoal_dict[ "polarity" ]       = ""
+        existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
     
-          subgoalListOfDicts.append( existentialVarSubgoal_dict )
+        subgoalListOfDicts.append( existentialVarSubgoal_dict )
+
 
     # ----------------------------------------- #
     # build ruleData for new rule and save
@@ -2101,38 +2174,6 @@ def dnfToDatalog( not_name, \
     logging.debug( "  DNF TO DATALOG : returing newDMRule.ruleData = " + str( newRule.ruleData ) )
 
   return newDMRules
-
-
-##########################
-#  RULE IS ALREADY SAFE  #
-##########################
-# return True if every goal attribute appears in 
-# at least one positive subgoal.
-def rule_is_already_safe( goalAttList, subgoalListOfDicts ) :
-  for gatt in goalAttList :
-    flag = False
-    for sub in subgoalListOfDicts :
-      if sub[ "polarity" ] == "" and \
-         gatt in sub[ "subgoalAttList" ] :
-        flag = True
-    if flag :
-      continue
-    else :
-      return False
-  return True
-
-
-####################################
-#  RULE CONTAINS EXISTENTIAL VARS  #
-####################################
-# return True if a subgoal contains an attribute
-# not appearing in the goal attribute list.
-def rule_contains_existential_vars( goalAttList, subgoalListOfDicts ) :
-  for sub in subgoalListOfDicts :
-    for satt in sub[ "subgoalAttList" ] :
-      if not satt in goalAttList :
-        return True
-  return False
 
 
 #####################
