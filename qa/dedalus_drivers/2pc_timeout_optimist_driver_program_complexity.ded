@@ -1,0 +1,3 @@
+include "../testFiles/examples_ft/commit/2pc.ded" ;
+include "../testFiles/examples_ft/commit/2pc_assert_optimist.ded" ;
+include "../testFiles/timer_cancel.ded" ;

@@ -233,11 +233,12 @@ def c4datalog( argDict, cursor ) :
   # add crash facts
 
   crashFactList = dumpers_c4.dump_crash( cursor )
+  #crashFactList = []
 
   #print crashFactList
   #tools.bp( __name__, inspect.stack()[0][3], "blah" )
 
-  logging.debug( "c4_translator: crashFactList = " + str( crashFactList ) )
+  #logging.debug( "c4_translator: crashFactList = " + str( crashFactList ) )
 
   # ----------------------------------------------------------- #
   # add rules
