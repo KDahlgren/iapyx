@@ -38,6 +38,8 @@ if not os.path.abspath( __file__ + "/../../rewrite_wildcards" ) in sys.path :
 
 from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
+from evaluators  import c4_evaluator
+from comb        import combitorialNegRewriter
 
 import dm, iedb_rewrites, rewrite_wildcards
 
@@ -201,7 +203,8 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
     goal_atts = cursor.fetchall()
     goal_atts = tools.toAscii_multiList( goal_atts )
-    logging.debug( "  DEDT : goal_atts (1) = " + str( goal_atts ) )
+    #logging.debug( "  DEDT : goal_atts (1) = " + str( goal_atts ) )
+    logging.debug( "  DEDT : rule.ruleData = " + str( rule.ruleData ) )
 
   # ----------------------------------------------------------------------------- #
   # wilcard rewrites
@@ -221,6 +224,9 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
     logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
   #sys.exit( "blah2" )
+
+  for rule in ruleMeta :
+    logging.debug( "  DEDT : rule.ruleData (2) = " + str( rule.ruleData ) )
 
   # be sure to fill in all the type info for the new rule definitions
   setTypes.setTypes( cursor, argDict )
@@ -242,6 +248,29 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   except ConfigParser.NoOptionError :
     logging.warning( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
+    pass
+
+  try:
+    RUN_COMB = tools.getConfig( settings_path, "DEFAULT", "COMB", bool )
+
+    if RUN_COMB:
+      
+      # collect the results from the original program
+      original_prog = c4_translator.c4datalog( argDict, cursor )
+      results_array = c4_evaluator.runC4_wrapper( original_prog, argDict )
+      parsedResults = tools.getEvalResults_dict_c4( results_array )
+
+      # run the neg rewrite for combinatorial approach
+      # returns a new ruleMeta
+      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, \
+                                                               argDict, \
+                                                               settings_path, 
+                                                               ruleMeta, 
+                                                               factMeta, 
+                                                               parsedResults )
+
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without combo rewrites" )
     pass
 
   for rule in ruleMeta :

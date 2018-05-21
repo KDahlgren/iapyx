@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 
-import logging, os, string, sys, unittest
-import Test_dedt, Test_dm, Test_iedb_rewrites, Test_setTypes, Test_vs_molly, Test_molly_ldfi, Test_wildcard_rewrites
+import logging, os, unittest
+import Test_comb
+import Test_dedt
+import Test_dm
+import Test_iedb_rewrites
+import Test_setTypes
+import Test_vs_molly
+import Test_molly_ldfi
+import Test_wildcard_rewrites
 
 #####################
 #  UNITTEST DRIVER  #
@@ -18,7 +25,6 @@ def unittest_driver() :
   if os.path.exists( "./IR*.db*" ) :
     os.system( "rm ./IR*.db*" )
     logging.info( "  UNIT TEST DRIVER : deleted rogue IR*.db* file." )
-
 
   # run Test_dedt tests
   suite = unittest.TestLoader().loadTestsFromTestCase( Test_dedt.Test_dedt )
@@ -48,6 +54,9 @@ def unittest_driver() :
 #  suite = unittest.TestLoader().loadTestsFromTestCase( Test_molly_ldfi.Test_molly_ldfi )
 #  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
+  # run Test_comb tests
+  suite = unittest.TestLoader().loadTestsFromTestCase( Test_comb.Test_comb )
+  unittest.TextTestRunner( verbosity=2, buffer=False ).run( suite )
 
 #########################
 #  THREAD OF EXECUTION  #
