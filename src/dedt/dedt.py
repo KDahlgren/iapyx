@@ -437,7 +437,7 @@ def translateDedalus( argDict, cursor ) :
 
   evaluator = argDict[ 'evaluator' ] # flavor of datalog depends upon user's choice of evaluator.
 
-  complete_file_path = tools.compile_full_program_and_save( fileList )
+  complete_file_path = tools.compile_full_program_and_save( argDict, fileList )
 
   #logging.warning( "  TRANSLATE DEDALUS : translating files one at a time might be good if order matters." )
   logging.debug( "  TRANSLATE DEDALUS : complete_file_path = " + complete_file_path )

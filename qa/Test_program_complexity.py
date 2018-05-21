@@ -37,45 +37,50 @@ class Test_program_complexity( unittest.TestCase ) :
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
+  IAPYX_RUNS = False
+  MOLLY_RUNS = True
 
   ###########
   #  KAFKA  #
   ###########
   def test_kafka( self ) :
 
-    RUN_EVAL = False # dm conversion takes forever, but does hit the c4 stall eventually.
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # dm conversion takes forever, but does hit the c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run kafka_molly
 
-    test_id        = "program_complexity_kafka_molly"
-    test_file_name = "kafka"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_kafka_molly"
+      test_file_name = "kafka"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run kafka_iapyx
 
-    test_id        = "program_complexity_kafka_iapyx"
-    test_file_name = "kafka_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_kafka_iapyx"
+      test_file_name = "kafka_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 9
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 9
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -83,39 +88,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_3pc_97( self ) : 
 
-    RUN_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run 3pc_molly
 
-    test_id        = "program_complexity_3pc_97_molly"
-    test_file_name = "3pc_97"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_3pc_97_molly"
+      test_file_name = "3pc_97"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 3pc_97_iapyx
 
-    test_id        = "program_complexity_3pc_97_iapyx"
-    test_file_name = "3pc_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_3pc_97_iapyx"
+      test_file_name = "3pc_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 9
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 9
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -123,39 +131,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_3pc_80( self ) :
 
-    RUN_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run 3pc_80_molly
 
-    test_id        = "program_complexity_3pc_80_molly"
-    test_file_name = "3pc_80"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_3pc_80_molly"
+      test_file_name = "3pc_80"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 3pc_80_iapyx
 
-    test_id        = "program_complexity_3pc_80_iapyx"
-    test_file_name = "3pc_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_3pc_80_iapyx"
+      test_file_name = "3pc_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   #############
@@ -163,39 +174,42 @@ class Test_program_complexity( unittest.TestCase ) :
   #############
   def test_2pc_ctp( self ) :
 
-    RUN_EVAL = False # dm conversion takes forever, but hits c4 eval stall eventually.
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 eval stall eventually.
 
     # --------------------------------------------------------------- #
     # run 2pc_ctp_molly
 
-    test_id        = "program_complexity_2pc_ctp_molly"
-    test_file_name = "2pc_ctp"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_ctp_molly"
+      test_file_name = "2pc_ctp"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_ctp_iapyx
 
-    test_id        = "program_complexity_2pc_ctp_iapyx"
-    test_file_name = "2pc_ctp_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_ctp_iapyx"
+      test_file_name = "2pc_ctp_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   #################
@@ -203,39 +217,42 @@ class Test_program_complexity( unittest.TestCase ) :
   #################
   def test_2pc_timeout( self ) :
 
-    RUN_EVAL = False # stalls at c4 eval
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # stalls at c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_molly
 
-    test_id        = "program_complexity_2pc_timeout_molly"
-    test_file_name = "2pc_timeout"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_timeout_molly"
+      test_file_name = "2pc_timeout"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_iapyx
 
-    test_id        = "program_complexity_2pc_timeout_iapyx"
-    test_file_name = "2pc_timeout_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_timeout_iapyx"
+      test_file_name = "2pc_timeout_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ##########################
@@ -243,39 +260,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ##########################
   def test_2pc_timeout_optimist( self ) :
 
-    RUN_EVAL = False # stalls on c4 eval
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_optimist_molly
 
-    test_id        = "program_complexity_2pc_timeout_optimist_molly"
-    test_file_name = "2pc_timeout_optimist"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_timeout_optimist_molly"
+      test_file_name = "2pc_timeout_optimist"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_optimist_iapyx
 
-    test_id        = "program_complexity_2pc_timeout_optimist_iapyx"
-    test_file_name = "2pc_timeout_optimist_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_timeout_optimist_iapyx"
+      test_file_name = "2pc_timeout_optimist_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ##################
@@ -283,39 +303,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ##################
   def test_2pc_optimist( self ) :
 
-    RUN_EVAL = False # stalls on c4 eval
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_optimist_molly
 
-    test_id        = "program_complexity_2pc_optimist_molly"
-    test_file_name = "2pc_optimist"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_optimist_molly"
+      test_file_name = "2pc_optimist"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_63_iapyx
 
-    test_id        = "program_complexity_2pc_optimist_iapyx"
-    test_file_name = "2pc_optimist_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_optimist_iapyx"
+      test_file_name = "2pc_optimist_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -323,39 +346,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_2pc_63( self ) :
 
-    RUN_EVAL = False # stalls on c4 eval
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_63_molly
 
-    test_id        = "program_complexity_2pc_63_molly"
-    test_file_name = "2pc_63"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_63_molly"
+      test_file_name = "2pc_63"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_63_iapyx
 
-    test_id        = "program_complexity_2pc_63_iapyx"
-    test_file_name = "2pc_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_63_iapyx"
+      test_file_name = "2pc_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -363,39 +389,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_2pc_73( self ) :
 
-    RUN_EVAL = False # stalls on c4 eval
+    MOLLY_EVAL = True
+    IAPYX_EVAL = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_73_molly
 
-    test_id        = "program_complexity_2pc_73_molly"
-    test_file_name = "2pc_73"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_2pc_73_molly"
+      test_file_name = "2pc_73"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run 2pc_73_iapyx
 
-    test_id        = "program_complexity_2pc_73_iapyx"
-    test_file_name = "2pc_driver_program_complexity"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_2pc_73_iapyx"
+      test_file_name = "2pc_driver_program_complexity"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 7
+      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 7
-    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -403,39 +432,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_ack_rb( self ) :
 
-    RUN_EVAL = True
+    MOLLY_EVAL = True
+    IAPYX_EVAL = True
 
     # --------------------------------------------------------------- #
     # run ack_rb_molly
 
-    test_id        = "program_complexity_ack_rb_molly"
-    test_file_name = "ack_rb"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_ack_rb_molly"
+      test_file_name = "ack_rb"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run ack_rb_iapyx
 
-    test_id        = "program_complexity_ack_rb_iapyx"
-    test_file_name = "ack_rb_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_ack_rb_iapyx"
+      test_file_name = "ack_rb_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ################
@@ -443,39 +475,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ################
   def test_classic_rb( self ) :
 
-    RUN_EVAL = True
+    MOLLY_EVAL = True
+    IAPYX_EVAL = True
 
     # --------------------------------------------------------------- #
     # run classic_rb_molly
 
-    test_id        = "program_complexity_classic_rb_molly"
-    test_file_name = "classic_rb"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_classic_rb_molly"
+      test_file_name = "classic_rb"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run classic_rb_iapyx
 
-    test_id        = "program_complexity_classic_rb_iapyx"
-    test_file_name = "classic_rb_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_classic_rb_iapyx"
+      test_file_name = "classic_rb_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ############
@@ -483,39 +518,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ############
   def test_replog( self ) :
 
-    RUN_EVAL = True
+    MOLLY_EVAL = True
+    IAPYX_EVAL = True
 
     # --------------------------------------------------------------- #
     # run replog_molly
 
-    test_id        = "program_complexity_replog_molly"
-    test_file_name = "replog"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_replog_molly"
+      test_file_name = "replog"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run replog_iapyx
 
-    test_id        = "program_complexity_replog_iapyx"
-    test_file_name = "replog_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_replog_iapyx"
+      test_file_name = "replog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   ###########
@@ -523,39 +561,42 @@ class Test_program_complexity( unittest.TestCase ) :
   ###########
   def test_rdlog( self ) :
 
-    RUN_EVAL = True
+    MOLLY_EVAL = True
+    IAPYX_EVAL = True
 
     # --------------------------------------------------------------- #
     # run rdlog_molly
 
-    test_id        = "program_complexity_rdlog_molly"
-    test_file_name = "rdlog"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_rdlog_molly"
+      test_file_name = "rdlog"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run rdlog_iapyx
 
-    test_id        = "program_complexity_rdlog_iapyx"
-    test_file_name = "rdlog_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_rdlog_iapyx"
+      test_file_name = "rdlog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
   #############
@@ -563,39 +604,42 @@ class Test_program_complexity( unittest.TestCase ) :
   #############
   def test_simplog( self ) :
 
-    RUN_EVAL = True
+    MOLLY_EVAL = True
+    IAPYX_EVAL = True
 
     # --------------------------------------------------------------- #
     # run simplog_molly
 
-    test_id        = "program_complexity_simplog_molly"
-    test_file_name = "simplog"
-
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./molly_progs/" + test_file_name + ".olg"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-    eval_molly = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
+    if self.MOLLY_RUNS :
+      test_id        = "program_complexity_simplog_molly"
+      test_file_name = "simplog"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+  
+      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
     # run simplog_iapyx
 
-    test_id        = "program_complexity_simplog_iapyx"
-    test_file_name = "simplog_driver"
+    if self.IAPYX_RUNS :
+      test_id        = "program_complexity_simplog_iapyx"
+      test_file_name = "simplog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+  
+      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
 
-    print " >>> RUNNING " + test_id + " <<<"
-
-    input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-    argDict                     = self.getArgDict( input_file )
-    argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-    argDict[ 'EOT' ]            = 6
-    argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-
-    eval_iapyx = self.run_workflow( test_id, argDict, input_file, RUN_EVAL )
-
-    if RUN_EVAL :
+    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
       self.check_results_alignment( eval_molly, eval_iapyx )
 
 

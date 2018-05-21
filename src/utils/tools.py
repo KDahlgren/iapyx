@@ -33,18 +33,12 @@ TOOLS_DEBUG = False
 # save call file contents into a single file,
 # orderedby last to first.
 # return the full path to the generated file.
-def compile_full_program_and_save( fileList ) :
+def compile_full_program_and_save( argDict, fileList ) :
 
   logging.debug( "  COMPILE FULL PROGRAM AND SAVE : fileList = " + str( fileList ) )
 
-  # get starter file prepend path
-  starterFile_path = fileList[-1]
-  prepend = starterFile_path.split( "/" )
-  prepend = prepend[:-1]
-  prepend = "/".join( prepend )
-
   # use cwd as the save file path
-  save_file_path = prepend + "/complete_dedalus_program.ded"
+  save_file_path = argDict[ "data_save_path" ] + "/complete_dedalus_program.ded"
 
   # open save file
   # observe 'w' completely overwrites any existing files by the same name
