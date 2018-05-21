@@ -29,8 +29,8 @@ import iedb_rewrites
 ########################
 class Test_iedb_rewrites( unittest.TestCase ) :
 
-  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
-  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
+  logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
+  #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP    = False
