@@ -511,7 +511,10 @@ def prioritizeDoms( rid, subIDs, cursor ) :
     subgoalName = cursor.fetchone()
     subgoalName = tools.toAscii_str( subgoalName )
 
-    if "dom_" in subgoalName[0:4] : 
+    if subgoalName.startswith( "dom_" )     or \
+       subgoalName.startswith( "domcomp_" ) or \
+       subgoalName.startswith( "unidom_" )  or \
+       subgoalName.startswith( "exidom_" ) :
       domSubs.append( subID )
     else :
       nonDomSubs.append( subID )

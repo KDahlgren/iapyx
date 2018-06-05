@@ -34,7 +34,6 @@ class Test_comb( unittest.TestCase ) :
 
   PRINT_STOP = False
 
-
   ###################
   # RUNNING EXAMPLE #
   ###################
@@ -61,6 +60,21 @@ class Test_comb( unittest.TestCase ) :
     expected_iapyx_comb_path = "./testFiles/2pc_ctp_comb.olg"
 
     self.comparison_workflow( inputfile, expected_iapyx_comb_path, test_id )
+
+  #################
+  #  COMB ACK RB  #
+  #################
+  # tests rewriting ack_rb
+  @unittest.skip( "results do not align." )
+  def test_comb_ack_rb( self ) :
+
+    test_id = "comb_ack_rb"
+
+    # specify input and output paths
+    inputfile                = os.getcwd() + "/testFiles/ack_rb_driver.ded"
+    expected_iapyx_comb_path = "./testFiles/ack_rb_iapyx_comb.olg"
+
+    self.comparison_workflow( inputfile, expected_iapyx_comb_path, test_id, eot=6 )
 
   ################
   #  COMB REPLOG  #
@@ -195,57 +209,55 @@ class Test_comb( unittest.TestCase ) :
                            eff=4 ) :
 
     # --------------------------------------------------------------- #
-    # testing set up.
-
-    if os.path.isfile( "./IR.db" ) :
-      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
-
-    testDB = "./IR.db"
-    IRDB    = sqlite3.connect( testDB )
-    cursor  = IRDB.cursor()
-
-    # --------------------------------------------------------------- #
-    # reset counters for new test
-
-    dedt.globalCounterReset()
-
-    # --------------------------------------------------------------- #
-    # runs through function to make sure it finishes with expected error
-
     # get argDict
-    argDict = self.getArgDict( inputfile, negprov=True, nodes=nodes, eot=eot, eff=eff )
-    origArgDict = self.getArgDict( inputfile, negprov=False )
+
+    argDict     = self.getArgDict( inputfile, negprov=True, nodes=nodes, eot=eot, eff=eff )
+    origArgDict = self.getArgDict( inputfile, negprov=False, nodes=nodes, eot=eot, eff=eff )
 
     argDict[ "data_save_path" ]     += test_id
     origArgDict[ "data_save_path" ]  = argDict[ "data_save_path" ]
     self.make_data_dir( argDict[ "data_save_path" ], test_id )
 
-    # run translator
-    programData = dedt.translateDedalus( argDict, cursor )
+    # --------------------------------------------------------------- #
+    # testing set up.
+
+    testDB = "./" + argDict[ "data_save_path" ] + "/IR_" + test_id
+    testDB_combo = testDB + "_combo.db"
+    testDB_orig  = testDB + "_orig.db"
+
+    if os.path.isfile( testDB_combo ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
+      os.remove( testDB_combo )
+    if os.path.isfile( testDB_orig ) :
+      logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
+      os.remove( testDB_orig )
+
+    IRDB_combo   = sqlite3.connect( testDB_combo )
+    cursor_combo = IRDB_combo.cursor()
+    dedt.globalCounterReset()
+    programData = dedt.translateDedalus( argDict, cursor_combo )
 
     # Clear db.
-    IRDB.close()
-    os.remove( testDB )
+    IRDB_combo.close()
+    os.remove( testDB_combo )
 
-    if os.path.isfile( "./IR.db" ) :
+    if os.path.isfile( testDB_orig ) :
       logging.debug( "  COMPARISON WORKFLOW : removing rogue IR file." )
-      os.remove( "./IR.db" )
+      os.remove( testDB_orig )
 
-    testDB = "./IR.db"
-    IRDB    = sqlite3.connect( testDB )
-    cursor  = IRDB.cursor()
+    IRDB_orig   = sqlite3.connect( testDB_orig )
+    cursor_orig = IRDB_orig.cursor()
+    dedt.globalCounterReset()
 
     # run the translator with negprov turned off to compare results
-    origProgData = dedt.translateDedalus( origArgDict, cursor )
-
+    origProgData = dedt.translateDedalus( origArgDict, cursor_orig )
 
     # portray actual output program lines as a single string
     iapyx_results = self.getActualResults( programData[0] )
 
     if self.PRINT_STOP :
       print iapyx_results
-      sys.exit( "print stop." )
+      sys.exit( "PRINT STOP" )
 
     # ========================================================== #
     # IAPYX COMPARISON
@@ -266,8 +278,8 @@ class Test_comb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     #clean up testing
 
-    IRDB.close()
-    os.remove( testDB )
+    IRDB_orig.close()
+    os.remove( testDB_orig )
 
 
   ##################
@@ -298,6 +310,10 @@ class Test_comb( unittest.TestCase ) :
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = eff
     argDict[ 'data_save_path' ]           = "./data/"
+    argDict[ 'neg_writes' ]               = "combo"
+
+    if not negprov :
+      argDict[ 'neg_writes' ] = ""
 
     return argDict
 
@@ -328,10 +344,9 @@ class Test_comb( unittest.TestCase ) :
   # return some data structure or storage location encompassing the evaluation results.
   def evaluate( self, programData, origProgData, argDict ) :
 
-    noOverlap = False
-
-    results_array = c4_evaluator.runC4_wrapper( programData[0], argDict )
+    results_array      = c4_evaluator.runC4_wrapper( programData[0], argDict )
     orig_results_array = c4_evaluator.runC4_wrapper( origProgData[0], argDict )
+
     # ----------------------------------------------------------------- #
     # convert results array into dictionary
 
@@ -354,7 +369,62 @@ class Test_comb( unittest.TestCase ) :
     # make sure comb positive relation results are identical to molly
     # relation results
 
-    self.comparePositiveResults( orig_eval_results_dict, eval_results_dict )
+    self.check_results_alignment( orig_eval_results_dict, eval_results_dict )
+
+
+  #############################
+  #  CHECK RESULTS ALIGNMENT  #
+  #############################
+  def check_results_alignment( self, eval_molly, eval_combo ) :
+    logging.debug( "" )
+    logging.debug( "<><><><><><><><><><><><><><><><><><>" )
+    logging.debug( "<>   CHECKING TUPLE ALIGNMENTS    <>" )
+
+    # combo check
+    logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
+    logging.debug( "  checking results for combo v. molly:" )
+
+    molly_tups_not_in_iapyx = []
+    iapyx_tups_not_in_molly = []
+
+    for rel in eval_molly :
+      if "_prov" in rel :
+        continue
+      else :
+
+        # check for extra molly tups
+        extra_molly_tups = []
+        for molly_tup in eval_molly[ rel ] :
+          if not molly_tup in eval_combo[ rel ] :
+            extra_molly_tups.append( molly_tup )
+        molly_tups_not_in_iapyx.extend( extra_molly_tups )
+
+        # check for extra combo tups
+        extra_combo_tups = []
+        for combo_tup in eval_combo[ rel ] :
+          if not combo_tup in eval_molly[ rel ] :
+            extra_combo_tups.append( combo_tup )
+        iapyx_tups_not_in_molly.extend( extra_combo_tups )
+
+        if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+          logging.debug( ">>>> alignment inconsistencies for relation '" + rel + "' :" )
+
+        if len( extra_molly_tups ) > 0 :
+          logging.debug( "> tuples found in molly and not in combo for relation '" + rel.upper() + " :" )
+          for tup in extra_molly_tups :
+            logging.debug( ",".join( tup ) )
+        if len( extra_combo_tups ) > 0 :
+          logging.debug( "> tuples found in combo and not in molly for relation '" + rel.upper() + " :" )
+          for tup in extra_combo_tups :
+            logging.debug( ",".join( tup ) )
+        if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+          logging.debug( "<<<<" )
+
+    logging.debug( "" )
+    logging.debug( "<><><><><><><><><><><><><><><><><><>" )
+    print molly_tups_not_in_iapyx
+    self.assertTrue( len( molly_tups_not_in_iapyx ) < 1 )
+    self.assertTrue( len( iapyx_tups_not_in_molly ) < 1 )
 
 
   ############################
@@ -365,7 +435,17 @@ class Test_comb( unittest.TestCase ) :
   def comparePositiveResults( self, orig_eval_results_dict, eval_results_dict ):
 
     for key, val in orig_eval_results_dict.iteritems():
+      # ensuring matching tuple contents is 
+      # not a good evaluation standard when the goal att orderings
+      # in prov rules can't match whatever the hell order Molly's using.
+      if not "_prov" in key :
+        logging.debug( "  COMPARE POSITIVE RESULTS : key = " + key )
+        for tup in val :
+          logging.debug( "  COMPARE POSITIVE RESULTS : tup = " + str( tup ) )
+        for tup in eval_results_dict[ key ] :
+          self.assertTrue( tup in val )
 
+    for key, val in eval_results_dict.iteritems():
       # ensuring matching tuple contents is 
       # not a good evaluation standard when the goal att orderings
       # in prov rules can't match whatever the hell order Molly's using.

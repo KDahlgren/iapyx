@@ -48,8 +48,12 @@ def negateRule( cursor, \
     logging.warning( "  COMBO REWRITE: parent rule " + rule[0] + " not found." )
     return ruleMeta, factMeta
 
-  # insert domain infomration
-  ruleMeta, factMeta = domain.insertDomainFact( cursor, rule, ruleMeta, factMeta, parsedResults )
+  # insert domain information
+  ruleMeta, factMeta = domain.insertDomainFact( cursor, \
+                                                rule, \
+                                                ruleMeta, \
+                                                factMeta, \
+                                                parsedResults )
 
   # Find the rule to be negated
   rule = rule[0]
@@ -118,7 +122,8 @@ def negateRule( cursor, \
     negRule        = goalData.saveRule( negRule )
     ruleMeta.append( negRule )
 
-  # if there are facts associated with it, adds in a rule to cover things at the time stamp that dont exist.
+  # if there are facts associated with it, 
+  # adds in a rule to cover things at the time stamp that dont exist.
   ruleMeta, factMeta = addNegFact( cursor, ruleMeta, factMeta, old_name )
 
   # flips the notin version of the rules to not_
@@ -134,8 +139,10 @@ def negateRule( cursor, \
 def addNegFact(cursor, ruleMeta, factMeta, old_name):
 
   '''
-    If there are any facts associated with the rule, sets up a negated rule that covers all things within the 
-    domain that are notin the rule and are at the same timestamp. This covers base facts for recursive rules.
+    If there are any facts associated with the rule, 
+    sets up a negated rule that covers all things within the 
+    domain that are notin the rule and are at the same timestamp. 
+    This covers base facts for recursive rules.
   '''
 
   for fact in factMeta:
@@ -150,11 +157,17 @@ def addNegFact(cursor, ruleMeta, factMeta, old_name):
       rule = createRuleData("not_"+old_name,"", atts)
 
       for attIndex in range (0,len(atts)):
-        rule = createSubgoal(rule, ["Att"+str(attIndex)], "dom_not_"+old_name+"_"+str(attIndex))
+        rule = createSubgoal( rule, \
+                             [ "Att" + str( attIndex ) ], \
+                             "dom_not_" + old_name + "_" + str( attIndex ) )
 
-      rule = createSubgoal(rule, atts, old_name, notin="notin")
-      rid = tools.getIDFromCounters( "rid" )
+      rule    = createSubgoal( rule, \
+                               atts, \
+                               old_name, \
+                               notin = "notin" )
+      rid     = tools.getIDFromCounters( "rid" )
       newRule = Rule.Rule( rid, rule, cursor )
+
       ruleMeta.append(newRule)
 
       return ruleMeta, factMeta

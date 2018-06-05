@@ -20,6 +20,7 @@ from utils      import dumpers, globalCounters, tools
 from evaluators import c4_evaluator
 
 import dm
+import dm_tools
 
 # ------------------------------------------------------ #
 
@@ -90,6 +91,30 @@ class Test_dm( unittest.TestCase ) :
 
     self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
+
+  ###############
+  #  DM 2PC 73  #
+  ###############
+  @unittest.skip( "program generation stalling." )
+  def test_dm_2pc_73( self ) :
+
+    test_id = "_dm_2pc_73_"
+    logging.info( "  TEST DM : running test" + test_id )
+
+    # specify input and output paths
+    inputfile               = os.getcwd() + "/testFiles/2pc_driver.ded"
+    expected_iapyx_dm_path = "./testFiles/program_complexity_2pc_73_dm_iapyx_dm.olg"
+    expected_eval_path      = "./testFiles/2pc_73_molly_eval.txt"
+
+    # get argDict
+    argDict = self.getArgDict( inputfile )
+
+    # get custom save path
+    argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ 'EOT' ]            = 7
+    argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+
+    self.comparison_workflow( argDict, inputfile, expected_iapyx_dm_path, expected_eval_path, test_id )
 
   ################
   #  DM REPLOG  #
@@ -438,6 +463,8 @@ class Test_dm( unittest.TestCase ) :
 
     expected_eval_results_dict = tools.getEvalResults_dict_c4( expected_results_array )
 
+    #self.check_results_alignment( expected_eval_results_dict, eval_results_dict )
+
     # ----------------------------------------------------------------- #
     # compare all positive tables (not prov)
 
@@ -446,12 +473,17 @@ class Test_dm( unittest.TestCase ) :
       # ----------------------------------------------------------------- #
       # skip not_ rules, _prov rules, adom_ rules
 
-      if rel_key.startswith( "not_" ) or \
+      if rel_key.startswith( "not_" )     or \
          rel_key.startswith( "domcomp_" ) or \
-         rel_key.startswith( "dom_" ) or \
-         rel_key == "adom_string" or \
-         rel_key == "adom_int" or \
-         "_prov" in rel_key or \
+         rel_key.startswith( "dom_" )     or \
+         rel_key.startswith( "orig_" )    or \
+         rel_key.startswith( "unidom_" )  or \
+         rel_key.startswith( "exidom_" )  or \
+         rel_key.endswith( "_edb" )       or \
+         rel_key == "adom_string"         or \
+         rel_key == "adom_int"            or \
+         "_nowilds" in rel_key            or \
+         "_prov" in rel_key               or \
          "_agg" in rel_key :
 
         pass
@@ -943,6 +975,7 @@ class Test_dm( unittest.TestCase ) :
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
     argDict[ 'data_save_path' ]           = "./data/"
+    argDict[ 'neg_writes' ]               = "dm"
 
     return argDict
 
@@ -1019,7 +1052,7 @@ class Test_dm( unittest.TestCase ) :
 
     argDict = self.getArgDict( "" )
     argDict[ "settings" ] = "./settings_files/settings.ini"
-    targetRuleMeta = dm.replaceSubgoalNegations( ruleMeta, argDict )
+    targetRuleMeta = dm_tools.replaceSubgoalNegations( ruleMeta, argDict )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -1473,6 +1506,8 @@ class Test_dm( unittest.TestCase ) :
     actual_existentialVarsRules_ruleData = []
     for ruleSet in targetRuleMeta :
 
+      ruleSet = ruleSet[1]
+
       # get not_ name
       orig_name = ruleSet[0].ruleData[ "relationName" ]
       not_name  = "not_" + orig_name
@@ -1667,6 +1702,8 @@ class Test_dm( unittest.TestCase ) :
     actual_domcompRules_ruleData = []
     for ruleSet in targetRuleMeta :
 
+      ruleSet = ruleSet[1]
+
       # get not_ name
       orig_name = ruleSet[0].ruleData[ "relationName" ]
       not_name  = "not_" + orig_name
@@ -1816,6 +1853,8 @@ class Test_dm( unittest.TestCase ) :
 
     actual_newDMRules_ruleData = []
     for ruleSet in targetRuleMeta :
+
+      ruleSet = ruleSet[1]
 
       # get not_ name
       orig_name = ruleSet[0].ruleData[ "relationName" ]
@@ -2035,6 +2074,8 @@ class Test_dm( unittest.TestCase ) :
     actual_newDMRules_ruleData = []
     for ruleSet in targetRuleMeta :
 
+      ruleSet = ruleSet[1]
+
       # get not_ name
       orig_name = ruleSet[0].ruleData[ "relationName" ]
       not_name  = "not_" + orig_name
@@ -2248,6 +2289,7 @@ class Test_dm( unittest.TestCase ) :
 
     actual_pos_dnf_fmlas = []
     for ruleSet in targetRuleMeta :
+      ruleSet = ruleSet[1]
       negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
       actual_pos_dnf_fmlas.append( str( dm.simplifyToDNF( negated_dnf_fmla ) ) )
 
@@ -2348,6 +2390,7 @@ class Test_dm( unittest.TestCase ) :
 
     actualFmlas = []
     for ruleSet in targetRuleMeta :
+      ruleSet = ruleSet[1]
       actualFmlas.append( dm.generateBooleanFormula( ruleSet ) )
 
     # --------------------------------------------------------------- #
@@ -2448,6 +2491,7 @@ class Test_dm( unittest.TestCase ) :
 
     actualTargetRuleData = []
     for ruleSet in targetRuleMeta :
+      ruleSet = ruleSet[1]
       ruleDataSet = []
       for rule in ruleSet :
         ruleDataSet.append( rule.ruleData )
@@ -2521,7 +2565,7 @@ class Test_dm( unittest.TestCase ) :
 
     targetRuleMeta = dm.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
 
-    actualTargetRuleData = targetRuleMeta[0][0].ruleData # should yield only one rule in one rule set
+    actualTargetRuleData = targetRuleMeta[0][1][0].ruleData # should yield only one rule in one rule set
 
     # --------------------------------------------------------------- #
     # check assertion
@@ -2728,6 +2772,62 @@ class Test_dm( unittest.TestCase ) :
     program_string  = "\n".join( programLines[0][0] )
     program_string += "\n" # add extra newline to align with read() parsing
     return program_string
+
+
+  #############################
+  #  CHECK RESULTS ALIGNMENT  #
+  #############################
+  def check_results_alignment( self, eval_molly, eval_dm ) :
+
+    assert( len( eval_molly ) > 0 )
+    assert( len( eval_dm ) > 0 )
+
+    print
+    print "<><><><><><><><><><><><><><><><><><>"
+    print "<>   CHECKING TUPLE ALIGNMENTS    <>"
+
+    # check dm
+    logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
+    logging.debug( "  checking results for dm v. molly:" )
+    extra_molly_tups_final = []
+    extra_dm_tups_final    = []
+    for rel in eval_molly :
+      if "_prov" in rel :
+        continue
+      else :
+
+        # check for extra molly tups
+        extra_molly_tups = []
+        for molly_tup in eval_molly[ rel ] :
+          if not molly_tup in eval_dm[ rel ] :
+            extra_molly_tups.append( molly_tup )
+            extra_molly_tups_final.append( molly_tup )
+
+        # check for extra dm tups
+        extra_dm_tups = []
+        for dm_tup in eval_dm[ rel ] :
+          if not dm_tup in eval_molly[ rel ] :
+            extra_dm_tups.append( dm_tup )
+            extra_dm_tups_final.append( dm_tup )
+
+        if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+          print ">>>> alignment inconsistencies for relation '" + rel + "' :"
+
+        if len( extra_molly_tups ) > 0 :
+          print "> tuples found in molly and not in dm for relation '" + rel.upper() + " :"
+          for tup in extra_molly_tups :
+            print ",".join( tup )
+
+        if len( extra_dm_tups ) > 0 :
+          print "> tuples found in dm and not in molly for relation '" + rel.upper() + " :"
+          for tup in extra_dm_tups :
+            print ",".join( tup )
+
+        if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+          print "<<<<"
+
+    #self.assertTrue( len( extra_molly_tups_final ) < 1 )
+    #self.assertTrue( len( extra_dm_tups_final ) < 1 )
 
 
 if __name__ == "__main__" :

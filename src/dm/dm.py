@@ -12,6 +12,8 @@ import itertools
 import ConfigParser
 
 import dm_time_att_replacement
+import dm_tools
+import sip
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -43,9 +45,42 @@ arithFuncs = [ "count", "avg", "min", "max", "sum" ]
 # ruleMeta := a list of Rule objects
 def dm( factMeta, ruleMeta, cursor, argDict ) :
 
+  # ----------------------------------------- #
+
   logging.debug( "  DM : running process..." )
 
   settings_path = argDict[ "settings" ]
+
+  # ----------------------------------------- #
+  # get parameters
+
+  # ========== OPTIMIZE NOT ========== #
+  try :
+    OPTIMIZE_NOT = tools.getConfig( settings_path, "DEFAULT", "OPTIMIZE_NOT", bool )
+  except ConfigParser.NoOptionError :
+    OPTIMIZE_NOT = False
+    logging.warning( "WARNING : no 'OPTIMIZE_NOT' defined in 'DEFAULT' section of " + settings_path + \
+                     " ...running with OPTIMIZE_NOT=False." )
+
+  # ========== NW DOM DEF ========== #
+  try :
+    NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", str )
+    if NW_DOM_DEF == "dm_huge" or \
+       NW_DOM_DEF == "sip_edb" or \
+       NW_DOM_DEF == "sip_idb" :
+      pass
+    else :
+      raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
+                        "'. aborting..." )
+  except ConfigParser.NoOptionError :
+    raise ValueError( "no 'NW_DOM_DEF' defined in 'DEFAULT' section of " + settings_path + \
+                      ". aborting..." )
+
+  # ----------------------------------------- #
+  # replace unused variables with wildcards
+
+  if NW_DOM_DEF == "sip_idb" :
+    ruleMeta = dm_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #
   # rewrite rules with fixed data 
@@ -96,6 +131,24 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
     logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
 
   # ----------------------------------------- #
+  # append rids to all rel names and
+  # generate cps of the original rules
+  # (do not reference these in final programs)
+
+  if NW_DOM_DEF == "sip_idb" : 
+    #ruleMeta = dm_tools.change_rel_names( ruleMeta )
+
+    # future optimization : do this lazily:
+    ruleMeta.extend( dm_tools.generate_orig_cps( ruleMeta ) )
+
+  # ----------------------------------------- #
+  # generate a map of all rids to corresponding
+  # rule meta object pointers.
+
+  if NW_DOM_DEF == "sip_idb" : 
+    rid_to_rule_meta_map = dm_tools.generate_rid_to_rule_meta_map( ruleMeta )
+
+  # ----------------------------------------- #
   # build all de morgan's rules
 
   COUNTER = 0
@@ -108,8 +161,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
     # to rule meta list
     # only do this once.
      
-    if COUNTER < 1 :
-
+    if COUNTER < 1 and NW_DOM_DEF == "dm_huge" :
       ruleMeta.extend( buildAdom( factMeta, cursor ) )
     
     # ----------------------------------------- #
@@ -119,45 +171,68 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
     targetRuleMetaSets = getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
     
     # ----------------------------------------- #
-    # break execution if no rules contain negated IDBs
+    # break execution if no rules contain negated IDBs.
     # should not hit this b/c of loop condition.
 
     if len( targetRuleMetaSets ) < 1 :
       return []
     
     # ----------------------------------------- #
-    # create the de morgan rewrite rules
+    # create the de morgan rewrite rules.
     # incorporates domcomp and existential 
-    # domain subgoals
+    # domain subgoals.
     
-    for s in targetRuleMetaSets :
-      for r in s :
-        logging.debug( "  DM : r.ruleData = " + str( r.ruleData ) )
+    if NW_DOM_DEF == "dm_huge" : 
+      ruleMeta = doDeMorgans_dm_huge( ruleMeta, \
+                                      targetRuleMetaSets, \
+                                      cursor, \
+                                      argDict )
+    elif NW_DOM_DEF == "sip_edb" : 
+      ruleMeta = sip.doDeMorgans_sip_edb( factMeta, \
+                                          ruleMeta, \
+                                          targetRuleMetaSets, \
+                                          cursor, \
+                                          argDict )
+    elif NW_DOM_DEF == "sip_idb" : 
+      ruleMeta = sip.doDeMorgans_sip_idb( factMeta, \
+                                          ruleMeta, \
+                                          targetRuleMetaSets, \
+                                          rid_to_rule_meta_map, \
+                                          cursor, \
+                                          argDict )
+    else :
+      raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
+                        "'. aborting..." )
 
-    # ----------------------------------------- #  
-    # build and add the new de morgan's rules
+    # ----------------------------------------- #
+    # update rid to rule meta map
 
-    ruleMeta = doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict )
+    rid_to_rule_meta_map = dm_tools.generate_rid_to_rule_meta_map( ruleMeta )
 
-    # ----------------------------------------- #  
     # increment loop counter
-
     COUNTER += 1
+
+    #for rule in ruleMeta :
+    #  print str( rule.rid ) + " : " + dumpers.reconstructRule( rule.rid, rule.cursor )
+
+  # ----------------------------------------- #
+  # replace unused variables with wildcards
+
+  if NW_DOM_DEF == "sip_idb" :
+    ruleMeta = dm_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #  
   #  apply filters
-
-  try :
-    OPTIMIZE_NOT = tools.getConfig( settings_path, "DEFAULT", "OPTIMIZE_NOT", bool )
-  except ConfigParser.NoOptionError :
-    OPTIMIZE_NOT = False
-    logging.warning( "WARNING : no 'OPTIMIZE_NOT' defined in 'DEFAULT' section of settings.ini ...running with OPTIMIZE_NOT=False." )
 
   if OPTIMIZE_NOT :
     for rule in ruleMeta :
       if rule.ruleData[ "relationName" ].startswith( "not_" ) :
         # observe all negated subgoals, at this point, will be edb.
         remove_any_unnecessary_constraint_subgoals( rule )
+
+#  for rule in ruleMeta :
+#    print dumpers.reconstructRule( rule.rid, rule.cursor )
+#  sys.exit( "blahahaha" )
 
   logging.debug( "  DM : ...done." )
   return factMeta, ruleMeta
@@ -178,7 +253,11 @@ def remove_any_unnecessary_constraint_subgoals( rule ) :
   for sub in rule.ruleData[ "subgoalListOfDicts" ] :
     #if sub[ "subgoalName" ].startswith( "domcomp_") and not is_necessary( sub, rule ) :
     #  pass # excluding these makes the results incorrect
-    if sub[ "subgoalName" ].startswith( "dom_") and not is_necessary( sub, rule ) :
+    if sub[ "subgoalName" ].startswith( "dom_")     and not is_necessary( sub, rule ) or \
+       sub[ "subgoalName" ].startswith( "domcomp_") and not is_necessary( sub, rule ) or \
+       sub[ "subgoalName" ].startswith( "unidom_")  and not is_necessary( sub, rule ) or \
+       sub[ "subgoalName" ].startswith( "exidom_")  and not is_necessary( sub, rule ) or \
+       sub[ "subgoalName" ].startswith( "orig_")  and not is_necessary( sub, rule ) :
       pass
     else :
       # keep it.
@@ -251,8 +330,11 @@ def is_necessary( constraint_subgoal_dict, rule_obj ) :
 def get_subgoal_att_list( rule_obj ) :
   subgoal_att_list = []
   for sub in rule_obj.ruleData[ "subgoalListOfDicts" ] :
-    if not sub[ "subgoalName" ].startswith( "dom_" ) and \
-       not sub[ "subgoalName" ].startswith( "domcomp_" ) :
+    if not sub[ "subgoalName" ].startswith( "dom_" )     and \
+       not sub[ "subgoalName" ].startswith( "domcomp_" ) and \
+       not sub[ "subgoalName" ].startswith( "unidom_" )  and \
+       not sub[ "subgoalName" ].startswith( "exidom_" )  and \
+       not sub[ "subgoalName" ].startswith( "orig_" ) :
       for satt in sub[ "subgoalAttList" ] :
         if not satt in subgoal_att_list :
           subgoal_att_list.append( satt )
@@ -265,8 +347,11 @@ def get_subgoal_att_list( rule_obj ) :
 def get_pos_subgoal_att_list( rule_obj ) :
   pos_subgoal_att_list = []
   for sub in rule_obj.ruleData[ "subgoalListOfDicts" ] :
-    if not sub[ "subgoalName" ].startswith( "dom_" ) and \
+    if not sub[ "subgoalName" ].startswith( "dom_" )     and \
        not sub[ "subgoalName" ].startswith( "domcomp_" ) and \
+       not sub[ "subgoalName" ].startswith( "unidom_" )  and \
+       not sub[ "subgoalName" ].startswith( "exidom_" )  and \
+       not sub[ "subgoalName" ].startswith( "orig_" )    and \
        not sub[ "polarity" ]    == "notin" :
       for satt in sub[ "subgoalAttList" ] :
         if not satt in pos_subgoal_att_list :
@@ -568,6 +653,7 @@ def setUniformAttList( ruleMeta, cursor ) :
     if differentAttSchemas( ruleSet ) :
       for rule in ruleSet :
         rule.hitUniformityRewrites = True
+
       new_ruleMeta.extend( makeUniform( ruleSet, cursor ) )
 
     else :
@@ -623,6 +709,7 @@ def makeUniform( ruleSet, cursor ) :
 
     orig_goalAttList = rule.goalAttList
 
+
     # ----------------------------------------- #
     # generate a mapping between old and
     # new att strings
@@ -675,6 +762,8 @@ def makeUniform( ruleSet, cursor ) :
     rule.goalAttList               = copy.deepcopy( new_goalAttList )
     rule.ruleData[ "goalAttList" ] = copy.deepcopy( new_goalAttList )
     rule.saveToGoalAtt()
+
+    logging.debug( "  MAKE UNIFORM : replace goal att list." )
 
     # ----------------------------------------- #
     # replace universal atts in subgoals
@@ -1208,31 +1297,28 @@ def identicalRules( rule1, rule2 ) :
     return False
 
 
-##################
-#  DO DEMORGANS  #
-##################
+##########################
+#  DO DEMORGANS DM HUGE  #
+##########################
 # create a new set of rules representing the application of 
 # DeMorgan's Law on the first-order logic representation
 # of the targetted rules
-def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
+def doDeMorgans_dm_huge( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
 
-  logging.debug( "  DO DEMORGANS : running process..." )
+  logging.debug( "  DO DEMORGANS DM HUGE : running process..." )
 
   newDMRules = []
 
-  logging.debug( "  DO DEMORGANS : len( targetRuleMetaSets ) = " + str( len( targetRuleMetaSets ) ) )
-  for s in targetRuleMetaSets :
-    logging.debug( str( s ) )
-    for r in s :
-      logging.debug( "  DO DEMORGANS : r.ruleData = " + str( r.ruleData ) )
+  for rule_info in targetRuleMetaSets :
 
-  for ruleSet in targetRuleMetaSets :
+    parent_list = rule_info[ 0 ]
+    ruleSet     = rule_info[ 1 ]
 
     for rule in ruleSet :
       logging.debug( "//////////////////////////////////////////////////" )
-      logging.debug( "  DO DEMORGANS : rule.ruleData     = " + str( rule.ruleData ) )
-      logging.debug( "  DO DEMORGANS : rule.relationName = " + str( rule.relationName ) )
-      logging.debug( "  DO DEMORGANS : rule.rid          = " + str( rule.rid ) )
+      logging.debug( "  DO DEMORGANS DM HUGE : rule.ruleData     = " + str( rule.ruleData ) )
+      logging.debug( "  DO DEMORGANS DM HUGE : rule.relationName = " + str( rule.relationName ) )
+      logging.debug( "  DO DEMORGANS DM HUGE : rule.rid          = " + str( rule.rid ) )
       logging.debug( "//////////////////////////////////////////////////" )
 
     # ----------------------------------------- #
@@ -1240,7 +1326,7 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
 
     orig_rid = ruleSet[0].rid
 
-    logging.debug( "  DO DEMORGANS : orig_rid = " + str( orig_rid ) )
+    logging.debug( "  DO DEMORGANS DM HUGE : orig_rid = " + str( orig_rid ) )
 
     # ----------------------------------------- #
     # get new rule name
@@ -1317,226 +1403,19 @@ def doDeMorgans( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     # with instances of the positive not_
     # subgoal
 
-    ruleMeta = replaceSubgoalNegations( ruleMeta, argDict )
+    ruleMeta = dm_tools.replaceSubgoalNegations( ruleMeta, argDict )
 
     # ----------------------------------------- #
     # resolve double negations
 
-    ruleMeta = resolveDoubleNegations( ruleMeta )
+    ruleMeta = dm_tools.resolveDoubleNegations( ruleMeta )
 
     # ----------------------------------------- #
     # order recursive rules last
 
-    ruleMeta = sortDMRules( ruleMeta )
+    ruleMeta = dm_tools.sortDMRules( ruleMeta )
 
   return ruleMeta
-
-
-###################
-#  SORT DM RULES  #
-###################
-# order DM rules with recursive rules last
-def sortDMRules( ruleMeta ) :
-
-  regularRules   = []
-  recursiveRules = []
-
-  for r in ruleMeta :
-    if is_dm_and_recursive( r ) :
-      recursiveRules.append( r )
-    else :
-      regularRules.append( r )
-
-  for r in regularRules :
-    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
-  logging.debug( "-----" )
-  for r in recursiveRules :
-    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
-
-  sorted_ruleMeta = []
-  sorted_ruleMeta.extend( regularRules )
-  sorted_ruleMeta.extend( recursiveRules )
-
-  for r in sorted_ruleMeta :
-    logging.debug( dumpers.reconstructRule( r.rid, r.cursor ) )
-  #sys.exit( "blah" )
-
-  return sorted_ruleMeta
-
-
-#########################
-#  IS DM AND RECURSIVE  #
-#########################
-def is_dm_and_recursive( rule ) :
-  goalName = rule.relationName
-  for sub in rule.subgoalListOfDicts :
-    subName = sub[ "subgoalName" ]
-    if subName == goalName and subName.startswith( "not_" ) :
-      return True
-  return False
-
-
-##############################
-#  RESOLVE DOUBLE NEGATIONS  #
-##############################
-# a negated not_ rule is th original rule.
-def resolveDoubleNegations( ruleMeta ) :
-
-  for rule in ruleMeta :
-
-    # ----------------------------------------- #
-    # get subgoal info
-
-    subgoalListOfDicts = copy.deepcopy( rule.subgoalListOfDicts )
-
-    new_subgoalListOfDicts = []
-
-    for subgoal in subgoalListOfDicts :
-
-      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalName    = " + \
-                     subgoal[ "subgoalName" ] )
-      logging.debug( "  RESOLVE DOUBLE NEGATIONS : polarity       = " + \
-                     subgoal[ "polarity" ] )
-      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalAttList = " + \
-                     str( subgoal[ "subgoalAttList" ] ) )
-      logging.debug( "  RESOLVE DOUBLE NEGATIONS : subgoalTimeArg = " + \
-                     subgoal[ "subgoalTimeArg" ] )
-
-      # ----------------------------------------- #
-      # resolve double negatives
-
-      if subgoal[ "subgoalName" ].startswith( "not_" ) and subgoal[ "polarity" ] == "notin" :
-
-        logging.debug( "  RESOLVE DOUBLE NEGATIONS: original subgoal = " + str( subgoal ) )
-
-        new_sub_dict = {}
-        new_sub_dict[ "subgoalName" ]    = subgoal[ "subgoalName" ][4:]
-        new_sub_dict[ "subgoalAttList" ] = subgoal[ "subgoalAttList" ]
-        new_sub_dict[ "polarity" ]       = ""
-        new_sub_dict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
-
-        logging.debug( "  RESOLVE DOUBLE NEGATIONS : new_sub_dict = " + \
-                       str( new_sub_dict ) )
-        logging.debug( "  RESOLVE DOUBLE NEGATIONS : adding to new_subgoalListOfDicts : " + \
-                       str( new_sub_dict ) + "->1")
-
-        new_subgoalListOfDicts.append( copy.deepcopy( new_sub_dict ) )
-
-      else :
-
-        logging.debug( "  RESOLVE DOUBLE NEGATIONS : adding to new_subgoalListOfDicts : " + \
-                       str( subgoal ) + " -> 3" )
-
-        new_subgoalListOfDicts.append( copy.deepcopy( subgoal )  )
-
-    # ----------------------------------------- #
-    # save new subgoal list
-
-    logging.debug( "  RESOLVE DOUBLE NEGATIONS : new_subgoalListOfDicts = " + \
-                   str( new_subgoalListOfDicts ) )
-
-    rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
-    rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
-    rule.saveSubgoals()
-
-  return ruleMeta        
-
-
-###############################
-#  REPLACE SUBGOAL NEGATIONS  #
-###############################
-# rewrite existing rules to replace 
-# instances of negated subgoal instances 
-# with derived not_rules
-def replaceSubgoalNegations( ruleMeta, argDict ) :
-
-  settings_path = argDict[ "settings" ]
-
-  for rule in ruleMeta :
-
-    # ----------------------------------------- #
-    # skip domcomp rules
-
-    if rule.relationName.startswith( "domcomp_" ) :
-      pass
-
-    elif rule.relationName.startswith( "dom_" ) :
-      pass
-
-    else :
-
-      # ----------------------------------------- #
-      # get subgoal info
-
-      subgoalListOfDicts = copy.deepcopy( rule.subgoalListOfDicts )
-
-      new_subgoalListOfDicts = []
-
-      for subgoal in subgoalListOfDicts :
-
-        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalName    = " + \
-                       subgoal[ "subgoalName" ] )
-        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : polarity       = " + \
-                       subgoal[ "polarity" ] )
-        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalAttList = " + \
-                       str( subgoal[ "subgoalAttList" ] ) )
-        logging.debug( "  REPLACE SUBUGOAL NEGATIONS : subgoalTimeArg = " + \
-                       subgoal[ "subgoalTimeArg" ] )
-
-        # ----------------------------------------- #
-        # replace negatives
-
-        if subgoal[ "subgoalName" ] == "missing_log" and subgoal[ "polarity" ] == "notin" :
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : hasDM missing_log = " + \
-                         str( hasDM( "missing_log", ruleMeta ) ) )
-
-        if hasDM( subgoal[ "subgoalName" ], ruleMeta ) and subgoal[ "polarity" ] == "notin" :
-
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : original subgoal = " + str( subgoal ) )
-
-          new_sub_dict = {}
-          new_sub_dict[ "subgoalName" ]    = "not_" + subgoal[ "subgoalName" ]
-          new_sub_dict[ "subgoalAttList" ] = subgoal[ "subgoalAttList" ]
-          new_sub_dict[ "polarity" ]       = ""
-          new_sub_dict[ "subgoalTimeArg" ] = subgoal[ "subgoalTimeArg" ]
-
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_sub_dict = " + str( new_sub_dict ) )
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : adding to new_subgoalListOfDicts : " + \
-                         str( new_sub_dict ) + "->1")
-
-          new_subgoalListOfDicts.append( new_sub_dict )
-
-        else :
-
-          logging.debug( "  REPLACE SUBGOAL NEGATIONS : adding to new_subgoalListOfDicts : " + \
-                         str( subgoal ) + " -> 2" )
-
-          new_subgoalListOfDicts.append( copy.deepcopy( subgoal )  )
-
-      # ----------------------------------------- #
-      # save new subgoal list
-
-      logging.debug( "  REPLACE SUBGOAL NEGATIONS : new_subgoalListOfDicts_tmp = " + \
-                     str( new_subgoalListOfDicts ) )
-      rule.subgoalListOfDicts               = copy.deepcopy( new_subgoalListOfDicts )
-      rule.ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( new_subgoalListOfDicts )
-
-      rule.saveSubgoals()
-
-  return ruleMeta
-
-
-#############
-#  HAS DM  #
-#############
-# check if the subgoal has a corresponding not_ rule
-def hasDM( subgoalName, ruleMeta ) :
-
-  for rule in ruleMeta :
-    if rule.relationName == "not_" + subgoalName :
-      return True
-
-  return False
 
 
 #####################
@@ -1860,7 +1739,11 @@ def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor, argDict ) :
   # sanity check break
 
   if not len( goalAttList ) == len( goalTypeList ) :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : buildDomCompRule : the length of the goal att list '" + str( goalAttList ) + "' does not match the length of the goal type list '" + str( goalTypeList ) + "' for rule:\n" + dumpers.reconstructRule( orig_rid, cursor ) )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : buildDomCompRule : " + \
+              "the length of the goal att list '" + str( goalAttList ) + \
+              "' does not match the length of the goal type list '" + \
+              str( goalTypeList ) + \
+              "' for rule:\n" + dumpers.reconstructRule( orig_rid, cursor ) )
 
   else :
 
@@ -1870,7 +1753,8 @@ def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor, argDict ) :
       DM_CONCISE = tools.getConfig( argDict[ "settings" ], "DEFAULT", "DM_CONCISE", bool )
 
     except ConfigParser.NoOptionError :
-      logging.debug( "  WARNING : DM_CONCISE not defined in settings file '" + argDict[ "settings" ] + "'. running with DM_CONCISE = False." )
+      logging.debug( "  WARNING : DM_CONCISE not defined in settings file '" + \
+                     argDict[ "settings" ] + "'. running with DM_CONCISE = False." )
       DM_CONCISE = False
 
     # ----------------------------------------- #
@@ -1936,7 +1820,7 @@ def buildDomCompRule( orig_name, goalAttList, orig_rid, cursor, argDict ) :
     rid = tools.getIDFromCounters( "rid" )
 
     #domcompRule = Rule.Rule( rid, ruleData, cursor )
-    domcompRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
+    domcompRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor ) )
     domcompRule.cursor = cursor # need to do this for some reason or else cursor disappears?
 
     return domcompRule
@@ -2148,9 +2032,8 @@ def dnfToDatalog( not_name, \
         existentialVarSubgoal_dict[ "subgoalAttList" ] = currRule.ruleData[ "goalAttList" ]
         existentialVarSubgoal_dict[ "polarity" ]       = ""
         existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
-    
+   
         subgoalListOfDicts.append( existentialVarSubgoal_dict )
-
 
     # ----------------------------------------- #
     # build ruleData for new rule and save
@@ -2275,21 +2158,18 @@ def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
   # ----------------------------------------- #
   # get list of negated subgoal names
 
-  negatedSubgoalNames = getNegatedNameList( ruleMeta )
+  negatedSubgoal_info = get_negated_subgoal_info( ruleMeta )
 
   # ----------------------------------------- #
   # initialize dictionary
 
-  for name in negatedSubgoalNames :
+  for name in negatedSubgoal_info :
     set_dict[ name ] = []
 
   # ----------------------------------------- #
   # iterate over rule meta
 
-  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : negatedSubgoalNames = " + str( negatedSubgoalNames ) )
-
-  for name in negatedSubgoalNames :
-
+  for name in negatedSubgoal_info.keys() :
     for rule in ruleMeta :
       if rule.relationName == name :
         set_dict[ name ].append( rule )
@@ -2301,36 +2181,48 @@ def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
 
   targetRuleMetaSets = []
   for name in set_dict :
-    targetRuleMetaSets.append( set_dict[ name ] )
+    targetRuleMetaSets.append( [ negatedSubgoal_info[ name ], set_dict[ name ] ] )
 
-  for s in targetRuleMetaSets :
+  for r in targetRuleMetaSets :
     logging.debug( "++++++++" )
-    for r in s :
-      logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : r.ruleData = " + str( r.ruleData ) )
+    parent_list   = r[ 0 ]
+    rule_obj_list = r[ 1 ]
+    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : parent_list   : " + str( parent_list ) )
+    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : rule_obj_list :" )
+    for p in rule_obj_list :
+      logging.debug( "    " + str( dumpers.reconstructRule( p.rid, p.cursor ) ) )
 
+  # returns an array of arrays of arrays of parent rule strings and rule objects
+  # [ [ [ "missing_log" ], [ log_obj_1, ...] ], ... ]
   return targetRuleMetaSets
 
 
-###########################
-#  GET NEGATED NAME LIST  #
-###########################
+##############################
+#  GET NEGATED SUBGOAL INFO  #
+##############################
 # get the list of names for negated IDB subgoals
-def getNegatedNameList( ruleMeta ) :
+def get_negated_subgoal_info( ruleMeta ) :
 
   cursor = ruleMeta[0].cursor # all cursors are the same
 
-  negatedNames = []
+  # key on negated subgoal name, 
+  # value on list of parent relation names negating that subgoal
+  negatedNames_data = {}
 
   for rule in ruleMeta :
 
     logging.debug( "  GET NEGATED NAME LIST : rule.ruleData = " + str( rule.ruleData ) )
 
+    parent_rule_name = rule.relationName
+    parent_rule_rid  = rule.rid
+
     # ----------------------------------------- #
     # ignore domcomp rules
-    if rule.relationName.startswith( "domcomp_" ) :
-      pass
-
-    elif rule.relationName.startswith( "dom_" ) :
+    if rule.relationName.startswith( "domcomp_" ) or \
+       rule.relationName.startswith( "dom_" )     or \
+       rule.relationName.startswith( "unidom_" )  or \
+       rule.relationName.startswith( "exidom_" )  or \
+       rule.relationName.startswith( "orig_" ) :
       pass
 
     else :
@@ -2346,17 +2238,19 @@ def getNegatedNameList( ruleMeta ) :
       for subgoalDict in subgoalListOfDicts :
 
         # save the rule object for the subgoal if the subgoal is negated and is idb
-        if subgoalDict[ "polarity" ] == "notin" and isIDB( subgoalDict[ "subgoalName" ], cursor ) :
+        if subgoalDict[ "polarity" ] == "notin" and isIDB( subgoalDict[ "subgoalName" ], cursor ) and \
+           not subgoalDict[ "subgoalName" ].startswith( "orig_" ) :
 
           # ----------------------------------------- #
           # grab subgoal name
 
-          logging.debug( "  GET NEGATED NAME LIST : adding '" + subgoalDict[ "subgoalName" ] + "' to negatedNames list" )
+          logging.debug( "  GET NEGATED NAME LIST : adding '" + subgoalDict[ "subgoalName" ] + "' to negatedNames_data list" )
 
-          if not subgoalDict[ "subgoalName" ] in negatedNames : # ignore duplicates created by prov rules
-            negatedNames.append( subgoalDict[ "subgoalName" ] )
+          if not subgoalDict[ "subgoalName" ] in negatedNames_data : # ignore duplicates created by prov rules
+            negatedNames_data[ subgoalDict[ "subgoalName" ] ] = []
+          negatedNames_data[ subgoalDict[ "subgoalName" ] ].append( [ parent_rule_name, parent_rule_rid ] )
 
-  return negatedNames
+  return negatedNames_data
 
 
 ################
@@ -2491,6 +2385,14 @@ def buildAdom( factMeta, cursor ) :
         #newRules.append( newRule )
         newRule        = copy.deepcopy( Rule.Rule( rid, newRuleData, cursor) )
         newRule.cursor = cursor # need to do this for some reason or else cursor disappears?
+
+        if newRule.relationName == "adom_string" :
+          newRule.goal_att_type_list.append( [ 0, "string" ] )
+          newRule.saveToGoalAtt()
+        elif newRule.relationName == "adom_int" :
+          newRule.goal_att_type_list.append( [ 0, "int" ]  )
+          newRule.saveToGoalAtt()
+
         newRules.append( newRule )
 
         logging.debug( "  BUILD ADOM : saved new rule with rid=" + str( newRule.rid ) + " and ruleData:\n" + str( newRule.ruleData ) )
@@ -2613,7 +2515,11 @@ def resolveDoubleNegatives( rid, fromName, cursor ) :
 def stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
   for rule in ruleMeta :
-    if not rule.relationName.startswith( "domcomp_" ) and not rule.relationName.startswith( "dom_" ) :
+    if not rule.relationName.startswith( "domcomp_" ) and \
+       not rule.relationName.startswith( "dom_" )     and \
+       not rule.relationName.startswith( "unidom_" )  and \
+       not rule.relationName.startswith( "exidom_" )  and \
+       not rule.relationName.startswith( "orig_" ) :
       if ruleContainsNegatedIDB( rule.rid, cursor ) :
         logging.debug( "  STILL CONTAINS NEGATED IDBs : rule contains negated idb : " + dumpers.reconstructRule( rule.rid, cursor ) )
         return True
@@ -2630,7 +2536,11 @@ def remainingIDBs( ruleMeta, cursor ) :
   remainingRulesWIDBs = []
 
   for rule in ruleMeta :
-    if not rule.relationName.startswith( "domcomp_" ) :
+    if not rule.relationName.startswith( "domcomp_" ) and \
+       not rule.relationName.startswith( "dom_" )     and \
+       not rule.relationName.startswith( "unidom_" )  and \
+       not rule.relationName.startswith( "exidom_" )  and \
+       not rule.relationName.startswith( "orig_" ) :
       if ruleContainsNegatedIDB( rule.rid, cursor ) :
         remainingRulesWIDBs.append( dumpers.reconstructRule( rule.rid, cursor ) )
 
@@ -2984,7 +2894,11 @@ def ruleContainsNegatedIDB( rid, cursor ) :
   goalName = cursor.fetchone()
   goalName = tools.toAscii_str( goalName )
 
-  if goalName.startswith( "domcomp_" ) or goalName.startswith( "dom_" ) :
+  if goalName.startswith( "domcomp_" ) or \
+     goalName.startswith( "dom_" )     or \
+     goalName.startswith( "unidom_" )  or \
+     goalName.startswith( "exidom_" )  or \
+     goalName.startswith( "orig_" ) :
     return False
 
   cursor.execute( "SELECT subgoalName FROM Subgoals WHERE rid='" + str( rid ) + "' AND subgoalPolarity=='notin'" )
@@ -2995,11 +2909,16 @@ def ruleContainsNegatedIDB( rid, cursor ) :
 
   for subgoalName in negatedSubgoals :
 
-    # skip domcomp rules
-    if subgoalName.startswith( "domcomp_" ) :
+    # skip these subgoals
+    if subgoalName.startswith( "domcomp_" ) or \
+       subgoalName.startswith( "dom_" )     or \
+       subgoalName.startswith( "unidom_" )  or \
+       subgoalName.startswith( "exidom_" )  or \
+       subgoalName.startswith( "orig_" ) :
       pass
 
     elif isIDB( subgoalName, cursor ) :
+      logging.debug( "  RULE CONTAINS NEGATED IDB : this one --> " + subgoalName  )
       flag = True
 
   return flag

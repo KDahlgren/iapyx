@@ -354,6 +354,7 @@ class Test_wildcard_rewrites( unittest.TestCase ) :
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = 2
     argDict[ 'data_save_path' ]           = "./data/"
+    argDict[ 'neg_writes' ]               = ""
 
     return argDict
 

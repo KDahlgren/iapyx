@@ -375,6 +375,37 @@ def clockDump( cursor ) :
 
 
 ######################
+#  RECONSTRUCT FACT  #
+######################
+def reconstructFact( fid, cursor ) :
+
+  # get fact relation data
+  cursor.execute( "SELECT name,timeArg FROM Fact WHERE fid=='" + str( fid ) + "'" )
+  fact_info = cursor.fetchall()
+  fact_info = tools.toAscii_multiList( fact_info )
+
+  # get fact data list
+  cursor.execute( "SELECT dataID,data,dataType FROM FactData WHERE fid=='" + str( fid ) + "'" )
+  fact_data_info = cursor.fetchall()
+  fact_data_info = tools.toAscii_multiList( fact_data_info )
+
+  # start with relation name.
+  fact = fact_info[0][0] + "("
+
+  # add in data elements.
+  for data in fact_data_info :
+    fact += data[1] + "(" + data[2] + ")"
+
+  fact += ")"
+
+  # add time argument, if applicable.
+  if not fact_info[0][1] == "" :
+    fact += "@" + fact_info[1]
+
+  return fact + ";"
+
+
+######################
 #  RECONSTRUCT RULE  #
 ######################
 def reconstructRule( rid, cursor ) :

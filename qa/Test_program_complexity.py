@@ -37,7 +37,8 @@ class Test_program_complexity( unittest.TestCase ) :
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
-  IAPYX_RUNS = False
+  DM_RUNS    = False
+  COMBO_RUNS = True
   MOLLY_RUNS = True
 
   ###########
@@ -46,7 +47,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_kafka( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # dm conversion takes forever, but does hit the c4 stall eventually.
+    COMBO_EVAL = True
+    DM_EVAL    = False # dm conversion takes forever, but does hit the c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run kafka_molly
@@ -61,13 +63,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run kafka_iapyx
+    # run kafka_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_kafka_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_kafka_combo"
+      test_file_name = "kafka_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 9
+      argDict[ 'nodes' ]          = [ "a", "b", "c", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run kafka_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_kafka_dm"
       test_file_name = "kafka_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -76,12 +96,19 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 9
-      argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+      argDict[ 'nodes' ]          = [ "a", "b", "c", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   ############
   #  3PC 97  #
@@ -89,7 +116,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_3pc_97( self ) : 
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
+    COMBO_EVAL = True
+    DM_EVAL    = False # dm conversion takes forever, but hits c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run 3pc_molly
@@ -104,13 +132,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 3pc_97_iapyx
+    # run 3pc_97_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_3pc_97_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_3pc_97_combo"
+      test_file_name = "3pc_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 9
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 3pc_97_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_3pc_97_dm"
       test_file_name = "3pc_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -121,10 +167,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 9
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   ############
   #  3PC 80  #
@@ -132,7 +185,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_3pc_80( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 stall eventually.
+    COMBO_EVAL = True
+    DM_EVAL    = False # dm conversion takes forever, but hits c4 stall eventually.
 
     # --------------------------------------------------------------- #
     # run 3pc_80_molly
@@ -147,13 +201,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 3pc_80_iapyx
+    # run 3pc_80_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_3pc_80_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_3pc_80_combo"
+      test_file_name = "3pc_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 3pc_80_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_3pc_80_dm"
       test_file_name = "3pc_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -164,10 +236,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   #############
   #  2PC CTP  #
@@ -175,7 +254,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_ctp( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # dm conversion takes forever, but hits c4 eval stall eventually.
+    COMBO_EVAL = True
+    DM_EVAL    = False # dm conversion takes forever, but hits c4 eval stall eventually.
 
     # --------------------------------------------------------------- #
     # run 2pc_ctp_molly
@@ -190,13 +270,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_ctp_iapyx
+    # run 2pc_ctp_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_ctp_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_timout_optimist_combo"
+      test_file_name = "2pc_ctp_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_ctp_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_ctp_dm"
       test_file_name = "2pc_ctp_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -207,10 +305,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   #################
   #  2PC TIMEOUT  #
@@ -218,7 +323,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_timeout( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # stalls at c4 eval
+    COMBO_EVAL = True
+    DM_EVAL    = False # stalls at c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_molly
@@ -233,13 +339,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_timeout_iapyx
+    # run 2pc_timeout_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_timeout_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_timout_optimist_combo"
+      test_file_name = "2pc_timeout_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_timeout_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_timeout_dm"
       test_file_name = "2pc_timeout_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -250,10 +374,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   ##########################
   #  2PC TIMEOUT OPTIMIST  #
@@ -261,7 +392,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_timeout_optimist( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # stalls on c4 eval
+    COMBO_EVAL = True
+    DM_EVAL    = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_timeout_optimist_molly
@@ -276,14 +408,32 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_timeout_optimist_iapyx
+    # run 2pc_timeout_optimist_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_timeout_optimist_iapyx"
-      test_file_name = "2pc_timeout_optimist_driver"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_timout_optimist_combo"
+      test_file_name = "2pc_timeout_optimist_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_timeout_optimist_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_timeout_optimist_dm"
+      test_file_name = "2pc_timeout_optimist_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
   
@@ -293,10 +443,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   ##################
   #  2PC OPTIMIST  #
@@ -304,7 +461,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_optimist( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # stalls on c4 eval
+    COMBO_EVAL = True
+    DM_EVAL    = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_optimist_molly
@@ -319,13 +477,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_63_iapyx
+    # run 2pc_optimist_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_optimist_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_optimist_combo"
+      test_file_name = "2pc_optimist_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_optimist_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_optimist_dm"
       test_file_name = "2pc_optimist_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -336,10 +512,16 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
 
   ############
   #  2PC 63  #
@@ -347,7 +529,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_63( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # stalls on c4 eval
+    COMBO_EVAL = True
+    DM_EVAL    = False # stalls on c4 eval
 
     # --------------------------------------------------------------- #
     # run 2pc_63_molly
@@ -362,13 +545,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_63_iapyx
+    # run 2pc_63_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_63_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_63_combo"
+      test_file_name = "2pc_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_63_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_63_dm"
       test_file_name = "2pc_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -379,10 +580,17 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
+
 
   ############
   #  2PC 73  #
@@ -390,7 +598,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_2pc_73( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = False # stalls on c4 eval
+    DM_EVAL    = False # stalls on c4 eval
+    COMBO_EVAL = True
 
     # --------------------------------------------------------------- #
     # run 2pc_73_molly
@@ -405,13 +614,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run 2pc_73_iapyx
+    # run 2pc_73_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_2pc_73_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_2pc_73_combo"
+      test_file_name = "2pc_driver_program_complexity"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 7
+      argDict[ 'nodes' ]           = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run 2pc_73_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_2pc_73_dm"
       test_file_name = "2pc_driver_program_complexity"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -421,11 +648,19 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 7
       argDict[ 'nodes' ]          = [ "a", "b", "C", "d" ]
+      argDict[ 'neg_writes' ]      = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
 
   ############
   #  ACK RB  #
@@ -433,7 +668,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_ack_rb( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = True
+    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
     # run ack_rb_molly
@@ -448,13 +684,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run ack_rb_iapyx
+    # run ack_rb_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_ack_rb_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_ack_rb_combo"
+      test_file_name = "ack_rb_driver"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]      = "combo"
+
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run ack_rb_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_ack_rb_dm"
       test_file_name = "ack_rb_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -464,11 +718,18 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]      = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
+
+    # molly and combo only
+    elif self.MOLLY_RUNS and self.COMBO_RUNS and \
+       MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, [], eval_combo )
 
   ################
   #  CLASSIC RB  #
@@ -476,7 +737,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_classic_rb( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = True
+    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
     # run classic_rb_molly
@@ -491,13 +753,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run classic_rb_iapyx
+    # run classic_rb_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_classic_rb_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_classic_rb_combo"
+      test_file_name = "classic_rb_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]      = "combo"
+  
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run classic_rb_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_classic_rb_dm"
       test_file_name = "classic_rb_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -507,11 +787,13 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]     = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
 
   ############
   #  REPLOG  #
@@ -519,7 +801,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_replog( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = True
+    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
     # run replog_molly
@@ -534,13 +817,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run replog_iapyx
+    # run replog_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_replog_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_replog_combo"
+      test_file_name = "replog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]      = "combo"
+  
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run replog_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_replog_dm"
       test_file_name = "replog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -550,11 +851,13 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]     = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
 
   ###########
   #  RDLOG  #
@@ -562,7 +865,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_rdlog( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = True
+    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
     # run rdlog_molly
@@ -577,13 +881,31 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run rdlog_iapyx
+    # run rdlog_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_rdlog_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_rdlog_combo"
+      test_file_name = "rdlog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                   = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                      = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ]  = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]             = 6
+      argDict[ 'nodes' ]           = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]      = "combo"
+  
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    # --------------------------------------------------------------- #
+    # run rdlog_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_rdlog_dm"
       test_file_name = "rdlog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -593,11 +915,13 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]     = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
 
   #############
   #  SIMPLOG  #
@@ -605,7 +929,8 @@ class Test_program_complexity( unittest.TestCase ) :
   def test_simplog( self ) :
 
     MOLLY_EVAL = True
-    IAPYX_EVAL = True
+    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
     # run simplog_molly
@@ -620,13 +945,13 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict                     = self.getArgDict( input_file )
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
   
-      eval_molly = self.run_workflow( test_id, argDict, input_file, MOLLY_EVAL )
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
 
     # --------------------------------------------------------------- #
-    # run simplog_iapyx
+    # run simplog_combo
 
-    if self.IAPYX_RUNS :
-      test_id        = "program_complexity_simplog_iapyx"
+    if self.COMBO_RUNS :
+      test_id        = "program_complexity_simplog_combo"
       test_file_name = "simplog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -636,61 +961,143 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]     = "combo"
   
-      eval_iapyx = self.run_workflow( test_id, argDict, input_file, IAPYX_EVAL )
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
 
-    if self.MOLLY_RUNS and self.IAPYX_RUNS and MOLLY_EVAL and IAPYX_EVAL :
-      self.check_results_alignment( eval_molly, eval_iapyx )
+    # --------------------------------------------------------------- #
+    # run simplog_dm
+
+    if self.DM_RUNS :
+      test_id        = "program_complexity_simplog_dm"
+      test_file_name = "simplog_driver"
+  
+      print " >>> RUNNING " + test_id + " <<<"
+  
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 6
+      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
+      argDict[ 'neg_writes' ]     = "dm"
+      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
+  
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
+
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm, eval_combo )
 
 
   #############################
   #  CHECK RESULTS ALIGNMENT  #
   #############################
-  def check_results_alignment( self, eval_molly, eval_iapyx ) :
+  def check_results_alignment( self, eval_molly, eval_dm, eval_combo ) :
+
+#    print
+#    print "MOLLY:"
+#    for i in eval_molly[ "post" ] :
+#      print i
+#    print
+#    print "DM:"
+#    for i in eval_dm[ "post" ] :
+#      print i
+#    print
+#    print "COMBO:"
+#    for i in eval_combo[ "post" ] :
+#      print i
+#    #sys.exit( "blah" )
+
     print
     print "<><><><><><><><><><><><><><><><><><>"
     print "<>   CHECKING TUPLE ALIGNMENTS    <>"
 
-    for rel in eval_molly :
-      if "_prov" in rel :
-        continue
-      else :
+    if len( eval_molly ) < 1 :
+      print "skipping eval comparison b/c no molly results."
+      return
 
-        # check for extra molly tups
-        extra_molly_tups = []
-        for molly_tup in eval_molly[ rel ] :
-          if not molly_tup in eval_iapyx[ rel ] :
-            extra_molly_tups.append( molly_tup )
+    if len( eval_dm ) > 0 :
+      # check dm
+      logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
+      logging.debug( "  checking results for dm v. molly:" )
+      for rel in eval_molly :
+        if "_prov" in rel :
+          continue
+        else :
+  
+          # check for extra molly tups
+          extra_molly_tups = []
+          for molly_tup in eval_molly[ rel ] :
+            if not molly_tup in eval_dm[ rel ] :
+              extra_molly_tups.append( molly_tup )
+  
+          # check for extra dm tups
+          extra_dm_tups = []
+          for dm_tup in eval_dm[ rel ] :
+            if not dm_tup in eval_molly[ rel ] :
+              extra_dm_tups.append( dm_tup )
+  
+          if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+            print ">>>> alignment inconsistencies for relation '" + rel + "' :"
+  
+          if len( extra_molly_tups ) > 0 :
+            print "> tuples found in molly and not in dm for relation '" + rel.upper() + " :"
+            for tup in extra_molly_tups :
+              print ",".join( tup )
+          if len( extra_dm_tups ) > 0 :
+            print "> tuples found in dm and not in molly for relation '" + rel.upper() + " :"
+            for tup in extra_dm_tups :
+              print ",".join( tup )
+          if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+            print "<<<<"
+    else :
+      print "skipping dm comparison b/c no eval results..."
 
-        # check for extra iapyx tups
-        extra_iapyx_tups = []
-        for iapyx_tup in eval_iapyx[ rel ] :
-          if not iapyx_tup in eval_molly[ rel ] :
-            extra_iapyx_tups.append( iapyx_tup )
-
-        if len( extra_molly_tups ) > 0 or len( extra_iapyx_tups ) > 0 :
-          print ">>>> alignment inconsistencies for relation '" + rel + "' :"
-
-        if len( extra_molly_tups ) > 0 :
-          print "> tuples found in molly and not in iapyx for relation '" + rel.upper() + " :"
-          for tup in extra_molly_tups :
-            print ",".join( tup )
-        if len( extra_iapyx_tups ) > 0 :
-          print "> tuples found in iapyx and not in molly for relation '" + rel.upper() + " :"
-          for tup in extra_iapyx_tups :
-            print ",".join( tup )
-        if len( extra_molly_tups ) > 0 or len( extra_iapyx_tups ) > 0 :
-          print "<<<<"
-
-    print
-    print "<><><><><><><><><><><><><><><><><><>"
+    if len( eval_combo ) > 0 :
+      # combo check
+      logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
+      logging.debug( "  checking results for combo v. molly:" )
+      for rel in eval_molly :
+        if "_prov" in rel :
+          continue
+        else :
+  
+          # check for extra molly tups
+          extra_molly_tups = []
+          for molly_tup in eval_molly[ rel ] :
+            if not molly_tup in eval_combo[ rel ] :
+              extra_molly_tups.append( molly_tup )
+  
+          # check for extra combo tups
+          extra_combo_tups = []
+          for combo_tup in eval_combo[ rel ] :
+            if not combo_tup in eval_molly[ rel ] :
+              extra_combo_tups.append( combo_tup )
+  
+          if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+            print ">>>> alignment inconsistencies for relation '" + rel + "' :"
+  
+          if len( extra_molly_tups ) > 0 :
+            print "> tuples found in molly and not in combo for relation '" + rel.upper() + " :"
+            for tup in extra_molly_tups :
+              print ",".join( tup )
+          if len( extra_combo_tups ) > 0 :
+            print "> tuples found in combo and not in molly for relation '" + rel.upper() + " :"
+            for tup in extra_combo_tups :
+              print ",".join( tup )
+          if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+            print "<<<<"
+    else :
+      print "skipping combo comparison b/c no eval results..."
+  
+      print
+      print "<><><><><><><><><><><><><><><><><><>"
 
 
   ##################
   #  RUN WORKFLOW  #
   ##################
   # generate program (if applicable), run dm program, collect results, analyze results.
-  def run_workflow( self, test_id, argDict, input_file, RUN_EVAL=True ) :
+  def run_workflow( self, test_id, argDict, input_file, eval_type, RUN_EVAL=True ) :
 
     # --------------------------------------------------------------- #
 
@@ -761,7 +1168,7 @@ class Test_program_complexity( unittest.TestCase ) :
 
     print
     print "======================================"
-    print "========== ANALYSIS RESULTS ==========" 
+    print "========== ANALYSIS RESULTS for " + eval_type + " ==========" 
     print
     for res in analysis_results_dict :
       print res + " => " + str( analysis_results_dict[ res ] )
@@ -822,7 +1229,7 @@ class Test_program_complexity( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # gather dm-specific data
     # observe all ded programs run through this process are programs
-    # generated via iapyx with the dm activated.
+    # generated via dm or combo.
 
     if IS_DED :
 
@@ -880,7 +1287,7 @@ class Test_program_complexity( unittest.TestCase ) :
       program_array = []
       fo = open( input_olg_file )
       for line in fo :
-        program_array.append( line )
+        program_array.append( line.rstrip() )
       fo.close()
       return program_array
 
@@ -914,8 +1321,9 @@ class Test_program_complexity( unittest.TestCase ) :
   ##################
   def getArgDict( self, inputfile ) :
     argDict = {}
-    argDict[ 'file' ]      = inputfile
-    argDict[ 'evaluator' ] = "c4"
+    argDict[ 'file' ]       = inputfile
+    argDict[ 'evaluator' ]  = "c4"
+    argDict[ 'neg_writes' ] = ""
 
     # this settings file is fine for running both the dm and molly progs
     # b/c c4 only needs the C4_HOME_PATH option.

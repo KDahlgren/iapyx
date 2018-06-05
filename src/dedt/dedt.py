@@ -207,130 +207,177 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
     logging.debug( "  DEDT : rule.ruleData = " + str( rule.ruleData ) )
 
   # ----------------------------------------------------------------------------- #
-  # wilcard rewrites
+  # other rewrites
+  # first get parameters for which rewrites to run.
 
-  logging.debug( "  REWRITE : calling wildcard rewrites..." )
-
+  # ========== WILDCARD ========== #
   try :
     rewriteWildcards = tools.getConfig( settings_path, "DEFAULT", "WILDCARD_REWRITES", bool )
-    if rewriteWildcards :
-      ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
-
   except ConfigParser.NoOptionError :
-    logging.warning( "WARNING : no 'WILDCARD_REWRITES' defined in 'DEFAULT' section of settings.ini ...running without wildcard rewrites." )
+    logging.warning( "WARNING : no 'WILDCARD_REWRITES' defined in 'DEFAULT' section of " + settings_path + \
+                     "...running without wildcard rewrites." )
+    rewriteWildcards = False
     pass
 
-  for rule in ruleMeta :
-    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
-  #sys.exit( "blah2" )
-
-  for rule in ruleMeta :
-    logging.debug( "  DEDT : rule.ruleData (2) = " + str( rule.ruleData ) )
-
-  # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor, argDict )
-
-  # ----------------------------------------------------------------------------- #
-  # dm rewrites
-
-  # be sure to fill in all the type info for the new rule definitions
-  setTypes.setTypes( cursor, argDict )
-
+  # ========== DM ========== #
   try :
     RUN_DM = tools.getConfig( settings_path, "DEFAULT", "DM", bool )
-    if RUN_DM :
-
-      factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, argDict ) # returns new ruleMeta
-
-      # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor, argDict )
-
   except ConfigParser.NoOptionError :
-    logging.warning( "WARNING : no 'DM' defined in 'DEFAULT' section of settings file ...running without dm rewrites" )
+    logging.warning( "WARNING : no 'DM' defined in 'DEFAULT' section of " + settings_path + \
+                     "...running without dm rewrites" )
+    RUN_DM = False
     pass
 
+  # ========== NW_DOM_DEF ========== #
+  try :
+    NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", bool )
+  except ConfigParser.NoOptionError :
+    raise Exception( "no 'NW_DOM_DEF' defined in 'DEFAULT' section of " + settings_path + \
+                     ". aborting..." )
+
+  # ========== COMBO ========== #
   try:
     RUN_COMB = tools.getConfig( settings_path, "DEFAULT", "COMB", bool )
-
-    if RUN_COMB:
-      
-      # collect the results from the original program
-      original_prog = c4_translator.c4datalog( argDict, cursor )
-      results_array = c4_evaluator.runC4_wrapper( original_prog, argDict )
-      parsedResults = tools.getEvalResults_dict_c4( results_array )
-
-      # run the neg rewrite for combinatorial approach
-      # returns a new ruleMeta
-      ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, \
-                                                               argDict, \
-                                                               settings_path, 
-                                                               ruleMeta, 
-                                                               factMeta, 
-                                                               parsedResults )
-
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of settings file ...running without combo rewrites" )
+    logging.info( "WARNING : no 'COMB' defined in 'DEFAULT' section of " + settings_path + \
+                  "...running without combo rewrites" )
+    RUN_COMB = False
     pass
 
-  for rule in ruleMeta :
-    rid = rule.rid
-    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
-    goal_atts = cursor.fetchall()
-    goal_atts = tools.toAscii_multiList( goal_atts )
-    logging.debug( "  DEDT : goal_atts (2) = " + str( goal_atts ) )
+  # ========== IEDB ========== #
+  try :
+    RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
+  except ConfigParser.NoOptionError :
+    logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of " + settings_path + \
+                  "...running without iedb rewrites" )
+    RUN_IEDB_REWRITES = False
+    pass
+
+  # ----------------------------------------------------------------------------- #
+  # do wildcard rewrites
+  # always do wildcard rewrites in prep for negative writes.
+
+  if rewriteWildcards or \
+     ( NW_DOM_DEF == "sip_idb"         and \
+     argDict[ "neg_writes" ] == "dm" ) :
+    #argDict[ "neg_writes" ] == "combo" :
+
+    logging.debug( "  REWRITE : calling wildcard rewrites..." )
+
+    ruleMeta = rewrite_wildcards.rewrite_wildcards( ruleMeta, cursor )
+
+#    for rule in ruleMeta :
+#      #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+#      logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+#    #sys.exit( "blah2" )
+  
+#    for rule in ruleMeta :
+#      logging.debug( "  DEDT : rule.ruleData (2) = " + str( rule.ruleData ) )
+  
+    # be sure to fill in all the type info for the new rule definitions
+    logging.debug( "  REWRITE : running setTypes after wildcard rewrites." )
+    setTypes.setTypes( cursor, argDict )
+  
+    update_goal_types( ruleMeta )
+  else :
+    setTypes.setTypes( cursor, argDict )
 
   # ----------------------------------------------------------------------------- #
   # iedb rewrites 
   # ^ need to happen AFTER dm rewrites or else get wierd c4 eval results???
   #   weird, dude.
 
-  try :
-    RUN_IEDB_REWRITES = tools.getConfig( settings_path, "DEFAULT", "IEDB_REWRITES", bool )
-    if RUN_IEDB_REWRITES :
+  if RUN_IEDB_REWRITES                 or \
+     ( NW_DOM_DEF == "sip_idb"         and \
+     argDict[ "neg_writes" ] == "dm" ) :
+    #argDict[ "neg_writes" ] == "combo" :
 
-      factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) # returns new ruleMeta
+    logging.debug( "  REWRITE : calling iedb rewrites..." )
+    factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, \
+                                                      ruleMeta, \
+                                                      cursor, \
+                                                      settings_path )
 
-      for rule in ruleMeta :
-        rid = rule.rid
-        cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
-        goal_atts = cursor.fetchall()
-        goal_atts = tools.toAscii_multiList( goal_atts )
-        logging.debug( "  DEDT : goal_atts (3) = " + str( goal_atts ) )
+#    for rule in ruleMeta :
+#      rid = rule.rid
+#      cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+#      goal_atts = cursor.fetchall()
+#      goal_atts = tools.toAscii_multiList( goal_atts )
+#      logging.debug( "  DEDT : goal_atts (3) = " + str( goal_atts ) )
 
-      # be sure to fill in all the type info for the new rule definitions
-      setTypes.setTypes( cursor, argDict )
+    # be sure to fill in all the type info for the new rule definitions
+    logging.debug( "  REWRITE : running setTypes after iedb rewrites." )
+    setTypes.setTypes( cursor, argDict )
 
-  except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'IEDB_REWRITES' defined in 'DEFAULT' section of settings file ...running without iedb rewrites" )
-    pass
+  # ----------------------------------------------------------------------------- #
+  # do dm rewrites
+
+  if argDict[ "neg_writes" ] == "dm" :
+
+    logging.debug( "  REWRITE : calling dm rewrites..." )
+    factMeta, ruleMeta = dm.dm( factMeta, ruleMeta, cursor, argDict ) # returns new ruleMeta
+
+    logging.debug( "  REWRITE : final dm program lines:" )
+    for rule in ruleMeta :
+      logging.debug( dumpers.reconstructRule( rule.rid, rule.cursor ) )
+    #sys.exit( "blah" )
+
+    # be sure to fill in all the type info for the new rule definitions
+    logging.debug( "  REWRITE : running setTypes after dm rewrites." )
+    setTypes.setTypes( cursor, argDict )
+
+  # ----------------------------------------------------------------------------- #
+  # do combo rewrites
+
+  if argDict[ "neg_writes" ] == "combo" :
+      
+    # collect the results from the original program
+    original_prog = c4_translator.c4datalog( argDict, cursor )
+    results_array = c4_evaluator.runC4_wrapper( original_prog, argDict )
+    parsedResults = tools.getEvalResults_dict_c4( results_array )
+
+    # run the neg rewrite for combinatorial approach
+    # returns a new ruleMeta
+    logging.debug( "  REWRITE : calling combo rewrites..." )
+    ruleMeta, factMeta = combitorialNegRewriter.neg_rewrite( cursor, \
+                                                             argDict, \
+                                                             settings_path, 
+                                                             ruleMeta, \
+                                                             factMeta, \
+                                                             parsedResults ) 
+#  for rule in ruleMeta :
+#    rid = rule.rid
+#    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
+#    goal_atts = cursor.fetchall()
+#    goal_atts = tools.toAscii_multiList( goal_atts )
+#    logging.debug( "  DEDT : goal_atts (2) = " + str( goal_atts ) )
 
   # ----------------------------------------------------------------------------- #
   # provenance rewrites
 
-  logging.debug( "  REWRITE : before prov dump :" )
-  for rule in ruleMeta :
-    logging.debug( "  REWRITE : (0) r = " + printRuleWithTypes( rule.rid, cursor ) )
+#  logging.debug( "  REWRITE : before prov dump :" )
+#  for rule in ruleMeta :
+#    logging.debug( "  REWRITE : (0) r = " + printRuleWithTypes( rule.rid, cursor ) )
   #sys.exit( "blah2" )
 
-  logging.debug( "  REWRITE : calling provenance rewrites..." )
-
   # add the provenance rules to the existing rule set
+  logging.debug( "  REWRITE : calling provenance rewrites..." )
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor, argDict ) )
 
-  for rule in ruleMeta :
-    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+#  for rule in ruleMeta :
+#    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+#    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
   #sys.exit( "blah2" )
 
   # be sure to fill in all the type info for the new rule definitions
+  logging.debug( "  REWRITE : running setTypes after provenance rewrites." )
   setTypes.setTypes( cursor, argDict )
 
   # ----------------------------------------------------------------------------- #
 
-  for rule in ruleMeta :
-    logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-    logging.debug( "  REWRITE : (2) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+#  for rule in ruleMeta :
+#    logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+#    logging.debug( "  REWRITE : (2) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 #  sys.exit( "blah2" )
 
   logging.debug( "  REWRITE : ...done." )
@@ -555,6 +602,15 @@ def printRuleWithTypes( rid, cursor ) :
     printLine += subgoal + ","
 
   return printLine[:-1]
+
+
+#######################
+#  UPDATE GOAL TYPES  #
+#######################
+def update_goal_types( ruleMeta ) :
+  for r in ruleMeta :
+    r.update_goal_att_types_list()
+
 
 #########
 #  EOF  #

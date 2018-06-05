@@ -50,14 +50,11 @@ def setTypes( cursor, argDict ) :
 
   settings_path = argDict[ "settings" ]
 
+  # get parameters
+
   SETTYPES_DATALOG = False
   try :
     SETTYPES_DATALOG = tools.getConfig( settings_path, "DEFAULT", "SETTYPES_DATALOG", bool )
-    if SETTYPES_DATALOG :
-      setTypes_datalog( cursor, argDict )
-    else :
-      setTypes_orig( cursor )
-
   except ConfigParser.NoOptionError as e :
     logging.info( "  FATAL ERROR : option 'SETTYPES_DATALOG' not set in settings file '" + settings_path + "'. aborting." )
     raise e
@@ -104,10 +101,10 @@ def setTypes_datalog( cursor, argDict ) :
 
   # sanity check : no relation should have more than one tuple result
   for relation in results_dict :
-     if len( results_dict[ relation ] ) > 1 :
-       raise ValueError( "  FATAL ERROR : types for relation '" + \
-                            relation + "' are ambiguous:\n" + \
-                            str( results_dict[ relation ] ) )
+    if len( results_dict[ relation ] ) > 1 :
+      raise ValueError( "  FATAL ERROR : types for relation '" + \
+                        relation + "' are ambiguous:\n" + \
+                        str( results_dict[ relation ] ) )
 
   # save type info
   update_facts( results_dict, cursor )

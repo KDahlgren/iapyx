@@ -67,6 +67,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -125,6 +126,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -183,6 +185,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = "dm"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -241,6 +244,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -299,6 +303,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = "dm"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -357,6 +362,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -415,6 +421,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = "dm"
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -473,6 +480,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -530,6 +538,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -580,10 +589,12 @@ class Test_dedt( unittest.TestCase ) :
 
     inputfile = "./testFiles/example15.ded"
     argDict   = self.getArgDict( inputfile )
-    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
+
+    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
@@ -667,10 +678,12 @@ class Test_dedt( unittest.TestCase ) :
 
     inputfile = "./testFiles/example13.ded"
     argDict   = self.getArgDict( inputfile )
-    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
+
+    dedt.runTranslator( cursor, inputfile, argDict, "c4" )
 
     # dump rules
     actual_ruleData = dumpers.ruleAttDump( cursor )
@@ -1383,6 +1396,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1436,6 +1450,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1489,6 +1504,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1752,6 +1768,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get custom save path
     argDict[ 'data_save_path' ] = self.custom_save_path( argDict, test_id )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1801,6 +1818,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "neg_writes" ]     = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )
@@ -1851,6 +1869,7 @@ class Test_dedt( unittest.TestCase ) :
 
     # get argDict
     argDict = self.getArgDict( inputfile )
+    argDict[ "neg_writes" ] = ""
 
     # run translator
     programData = dedt.translateDedalus( argDict, cursor )

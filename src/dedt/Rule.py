@@ -66,13 +66,13 @@ class Rule :
     ########################
     #  ATTRIBUTE DEFAULTS  #
     ########################
-    self.rid                             = ""
+    self.rid = ""
 
     # the ptr to the original rule for provenance rules only.
-    self.orig_rule_ptr                   = None
+    self.orig_rule_ptr = None
 
     # map of original goal att strings to uniform att strings (dm rewrites).
-    self.orig_rule_attMapper             = {}
+    self.orig_rule_attMapper = {}
 
     # map of original goal att strings to uniform att strings in aggregate rewrites (dm rewrites).
     self.orig_rule_attMapper_aggRewrites = {}
@@ -88,6 +88,9 @@ class Rule :
     self.ruleData              = {}
     self.rule_type             = "UNDEFINED_RULE_TYPE"
     self.hitUniformityRewrites = False
+
+    self.goal_att_type_list = []
+    self.lineage_not_names  = []
 
     # =========================================== #
 
@@ -147,6 +150,13 @@ class Rule :
     self.saveEquations()
 
 
+  ##############
+  #  SET NAME  #
+  ##############
+  def set_name( self, new_rel_name ) :
+    self.cursor.execute( "UPDATE Rule SET goalName='" + new_rel_name + \
+                         "' WHERE rid=='" + str( self.rid ) + "'" )
+
   ##################
   #  SAVE TO RULE  #
   ##################
@@ -159,7 +169,50 @@ class Rule :
     # delete all data for this id in the table, if applicable
     self.cursor.execute( "DELETE FROM Rule WHERE rid='%s'" % str( self.rid ) )
 
-    self.cursor.execute("INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + str( self.rid ) + "','" + self.relationName + "','" + self.goalTimeArg + "','" + str( rewrittenFlag ) + "')")
+    self.cursor.execute( "INSERT INTO Rule (rid, goalName, goalTimeArg, rewritten) VALUES ('" + \
+                         str( self.rid )   + "','" + \
+                         self.relationName + "','" + \
+                         self.goalTimeArg  + "','" + \
+                         str( rewrittenFlag ) + "')")
+
+  ################################
+  #  UPDATE GOAL ATT TYPES LIST  #
+  ################################
+  def update_goal_att_types_list( self ) :
+
+    logging.debug( "  UPDATE GOAL ATT TYPES LIST : running process for rule :\n" + \
+                   dumpers.reconstructRule( self.rid, self.cursor ) )
+
+    self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+    typeList = self.cursor.fetchall()
+    typeList = tools.toAscii_multiList( typeList )
+    for t in typeList :
+      logging.debug(  "  UPDATE GOAL ATT TYPES LIST : " + str( t ) )
+
+    # get type list
+    self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+    typeList = self.cursor.fetchall()
+    typeList = tools.toAscii_multiList( typeList )
+    self.goal_att_type_list = typeList
+
+    logging.debug( "  UPDATE GOAL ATT TYPES LIST : len( self.goalAttList ) = " + str( self.goalAttList ) )
+    logging.debug( "  UPDATE GOAL ATT TYPES LIST : typeList                = " + str( typeList ) )
+
+    assert( len( self.goalAttList ) == len( typeList ) )
+
+  ########################
+  #  MANUALLY SET TYPES  #
+  ########################
+  def manually_set_types( self ) :
+
+    logging.debug( "  MANUALLY SET TYPES : running process for rule :\n" + \
+                   dumpers.reconstructRule( self.rid, self.cursor ) )
+
+    for i in range( 0, len( self.goal_att_type_list ) ) :
+      att_type = self.goal_att_type_list[ i ][ 1 ]
+      self.cursor.execute( "UPDATE GoalAtt SET attType='" + att_type + \
+                           "' WHERE rid=='" + str( self.rid ) + \
+                           "' AND attID=='" + str( i ) + "'" )
 
 
   ######################
@@ -171,7 +224,8 @@ class Rule :
 
     logging.debug( "========================================================" )
     logging.debug( "  SAVE TO GOAL ATT : self.relationName = " + self.relationName )
-    logging.debug( "  SAVE TO GOAL ATT : rule meta = " + str( self.ruleData ) )
+    logging.debug( "  SAVE TO GOAL ATT : rule : " + \
+                   str( dumpers.reconstructRule( self.rid, self.cursor ) ) )
     self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
     typeList = self.cursor.fetchall()
     typeList = tools.toAscii_multiList( typeList )
@@ -179,21 +233,24 @@ class Rule :
       logging.debug(  "  SAVE TO GOAL ATT : " + str( t ) )
 
     # get type list
-    self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
-    typeList = self.cursor.fetchall()
-    typeList = tools.toAscii_multiList( typeList )
+    if len( typeList ) > 0 :
+      self.cursor.execute( "SELECT attID,attType FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
+      typeList = self.cursor.fetchall()
+      typeList = tools.toAscii_multiList( typeList )
+      self.goal_att_type_list = typeList
+    else :
+      typeList = self.goal_att_type_list
 
     logging.debug( "  SAVE TO GOAL ATT : len( self.goalAttList ) = " + str( self.goalAttList ) )
     logging.debug( "  SAVE TO GOAL ATT : typeList                = " + str( typeList ) )
+    #assert( len( self.goalAttList ) == len( typeList ) )
 
     # delete all data for this id in the table
     self.cursor.execute( "DELETE FROM GoalAtt WHERE rid=='" + str( self.rid ) + "'" )
 
     attID = 0  # allows duplicate attributes in attList
 
-    #for attName in self.goalAttList :
     for i in range( 0, len( self.goalAttList ) ) :
-
       attName = self.goalAttList[ i ]
       try :
         attType = typeList[ i ][ 1 ]
@@ -202,8 +259,11 @@ class Rule :
 
       logging.debug( "  SAVE TO GOAL ATT : attType = " + str( attType ) )
 
-      self.cursor.execute("INSERT INTO GoalAtt VALUES ('" + str( self.rid ) + "','" + str( attID ) + "','" + str( attName ) + "','" + attType + "')")
-
+      self.cursor.execute( "INSERT INTO GoalAtt VALUES ('" + \
+                           str( self.rid ) + "','" + \
+                           str( attID )    + "','" + \
+                           str( attName )  + "','" + \
+                           attType + "')" )
       attID += 1
 
 

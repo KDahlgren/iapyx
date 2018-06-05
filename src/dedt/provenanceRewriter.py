@@ -846,8 +846,11 @@ def rewriteProvenance( ruleMeta, cursor, argDict ) :
     # adom_string, or adom_int
 
     if goalName.startswith( "domcomp_" ) or \
-       goalName.startswith( "dom_" ) or \
-       goalName.startswith( "adom_" ) :
+       goalName.startswith( "dom_" )     or \
+       goalName.startswith( "adom_" )    or \
+       goalName.startswith( "unidom_" )  or \
+       goalName.startswith( "exidom_" )  or \
+       goalName.startswith( "orig_" ) :
        continue
 
     # -------------------------------------------------- #
