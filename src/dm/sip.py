@@ -406,7 +406,7 @@ def get_dom_rules( orig_name, \
 #    sys.exit( "blah" )
 
   # ------------------------------------------ #
-  # build the existential domain rule
+  # build the existential domain rules
 
   # exidom_ encompasses the set of data from the original version
   # of the target rule which contributes to generating data in 
@@ -421,12 +421,6 @@ def get_dom_rules( orig_name, \
 
   for target_rule in target_rules :
 
-    exi_ruleData = {}
-  
-    # get relation name
-    # need the extra _f to maintain arities.
-    exi_ruleData[ "relationName" ] = "exidom_" + not_name + "_f" + str( target_rule.rid )
-  
     # grab all existential vars from the original definition for the
     # target relation.
     all_exi_vars = []
@@ -440,69 +434,79 @@ def get_dom_rules( orig_name, \
     # only write an exidom_ rule if existential vars exist.
     if len( all_exi_vars ) > 0 :
 
-      #get goal atts
-      exi_ruleData[ "goalAttList" ] = copy.deepcopy( all_exi_vars )
-  
-      # get goal time arg
-      exi_ruleData[ "goalTimeArg" ] = ""
-    
-      # get eqn dict
-      exi_ruleData[ "eqnDict" ] = {}
-    
       # =================================== #
       # get subgoals
-  
-      exi_subgoalListOfDicts = copy.deepcopy( target_rule.subgoalListOfDicts )
-      for i in range( 0, len( exi_subgoalListOfDicts ) ) :
-        sub = exi_subgoalListOfDicts[ i ]
-        if not sub[ "subgoalName" ].startswith( "orig_" )   and \
-           not sub[ "subgoalName" ] == "clock"              and \
-           not sub[ "subgoalName" ] == "next_clock"         and \
-           not sub[ "subgoalName" ] == "crash"              and \
-           not sub[ "subgoalName" ].startswith( "not_" )    and \
-           not sub[ "subgoalName" ].startswith( "unidom_" ) and \
-           not sub[ "subgoalName" ].startswith( "exidom_" ) and \
-           dm_tools.is_idb( sub[ "subgoalName" ], ruleMeta ) :
-          exi_subgoalListOfDicts[ i ][ "subgoalName" ] = "orig_" + sub[ "subgoalName" ]
-  
-      exi_ruleData[ "subgoalListOfDicts" ] = exi_subgoalListOfDicts
-  
-      # =================================== #
-      # save rule
-  
-      exi_rid         = tools.getIDFromCounters( "rid" )
-      exi_rule        = copy.deepcopy( Rule.Rule( exi_rid, exi_ruleData, cursor) )
-      exi_rule.cursor = cursor # need to do this for some reason or else cursor disappears?
-  
-      # set the unidom rule types manually
-      exi_goal_types = []
-      for gatt in exi_rule.goalAttList :
-        for sub in exi_subgoalListOfDicts :
-          if gatt in sub[ "subgoalAttList" ] :
-            gatt_index = sub[ "subgoalAttList" ].index( gatt )
-            for rule in ruleMeta :
-              if rule.relationName == sub[ "subgoalName" ] :
-                exi_goal_types.append( rule.goal_att_type_list[ gatt_index ] )
-      assert( len( uni_goal_types ) > 0 )
-    
-      exi_rule.goal_att_type_list = exi_goal_types
-      exi_rule.manually_set_types()
-    
-      # check if a rule already exists
-      # to prevent duplicates.
-      if not dm_tools.identical_rule_already_exists( exi_rule, cursor ) :
-        newRules.append( exi_rule )
-        logging.debug( "  GET DOM RULES : added exi dom rule :\n     " + \
-                       dumpers.reconstructRule( exi_rule.rid, exi_rule.cursor ) ) 
-      else :
-        logging.debug( "  GET DOM RULES : NOT adding exi dom rule :\n     " + \
-                       dumpers.reconstructRule( exi_rule.rid, exi_rule.cursor ) ) 
+      # need one exidom rule per subgoal
+      # in the target rule.
 
+      all_subgoals = copy.deepcopy( target_rule.subgoalListOfDicts )
+
+      for asub in all_subgoals :
+
+        print "asub = " + str( asub )
+
+        exi_ruleData = {}
+    
+        # get relation name
+        # need the extra _f to maintain arities.
+        exi_ruleData[ "relationName" ] = "exidom_" + not_name + "_f" + str( target_rule.rid )
+  
+        #get goal atts
+        exi_ruleData[ "goalAttList" ] = copy.deepcopy( all_exi_vars )
+
+        # get goal time arg
+        exi_ruleData[ "goalTimeArg" ] = ""
+
+        # get eqn dict
+        exi_ruleData[ "eqnDict" ] = {}
+
+        if not asub[ "subgoalName" ].startswith( "orig_" )   and \
+           not asub[ "subgoalName" ] == "clock"              and \
+           not asub[ "subgoalName" ] == "next_clock"         and \
+           not asub[ "subgoalName" ] == "crash"              and \
+           not asub[ "subgoalName" ].startswith( "not_" )    and \
+           not asub[ "subgoalName" ].startswith( "unidom_" ) and \
+           not asub[ "subgoalName" ].startswith( "exidom_" ) and \
+           dm_tools.is_idb( asub[ "subgoalName" ], ruleMeta ) :
+          asub[ "subgoalName" ] = "orig_" + asub[ "subgoalName" ]
+    
+        exi_ruleData[ "subgoalListOfDicts" ] = [ asub ]
+
+        # =================================== #
+        # save rule
+    
+        exi_rid         = tools.getIDFromCounters( "rid" )
+        exi_rule        = copy.deepcopy( Rule.Rule( exi_rid, exi_ruleData, cursor) )
+        exi_rule.cursor = cursor # need to do this for some reason or else cursor disappears?
+    
+        # set the rule types manually
+        exi_goal_types = []
+        for gatt in exi_rule.goalAttList :
+          for sub in exi_ruleData[ "subgoalListOfDicts" ] :
+            if gatt in sub[ "subgoalAttList" ] :
+              gatt_index = sub[ "subgoalAttList" ].index( gatt )
+              for rule in ruleMeta :
+                if rule.relationName == sub[ "subgoalName" ] :
+                  exi_goal_types.append( rule.goal_att_type_list[ gatt_index ] )
+  
+        exi_rule.goal_att_type_list = exi_goal_types
+        exi_rule.manually_set_types()
+      
+        # check if a rule already exists
+        # to prevent duplicates.
+        if not dm_tools.identical_rule_already_exists( exi_rule, cursor ) :
+          newRules.append( exi_rule )
+          logging.debug( "  GET DOM RULES : added exi dom rule :\n     " + \
+                         dumpers.reconstructRule( exi_rule.rid, exi_rule.cursor ) ) 
+        else :
+          logging.debug( "  GET DOM RULES : NOT adding exi dom rule :\n     " + \
+                         dumpers.reconstructRule( exi_rule.rid, exi_rule.cursor ) ) 
+  
   logging.debug( "  GET DOM RULES : domain rules:" )
   for rule in newRules :
     logging.debug( "     " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 
-  #if uni_ruleData[ "relationName" ] == "unidom_not_node_f23" :
+  #if uni_ruleData[ "relationName" ] == "unidom_not_path_f2" :
   #  for rule in newRules :
   #    print dumpers.reconstructRule( rule.rid, rule.cursor )
   #  sys.exit( "blah" )
@@ -972,7 +976,8 @@ def dnfToDatalog( orig_name, \
       # if not_ rule contains a negated recusrion
       # instance, replace with the positive head.
 
-      if subgoalDict[ "subgoalName" ] == orig_name :
+      #if subgoalDict[ "subgoalName" ] == orig_name :
+      if False :
         subgoalDict[ "subgoalName" ] = not_name
         subgoalDict[ "polarity" ]    = ""
 
@@ -1022,29 +1027,8 @@ def dnfToDatalog( orig_name, \
         exidom_sub[ "subgoalTimeArg" ] = ""
         exidom_sub[ "polarity" ]       = ""
         exidom_sub[ "subgoalAttList" ] = esub.goalAttList
-        subgoalListOfDicts.append( exidom_sub )
-
-    # ----------------------------------------- #
-    # add existential domain subgoal,
-    # if applicable
-
-#    prevRules = []
-#    for currRule in existentialVarsRules :
-#
-#      if currRule.relationName in prevRules :
-#        pass
-#
-#      else :
-#        prevRules.append( currRule.relationName )
-#
-#        existentialVarSubgoal_dict = {}
-#        existentialVarSubgoal_dict[ "subgoalName" ]    = currRule.ruleData[ "relationName" ]
-#        existentialVarSubgoal_dict[ "subgoalAttList" ] = currRule.ruleData[ "goalAttList" ]
-#        existentialVarSubgoal_dict[ "polarity" ]       = ""
-#        existentialVarSubgoal_dict[ "subgoalTimeArg" ] = ""
-#    
-#        subgoalListOfDicts.append( existentialVarSubgoal_dict )
-
+        if not exidom_sub in subgoalListOfDicts :
+          subgoalListOfDicts.append( exidom_sub )
 
     # ----------------------------------------- #
     # build ruleData for new rule and save
@@ -1059,6 +1043,7 @@ def dnfToDatalog( orig_name, \
     # ----------------------------------------- #
     # add negation of original version 
     # for good measure.
+    # need for some reason? whatevs.
 
     orig_neg = {}
     orig_neg[ "subgoalName" ]    = "orig_" + orig_name
@@ -1094,6 +1079,7 @@ def dnfToDatalog( orig_name, \
   logging.debug( "  DNF TO DATALOG : newDMRules :" )
   for newRule in newDMRules :
     logging.debug( "    " + str( dumpers.reconstructRule( newRule.rid, newRule.cursor )) )
+  #sys.exit( "blahaha" )
 
   return newDMRules
 
@@ -1191,6 +1177,10 @@ def replaceSubgoalNegations( orig_name, \
 
 
   logging.debug( "  REPLACE SUBGOAL NEGATIONS : running process..." )
+  logging.debug( "  REPLACE SUBGOAL NEGATIONS : orig_name = " + orig_name )
+  logging.debug( "  REPLACE SUBGOAL NEGATIONS : not_name  = " + not_name )
+  logging.debug( "  REPLACE SUBGOAL NEGATIONS : parent rule :" )
+  logging.debug( "          " + dumpers.reconstructRule( parent_rid, ruleMeta[0].cursor ) )
 
   for rule in ruleMeta :
 
@@ -1217,26 +1207,26 @@ def replaceSubgoalNegations( orig_name, \
 
       rule.saveSubgoals()
 
-    # 2. make replacements in this set of not rules
-    else :
-      if rule.relationName == not_name :
+    ## 2. make replacements in this set of not rules
+    #else :
+    #  if rule.relationName == not_name :
 
-#        print "replace subgoals"
-#        print rule.relationName
-#        print rule.lineage_not_names
-#        print dumpers.reconstructRule( rule.rid, rule.cursor )
+#   #     print "replace subgoals"
+#   #     print rule.relationName
+#   #     print rule.lineage_not_names
+#   #     print dumpers.reconstructRule( rule.rid, rule.cursor )
 
-        for i in range( 0, len( rule.subgoalListOfDicts ) ) :
-          sub = rule.subgoalListOfDicts[ i ]
-          if sub[ "polarity" ] == "notin" :
-            print "checking subgoal : " + str( sub )
-            for lineage_not_name in rule.lineage_not_names :
-              if lineage_not_name.startswith( "not_" + sub[ "subgoalName" ] ) :
-                print "here"
-                rule.subgoalListOfDicts[ i ][ "subgoalName" ] = lineage_not_name
-                rule.subgoalListOfDicts[ i ][ "polarity" ]    = ""
+    #    for i in range( 0, len( rule.subgoalListOfDicts ) ) :
+    #      sub = rule.subgoalListOfDicts[ i ]
+    #      if sub[ "polarity" ] == "notin" :
+    #        print "checking subgoal : " + str( sub )
+    #        for lineage_not_name in rule.lineage_not_names :
+    #          if lineage_not_name.startswith( "not_" + sub[ "subgoalName" ] ) :
+    #            print "here"
+    #            rule.subgoalListOfDicts[ i ][ "subgoalName" ] = lineage_not_name
+    #            rule.subgoalListOfDicts[ i ][ "polarity" ]    = ""
 
-      rule.saveSubgoals()
+    #  rule.saveSubgoals()
 
 #      if rule.relationName == "not_log_f24" :
 #        print dumpers.reconstructRule( rule.rid, rule.cursor )
