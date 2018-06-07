@@ -1364,19 +1364,9 @@ def doDeMorgans_dm_huge( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     ruleMeta.extend( existentialVarsRules )
 
     # ----------------------------------------- #
-    # generate sympy boolean formula over
-    # subgoals across rules per set
-    # such that literals are strings identifying
-    # index of the rule containing the subgoal
-    # and the index of the subgoal in the subgoal
-    # lists of particular rules
+    # build the boolean dnf fmla
 
-    negated_dnf_fmla = generateBooleanFormula( ruleSet )
-
-    # ----------------------------------------- #
-    # simplify into another dnf fmla
-
-    pos_dnf_fmla = simplifyToDNF( negated_dnf_fmla )
+    final_fmla = dm_tools.get_final_fmla( ruleSet )
 
     # ----------------------------------------- #
     # each clause in the final dnf fmla 
@@ -1386,7 +1376,7 @@ def doDeMorgans_dm_huge( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     newDMRules = dnfToDatalog( not_name, \
                                goalAttList, \
                                goalTimeArg, \
-                               pos_dnf_fmla, \
+                               final_fmla, \
                                domcompRule, \
                                existentialVarsRules, \
                                ruleSet, \
@@ -1881,7 +1871,7 @@ def extractAtt( gatt ) :
 def dnfToDatalog( not_name, \
                   goalAttList, \
                   goalTimeArg, \
-                  pos_dnf_fmla, \
+                  final_fmla, \
                   domcompRule, \
                   existentialVarsRules, \
                   ruleSet, \
@@ -1889,13 +1879,12 @@ def dnfToDatalog( not_name, \
                   argDict ) :
 
   settings_path    = argDict[ "settings" ]
-  pos_dnf_fmla_str = str( pos_dnf_fmla )
 
-  logging.debug( "  DNF TO DATALOG : not_name         = " + not_name )
-  logging.debug( "  DNF TO DATALOG : goalAttList      = " + str( goalAttList ) )
-  logging.debug( "  DNF TO DATALOG : goalTimeArg      = " + goalTimeArg )
-  logging.debug( "  DNF TO DATALOG : pos_dnf_fmla_str = " + pos_dnf_fmla_str )
-  logging.debug( "  DNF TO DATALOG : ruleSet          = " + str( ruleSet ) )
+  logging.debug( "  DNF TO DATALOG : not_name    = " + not_name )
+  logging.debug( "  DNF TO DATALOG : goalAttList = " + str( goalAttList ) )
+  logging.debug( "  DNF TO DATALOG : goalTimeArg = " + goalTimeArg )
+  logging.debug( "  DNF TO DATALOG : final_fmla  = " + final_fmla )
+  logging.debug( "  DNF TO DATALOG : ruleSet     = " + str( ruleSet ) )
 
   # ----------------------------------------- #
   # generate combined equation list
@@ -1911,10 +1900,9 @@ def dnfToDatalog( not_name, \
   # break positive dnf fmla into a set of 
   # conjuncted clauses
 
-  clauseList = pos_dnf_fmla_str.replace( "INDX", "" )
-  clauseList = clauseList.replace( "(", "" )      # valid b/c dnf
+  clauseList = final_fmla.replace( "(", "" )      # valid b/c dnf
   clauseList = clauseList.replace( ")", "" )      # valid b/c dnf
-  clauseList = clauseList.split( " | " )
+  clauseList = clauseList.split( "|" )
 
   logging.debug( "  DNF TO DATALOG : clauseList = " + str( clauseList ) )
 

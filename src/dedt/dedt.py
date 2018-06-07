@@ -27,6 +27,10 @@ import copy, inspect, logging, os, pydot, string, sqlite3, sys
 # import sibling packages HERE!!!
 if not os.path.abspath( __file__ + "/../.." ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../.." ) )
+if not os.path.abspath( __file__ + "/../../combo/_old" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../combo/_old" ) )
+if not os.path.abspath( __file__ + "/../../combo" ) in sys.path :
+  sys.path.append( os.path.abspath( __file__ + "/../../combo" ) )
 if not os.path.abspath( __file__ + "/../translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../translators" ) )
 if not os.path.abspath( __file__ + "/../../dm" ) in sys.path :
@@ -39,7 +43,11 @@ if not os.path.abspath( __file__ + "/../../rewrite_wildcards" ) in sys.path :
 from utils       import dumpers, extractors, globalCounters, setTypes, tools, parseCommandLineInput
 from translators import c4_translator, dumpers_c4
 from evaluators  import c4_evaluator
-from comb        import combitorialNegRewriter
+
+# from combo/_old/ :
+import combitorialNegRewriter
+
+from combo import combo
 
 import dm, iedb_rewrites, rewrite_wildcards
 

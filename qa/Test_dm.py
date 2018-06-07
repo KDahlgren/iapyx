@@ -1873,8 +1873,7 @@ class Test_dm( unittest.TestCase ) :
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
-      pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
+      final_fmla = dm_tools.get_final_fmla( ruleSet )
 
       argDict = self.getArgDict( "" )
       argDict[ "settings" ] = "./settings_files/settings.ini"
@@ -1882,7 +1881,7 @@ class Test_dm( unittest.TestCase ) :
       newDMRules = dm.dnfToDatalog( not_name, \
                                     goalAttList, \
                                     goalTimeArg, \
-                                    pos_dnf_fmla, \
+                                    final_fmla, \
                                     domcompRule, \
                                     existentialVarsRules, \
                                     ruleSet, \
@@ -1896,11 +1895,11 @@ class Test_dm( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # check assertion
 
-    # not_c = ~b AND f
+    # not_c = ~d AND f
     expected_rule1 = { 'relationName': 'not_c', \
-                       'subgoalListOfDicts': [{ 'polarity': '', \
-                                                'subgoalName': 'b', \
-                                                'subgoalAttList': ['Z', '_'], \
+                       'subgoalListOfDicts': [{ 'polarity': 'notin', \
+                                                'subgoalName': 'd', \
+                                                'subgoalAttList': ['X', 'Z'], \
                                                 'subgoalTimeArg': ''}, \
                                               { 'polarity': 'notin', \
                                                 'subgoalName': 'f', \
@@ -1918,11 +1917,11 @@ class Test_dm( unittest.TestCase ) :
                        'goalAttList': ['X'], \
                        'goalTimeArg': ''}
 
-    # not_c = ~d AND f
+    # not_c = ~b AND f
     expected_rule2 = { 'relationName': 'not_c', \
-                       'subgoalListOfDicts': [{ 'polarity': 'notin', \
-                                                'subgoalName': 'd', \
-                                                'subgoalAttList': ['X', 'Z'], \
+                       'subgoalListOfDicts': [{ 'polarity': '', \
+                                                'subgoalName': 'b', \
+                                                'subgoalAttList': ['Z', '_'], \
                                                 'subgoalTimeArg': ''}, \
                                               { 'polarity': 'notin', \
                                                 'subgoalName': 'f', \
@@ -1976,9 +1975,10 @@ class Test_dm( unittest.TestCase ) :
                        'goalAttList': ['X', 'Y'], \
                        'goalTimeArg': ''}
 
-    expected_newDMRules_ruleData = [ expected_rule1, expected_rule2, expected_rule3, expected_rule4  ]
-
-    self.assertEqual( actual_newDMRules_ruleData, expected_newDMRules_ruleData )
+    self.assertEqual( actual_newDMRules_ruleData[0], expected_rule1 )
+    self.assertEqual( actual_newDMRules_ruleData[1], expected_rule2 )
+    self.assertEqual( actual_newDMRules_ruleData[2], expected_rule3 )
+    self.assertEqual( actual_newDMRules_ruleData[3], expected_rule4 )
 
     # --------------------------------------------------------------- #
     # clean up testing
@@ -2093,8 +2093,7 @@ class Test_dm( unittest.TestCase ) :
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
-      pos_dnf_fmla     = str( dm.simplifyToDNF( negated_dnf_fmla ) )
+      final_fmla = dm_tools.get_final_fmla( ruleSet )
 
       argDict = self.getArgDict( "" )
       argDict[ "settings" ] = "./settings_files/settings.ini"
@@ -2102,7 +2101,7 @@ class Test_dm( unittest.TestCase ) :
       newDMRules = dm.dnfToDatalog( not_name, \
                                     goalAttList, \
                                     goalTimeArg, \
-                                    pos_dnf_fmla, \
+                                    final_fmla, \
                                     domcompRule, \
                                     existentialVarsRules, \
                                     ruleSet, \
@@ -2116,30 +2115,9 @@ class Test_dm( unittest.TestCase ) :
     # --------------------------------------------------------------- #
     # check assertion
 
-    # not_c = ~b AND f
-    expected_rule1 = { 'relationName': 'not_c', \
-                       'subgoalListOfDicts': [{ 'polarity': '', \
-                                                'subgoalName': 'b', \
-                                                'subgoalAttList': ['Z', '_'], \
-                                                'subgoalTimeArg': ''}, \
-                                              { 'polarity': 'notin', \
-                                                'subgoalName': 'f', \
-                                                'subgoalAttList': ['X', '_'], \
-                                                'subgoalTimeArg': ''}, \
-                                              { 'polarity': '', \
-                                                'subgoalName': 'domcomp_c', \
-                                                'subgoalAttList': ['X'], \
-                                                'subgoalTimeArg': ''}, \
-                                              { 'polarity': '', \
-                                                'subgoalName': 'dom_c_z', \
-                                                'subgoalAttList': ['Z'], \
-                                                'subgoalTimeArg': ''}], \
-                       'eqnDict': {}, \
-                       'goalAttList': ['X'], \
-                       'goalTimeArg': ''}
 
     # not_c = ~d AND f
-    expected_rule2 = { 'relationName': 'not_c', \
+    expected_rule1 = { 'relationName': 'not_c', \
                        'subgoalListOfDicts': [{ 'polarity': 'notin', \
                                                 'subgoalName': 'd', \
                                                 'subgoalAttList': ['X', 'Z'], \
@@ -2160,6 +2138,27 @@ class Test_dm( unittest.TestCase ) :
                        'goalAttList': ['X'], \
                        'goalTimeArg': ''}
 
+    # not_c = ~b AND f
+    expected_rule2 = { 'relationName': 'not_c', \
+                       'subgoalListOfDicts': [{ 'polarity': '', \
+                                                'subgoalName': 'b', \
+                                                'subgoalAttList': ['Z', '_'], \
+                                                'subgoalTimeArg': ''}, \
+                                              { 'polarity': 'notin', \
+                                                'subgoalName': 'f', \
+                                                'subgoalAttList': ['X', '_'], \
+                                                'subgoalTimeArg': ''}, \
+                                              { 'polarity': '', \
+                                                'subgoalName': 'domcomp_c', \
+                                                'subgoalAttList': ['X'], \
+                                                'subgoalTimeArg': ''}, \
+                                              { 'polarity': '', \
+                                                'subgoalName': 'dom_c_z', \
+                                                'subgoalAttList': ['Z'], \
+                                                'subgoalTimeArg': ''}], \
+                       'eqnDict': {}, \
+                       'goalAttList': ['X'], \
+                       'goalTimeArg': ''}
     # not_b = ~d
     expected_rule3 = { 'relationName': 'not_b', \
                        'subgoalListOfDicts': [{ 'polarity': 'notin', \
@@ -2196,9 +2195,10 @@ class Test_dm( unittest.TestCase ) :
                        'goalAttList': ['X', 'Y'], \
                        'goalTimeArg': ''}
 
-    expected_newDMRules_ruleData = [ expected_rule1, expected_rule2, expected_rule3, expected_rule4  ]
-
-    self.assertEqual( actual_newDMRules_ruleData, expected_newDMRules_ruleData )
+    self.assertEqual( actual_newDMRules_ruleData[0], expected_rule1 )
+    self.assertEqual( actual_newDMRules_ruleData[1], expected_rule2 )
+    self.assertEqual( actual_newDMRules_ruleData[2], expected_rule3 )
+    self.assertEqual( actual_newDMRules_ruleData[3], expected_rule4 )
 
     # --------------------------------------------------------------- #
     # clean up testing
@@ -2290,13 +2290,12 @@ class Test_dm( unittest.TestCase ) :
     actual_pos_dnf_fmlas = []
     for ruleSet in targetRuleMeta :
       ruleSet = ruleSet[1]
-      negated_dnf_fmla = dm.generateBooleanFormula( ruleSet )
-      actual_pos_dnf_fmlas.append( str( dm.simplifyToDNF( negated_dnf_fmla ) ) )
+      actual_pos_dnf_fmlas.append( dm_tools.get_final_fmla( ruleSet ) )
 
     # --------------------------------------------------------------- #
     # check assertion
 
-    expected_pos_dnf_fmlas = ["(INDX0_INDX1 & ~INDX1_INDX0) | (~INDX0_INDX0 & ~INDX1_INDX0)", "~INDX0_INDX0 | ~INDX0_INDX1"]
+    expected_pos_dnf_fmlas = [ '(~0_0&~1_0)|(0_1&~1_0)', '(~0_0)|(~0_1)' ]
 
     self.assertEqual( actual_pos_dnf_fmlas, expected_pos_dnf_fmlas )
 

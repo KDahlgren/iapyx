@@ -79,7 +79,7 @@ def doDeMorgans_sip_idb( factMeta, \
 
     # ----------------------------------------- #
   
-    final_fmla = get_final_fmla( ruleSet )
+    final_fmla = dm_tools.get_final_fmla( ruleSet )
 
     # ----------------------------------------- #
     # get the lists of all strings and ints

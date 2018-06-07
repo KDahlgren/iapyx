@@ -53,9 +53,9 @@ domcomp_missing_log(A,Pl,NRESERVED):-adom_string(A),adom_string(Pl),adom_int(NRE
 dom_missing_log_x(X):-log(X,_,_),node(X,_,_);
 dom_missing_log_x(X):-log(X,_,_),notin node(X,_,_);
 dom_missing_log_x(X):-node(X,_,_),notin log(X,_,_);
-not_missing_log(A,Pl,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),log(A,Pl,NRESERVED);
 not_missing_log(A,Pl,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_log(X,Pl,NRESERVED);
 not_missing_log(A,Pl,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_node(X,A,NRESERVED);
+not_missing_log(A,Pl,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),log(A,Pl,NRESERVED);
 domcomp_log(Att0,Att1,MRESERVED):-adom_string(Att0),adom_string(Att1),adom_int(MRESERVED),notin log(Att0,Att1,MRESERVED);
 dom_log_nreserved4(NRESERVED4):-log(_,_,NRESERVED4),clock(_,_,NRESERVED4,_);
 dom_log_nreserved4(NRESERVED4):-log(_,_,NRESERVED4),notin clock(_,_,NRESERVED4,_);
@@ -86,9 +86,9 @@ node_prov3(Node,Neighbor,NRESERVED,MRESERVED):-node(Node,Neighbor,NRESERVED),clo
 log_prov4(Att0,Att1,NRESERVED4,MRESERVED):-log(Att0,Att1,NRESERVED4),clock(Att0,_,NRESERVED4,MRESERVED);
 log_prov5(Att0,Att1,Node15,NRESERVED5,MRESERVED):-bcast(Node15,Att1,NRESERVED5),node(Node15,Att0,NRESERVED5),clock(Node15,Att0,NRESERVED5,MRESERVED);
 log_prov6(Att0,Att1,MRESERVED):-bcast(Att0,Att1,MRESERVED);
-not_missing_log_prov7(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),log(A,Pl,NRESERVED);
-not_missing_log_prov8(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_log(X,Pl,NRESERVED);
-not_missing_log_prov9(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_node(X,A,NRESERVED);
+not_missing_log_prov7(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_log(X,Pl,NRESERVED);
+not_missing_log_prov8(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),not_node(X,A,NRESERVED);
+not_missing_log_prov9(A,Pl,X,NRESERVED):-domcomp_missing_log(A,Pl,NRESERVED),dom_missing_log_x(X),log(A,Pl,NRESERVED);
 not_log_prov10(Att0,Att1,NRESERVED4,Node15,NRESERVED5,MRESERVED):-domcomp_log(Att0,Att1,MRESERVED),dom_log_nreserved4(NRESERVED4),dom_log_node15nreserved5(Node15,NRESERVED5),notin clock(Att0,_,NRESERVED4,MRESERVED),notin bcast(Node15,Att1,NRESERVED5),notin bcast(Att0,Att1,MRESERVED);
 not_log_prov11(Att0,Att1,NRESERVED4,Node15,NRESERVED5,MRESERVED):-domcomp_log(Att0,Att1,MRESERVED),dom_log_nreserved4(NRESERVED4),dom_log_node15nreserved5(Node15,NRESERVED5),not_node(Node15,Att0,NRESERVED5),notin clock(Att0,_,NRESERVED4,MRESERVED),notin bcast(Att0,Att1,MRESERVED);
 not_log_prov12(Att0,Att1,NRESERVED4,Node15,NRESERVED5,MRESERVED):-domcomp_log(Att0,Att1,MRESERVED),dom_log_nreserved4(NRESERVED4),dom_log_node15nreserved5(Node15,NRESERVED5),notin clock(Att0,_,NRESERVED4,MRESERVED),notin clock(Node15,Att0,NRESERVED5,MRESERVED),notin bcast(Att0,Att1,MRESERVED);

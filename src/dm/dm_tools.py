@@ -28,6 +28,66 @@ from utils      import clockTools, tools, dumpers, setTypes
 # ------------------------------------------------------ #
 
 
+####################
+#  GET FINAL FMLA  #
+####################
+def get_final_fmla( ruleSet ) :
+
+  logging.debug( "  GET FINAL FMLA : running process..." )
+  logging.debug( "  GET FINAL FMLA : ruleSet :" )
+  for r in ruleSet :
+    logging.debug( "    " + str( dumpers.reconstructRule( r.rid, r.cursor ) ) )
+
+  # collect the initial set of literals
+  literal_id_lists = []
+  for rule_index in range( 0, len( ruleSet ) ) :
+    rule = ruleSet[ rule_index ]
+    this_literal_id_list = []
+    for sub_index in range( 0, len( rule.subgoalListOfDicts ) ) :
+      this_literal = str( rule_index ) + "_" + str( sub_index )
+      if rule.subgoalListOfDicts[ sub_index ][ "polarity" ] == "notin" :
+        this_literal = "~" + this_literal
+      this_literal_id_list.append( this_literal )
+    literal_id_lists.append( this_literal_id_list )
+
+  logging.debug( "  GET FINAL FMLA : literal_id_lists = " + str( literal_id_lists ) )
+
+  # based on https://stackoverflow.com/a/798893
+  all_clause_combos = list( itertools.product( *literal_id_lists ) )
+
+  # flip literal polarities
+  flipped_literal_id_lists = []
+  for clause in all_clause_combos :
+    flipped_lits_clause = []
+    for lit in clause :
+      if "~" in lit :
+        lit = lit.replace( "~", "" )
+      else :
+        lit = "~" + lit
+      flipped_lits_clause.append( lit )
+    flipped_literal_id_lists.append( flipped_lits_clause )
+
+  logging.debug( "  GET FINAL FMLA : flipped_literal_id_lists = " + \
+                 str( flipped_literal_id_lists ) )
+
+  # build final fmla
+  final_fmla = ""
+  for i in range( 0, len( flipped_literal_id_lists ) ) :
+    clause = flipped_literal_id_lists[ i ]
+    this_clause = ""
+    for j in range( 0, len( clause ) ) :
+      lit          = clause[ j ]
+      this_clause += lit
+      if j < len( clause ) - 1 :
+        this_clause += "&"
+    this_clause = "(" + this_clause + ")"
+    if i < len( flipped_literal_id_lists ) - 1 :
+      this_clause += "|"
+    final_fmla += this_clause
+
+  return final_fmla
+
+
 ###################################
 #  IDENTICAL RULE ALREADY EXISTS  #
 ###################################
