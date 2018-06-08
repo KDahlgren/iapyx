@@ -2338,7 +2338,11 @@ def buildAdom( factMeta, cursor ) :
         # ----------------------------------------- #
         # save data to subgoal dict
 
-        oneSubgoalDict[ "subgoalName" ]    = subgoalName
+        if subgoalName.endswith( "_edb" ) :
+          oneSubgoalDict[ "subgoalName" ]    = subgoalName.replace( "_edb", "" )
+        else :
+          oneSubgoalDict[ "subgoalName" ]    = subgoalName
+
         oneSubgoalDict[ "subgoalAttList" ] = subgoalAttList
         oneSubgoalDict[ "polarity" ]       = polarity
         oneSubgoalDict[ "subgoalTimeArg" ] = subgoalTimeArg

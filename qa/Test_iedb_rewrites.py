@@ -40,7 +40,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
   #  IEDB REWRITES REPLOG DM  #
   #############################
   # tests rewriting replog on dm
-  @unittest.skip( "eval result inconsistencies. look into this later." )
+  #@unittest.skip( "eval result inconsistencies. look into this later." )
   def test_iedb_rewrites_replog_dm( self ) :
 
     logging.info( "  TEST_IEDB_REWRITES : test_iedb_rewrites_replog_dm..." )
@@ -63,7 +63,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
   #  IEDB REWRITES RDLOG DM  #
   ############################
   # tests rewriting rdlog on dm
-  @unittest.skip( "eval result inconsistencies. look into this later." )
+  #@unittest.skip( "eval result inconsistencies. look into this later." )
   def test_iedb_rewrites_rdlog_dm( self ) :
 
     logging.info( "  TEST_IEDB_REWRITES : test_iedb_rewrites_rdlog_dm..." )
@@ -86,7 +86,7 @@ class Test_iedb_rewrites( unittest.TestCase ) :
   #  IEDB REWRITES SIMPLOG DM  #
   ##############################
   # tests rewriting simplog on dm
-  @unittest.skip( "eval result inconsistencies. look into this later." )
+  #@unittest.skip( "eval result inconsistencies. look into this later." )
   def test_iedb_rewrites_simplog_dm( self ) :
 
     logging.info( "  TEST_IEDB_REWRITES : test_iedb_rewrites_simplog_dm..." )
@@ -306,6 +306,9 @@ class Test_iedb_rewrites( unittest.TestCase ) :
 
     expected_eval_results_dict = tools.getEvalResults_dict_c4( expected_results_array )
 
+    #self.check_results_alignment( expected_eval_results_dict, eval_results_dict )
+    #sys.exit( "blah" )
+
     # ----------------------------------------------------------------- #
     # compare all positive tables (not prov)
 
@@ -465,6 +468,61 @@ class Test_iedb_rewrites( unittest.TestCase ) :
     argDict[ "neg_writes" ]               = ""
 
     return argDict
+
+  #############################
+  #  CHECK RESULTS ALIGNMENT  #
+  #############################
+  def check_results_alignment( self, eval_molly, eval_dm ) :
+
+    assert( len( eval_molly ) > 0 )
+    assert( len( eval_dm ) > 0 )
+
+    print
+    print "<><><><><><><><><><><><><><><><><><>"
+    print "<>   CHECKING TUPLE ALIGNMENTS    <>"
+
+    # check dm
+    logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
+    logging.debug( "  checking results for dm v. molly:" )
+    extra_molly_tups_final = []
+    extra_dm_tups_final    = []
+    for rel in eval_molly :
+      if "_prov" in rel :
+        continue
+      else :
+
+        # check for extra molly tups
+        extra_molly_tups = []
+        for molly_tup in eval_molly[ rel ] :
+          if not molly_tup in eval_dm[ rel ] :
+            extra_molly_tups.append( molly_tup )
+            extra_molly_tups_final.append( molly_tup )
+
+        # check for extra dm tups
+        extra_dm_tups = []
+        for dm_tup in eval_dm[ rel ] :
+          if not dm_tup in eval_molly[ rel ] :
+            extra_dm_tups.append( dm_tup )
+            extra_dm_tups_final.append( dm_tup )
+
+        if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+          print ">>>> alignment inconsistencies for relation '" + rel + "' :"
+
+        if len( extra_molly_tups ) > 0 :
+          print "> tuples found in molly and not in dm for relation '" + rel.upper() + " :"
+          for tup in extra_molly_tups :
+            print ",".join( tup )
+
+        if len( extra_dm_tups ) > 0 :
+          print "> tuples found in dm and not in molly for relation '" + rel.upper() + " :"
+          for tup in extra_dm_tups :
+            print ",".join( tup )
+
+        if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
+          print "<<<<"
+
+    #self.assertTrue( len( extra_molly_tups_final ) < 1 )
+    #self.assertTrue( len( extra_dm_tups_final ) < 1 )
 
 
 if __name__ == "__main__" :
