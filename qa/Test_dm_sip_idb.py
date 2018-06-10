@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_combo_sip_idb.py
+Test_dm_sip_idb.py
 '''
 
 #############
@@ -23,10 +23,10 @@ from evaluators import c4_evaluator
 # ------------------------------------------------------ #
 
 
-########################
-#  TEST COMBO SIP IDB  #
-########################
-class Test_combo_sip_idb( unittest.TestCase ) :
+#####################
+#  TEST DM SIP IDB  #
+#####################
+class Test_dm_sip_idb( unittest.TestCase ) :
 
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
@@ -34,93 +34,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
 
   PRINT_STOP = False
   MOLLY_RUNS = True
-  COMBO_RUNS = True
-
-  ############
-  #  REPLOG  #
-  ############
-  def test_replog( self ) :
-
-    MOLLY_EVAL = True
-    COMBO_EVAL = True
-
-    # --------------------------------------------------------------- #
-
-    if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_replog_molly"
-      test_file_name = "replog"
-
-      print " >>> RUNNING " + test_id + " <<<"
-
-      input_file                  = "./molly_progs/" + test_file_name + ".olg"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
-
-    # --------------------------------------------------------------- #
-
-    if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_replog"
-      test_file_name = "replog_driver"
-
-      print " >>> RUNNING " + test_id + " <<<"
-
-      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-      argDict[ 'EOT' ]            = 6
-      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-      argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
-
-      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
-
-    if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
-      self.check_results_alignment( eval_molly, eval_combo )
-
-  ###########
-  #  RDLOG  #
-  ###########
-  def test_rdlog( self ) :
-
-    MOLLY_EVAL = True
-    COMBO_EVAL = True
-
-    # --------------------------------------------------------------- #
-
-    if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_rdlog_molly"
-      test_file_name = "rdlog"
-
-      print " >>> RUNNING " + test_id + " <<<"
-
-      input_file                  = "./molly_progs/" + test_file_name + ".olg"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-
-      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
-
-    # --------------------------------------------------------------- #
-
-    if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_rdlog"
-      test_file_name = "rdlog_driver"
-
-      print " >>> RUNNING " + test_id + " <<<"
-
-      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-      argDict[ 'EOT' ]            = 6
-      argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-      argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
-
-      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
-
-    if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
-      self.check_results_alignment( eval_molly, eval_combo )
+  DM_RUNS    = True
 
   #############
   #  SIMPLOG  #
@@ -128,12 +42,12 @@ class Test_combo_sip_idb( unittest.TestCase ) :
   def test_simplog( self ) :
 
     MOLLY_EVAL = True
-    COMBO_EVAL = True
+    DM_EVAL    = True
 
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_simplog_molly"
+      test_id        = "dm_sip_idb_simplog_molly"
       test_file_name = "simplog"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -146,8 +60,8 @@ class Test_combo_sip_idb( unittest.TestCase ) :
 
     # --------------------------------------------------------------- #
 
-    if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_simplog"
+    if self.DM_RUNS :
+      test_id        = "dm_sip_idb_simplog"
       test_file_name = "simplog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -157,69 +71,27 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
-      argDict[ 'neg_writes' ]     = "combo"
+      argDict[ 'neg_writes' ]     = "dm"
       argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
   
-      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+      eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
-    if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
-      self.check_results_alignment( eval_molly, eval_combo )
+    if self.MOLLY_RUNS and self.DM_RUNS and MOLLY_EVAL and DM_EVAL :
+      self.check_results_alignment( eval_molly, eval_dm )
 
-  ###################
-  #  SMALL EXAMPLE  #
-  ###################
-  def test_small_example( self ) :
-
-    MOLLY_EVAL = True
-    COMBO_EVAL = True
-
-    # --------------------------------------------------------------- #
-
-    if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_small_example_molly"
-      test_file_name = "small_example"
-  
-      print " >>> RUNNING " + test_id + " <<<"
-  
-      input_file                  = "./molly_progs/" + test_file_name + ".olg"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-  
-      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
-
-    # --------------------------------------------------------------- #
-
-    if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_small_example"
-      test_file_name = "small_example_driver"
-  
-      print " >>> RUNNING " + test_id + " <<<"
-  
-      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
-      argDict                     = self.getArgDict( input_file )
-      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
-      argDict[ 'EOT' ]            = 1
-      argDict[ 'nodes' ]          = [ "a" ]
-      argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
-  
-      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
-
-    if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
-      self.check_results_alignment( eval_molly, eval_combo )
 
   #############################
   #  CHECK RESULTS ALIGNMENT  #
   #############################
-  def check_results_alignment( self, eval_molly, eval_combo ) :
+  def check_results_alignment( self, eval_molly, eval_dm ) :
 
 #    print
 #    print "MOLLY:"
 #    for i in eval_molly[ "post" ] :
 #      print i
 #    print
-#    print "COMBO:"
-#    for i in eval_combo[ "post" ] :
+#    print "DM:"
+#    for i in eval_dm[ "post" ] :
 #      print i
 #    print
 
@@ -231,10 +103,10 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       print "skipping eval comparison b/c no molly results."
       return
 
-    if len( eval_combo ) > 0 :
-      # check combo
+    if len( eval_dm ) > 0 :
+      # check dm
       logging.debug( "ooooooooooooooooooooooooooooooooooooooooooooooo" )
-      logging.debug( "  checking results for combo v. molly:" )
+      logging.debug( "  checking results for dm v. molly:" )
       for rel in eval_molly :
         if "_prov" in rel :
           continue
@@ -243,39 +115,30 @@ class Test_combo_sip_idb( unittest.TestCase ) :
           # check for extra molly tups
           extra_molly_tups = []
           for molly_tup in eval_molly[ rel ] :
-            try :
-              if not molly_tup in eval_combo[ rel ] :
-                extra_molly_tups.append( molly_tup )
-            except KeyError :
-              if not molly_tup in eval_combo[ "orig_" + rel ] :
-                extra_molly_tups.append( molly_tup )
- 
-          # check for extra combo tups
-          extra_combo_tups = []
-          try :
-            for combo_tup in eval_combo[ rel ] :
-              if not combo_tup in eval_molly[ rel ] :
-                extra_combo_tups.append( combo_tup )
-          except KeyError :
-            for combo_tup in eval_combo[ "orig_" + rel ] :
-              if not combo_tup in eval_molly[ rel ] :
-                extra_combo_tups.append( combo_tup )
+            if not molly_tup in eval_dm[ rel ] :
+              extra_molly_tups.append( molly_tup )
   
-          if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+          # check for extra dm tups
+          extra_dm_tups = []
+          for dm_tup in eval_dm[ rel ] :
+            if not dm_tup in eval_molly[ rel ] :
+              extra_dm_tups.append( dm_tup )
+  
+          if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
             print ">>>> alignment inconsistencies for relation '" + rel + "' :"
   
           if len( extra_molly_tups ) > 0 :
-            print "> tuples found in molly and not in combo for relation '" + rel.upper() + " :"
+            print "> tuples found in molly and not in dm for relation '" + rel.upper() + " :"
             for tup in extra_molly_tups :
               print ",".join( tup )
-          if len( extra_combo_tups ) > 0 :
-            print "> tuples found in combo and not in molly for relation '" + rel.upper() + " :"
-            for tup in extra_combo_tups :
+          if len( extra_dm_tups ) > 0 :
+            print "> tuples found in dm and not in molly for relation '" + rel.upper() + " :"
+            for tup in extra_dm_tups :
               print ",".join( tup )
-          if len( extra_molly_tups ) > 0 or len( extra_combo_tups ) > 0 :
+          if len( extra_molly_tups ) > 0 or len( extra_dm_tups ) > 0 :
             print "<<<<"
     else :
-      print "skipping combo comparison b/c no eval results..."
+      print "skipping dm comparison b/c no eval results..."
 
       print
       print "<><><><><><><><><><><><><><><><><><>"
@@ -284,7 +147,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
   ##################
   #  RUN WORKFLOW  #
   ##################
-  # generate program (if applicable), run combo program, collect results, analyze results.
+  # generate program (if applicable), run dm program, collect results, analyze results.
   def run_workflow( self, test_id, argDict, input_file, eval_type, RUN_EVAL=True ) :
 
     # --------------------------------------------------------------- #
@@ -415,9 +278,9 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       assert( len( program_data[1] ) == len( eval_results_dict ) )
 
     # --------------------------------------------------------------- #
-    # gather combo-specific data
+    # gather dm-specific data
     # observe all ded programs run through this process are programs
-    # generated via combo or combo.
+    # generated via dm or combo.
 
     if IS_DED :
 
@@ -513,7 +376,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     argDict[ 'evaluator' ]  = "c4"
     argDict[ 'neg_writes' ] = ""
 
-    # this settings file is fine for running both the combo and molly progs
+    # this settings file is fine for running both the dm and molly progs
     # b/c c4 only needs the C4_HOME_PATH option.
     argDict[ 'settings' ] = "./settings_files/settings_program_complexity.ini"
 

@@ -150,6 +150,18 @@ class Rule :
     self.saveEquations()
 
 
+  ####################
+  #  DELETE FROM DB  #
+  ####################
+  def delete_from_db( self ) :
+    self.cursor.execute( "DELETE FROM Rule         WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM GoalAtt      WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM Subgoals     WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM SubgoalAtt   WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM Equation     WHERE rid='%s'" % str( self.rid ) )
+    self.cursor.execute( "DELETE FROM EquationVars WHERE rid='%s'" % str( self.rid ) )
+
+
   ##############
   #  SET NAME  #
   ##############

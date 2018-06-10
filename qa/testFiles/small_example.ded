@@ -1,0 +1,8 @@
+a( X, Y ) :- b( X,Y,Z ), notin c( X, Z, _, Y ) ;
+c( X,Y,Z,P ) :- d(X),e(X,Y),f(X,Z,P) ;
+post( X, Y ) :- a(X,Y) ;
+
+b("a",1,2)@1 ;
+d("a")@1 ;
+e("a",1)@1 ;
+f("a",3,4)@1 ;

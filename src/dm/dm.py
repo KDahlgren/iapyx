@@ -12,8 +12,7 @@ import itertools
 import ConfigParser
 
 import dm_time_att_replacement
-import dm_tools
-import sip
+import dm_sip_idb
 
 # ------------------------------------------------------ #
 # import sibling packages HERE!!!
@@ -23,9 +22,9 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
-from dedt       import Fact, Rule
-from evaluators import c4_evaluator
-from utils      import clockTools, tools, dumpers, setTypes
+from dedt        import Fact, Rule
+from evaluators  import c4_evaluator
+from utils       import clockTools, tools, dumpers, setTypes, nw_tools
 
 # ------------------------------------------------------ #
 
@@ -66,12 +65,11 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   try :
     NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", str )
     if NW_DOM_DEF == "dm_huge" or \
-       NW_DOM_DEF == "sip_edb" or \
        NW_DOM_DEF == "sip_idb" :
       pass
     else :
       raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
-                        "'. aborting..." )
+                        "' for dm NW rewrites. aborting..." )
   except ConfigParser.NoOptionError :
     raise ValueError( "no 'NW_DOM_DEF' defined in 'DEFAULT' section of " + settings_path + \
                       ". aborting..." )
@@ -80,19 +78,19 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # replace unused variables with wildcards
 
   if NW_DOM_DEF == "sip_idb" :
-    ruleMeta = dm_tools.replace_unused_vars( ruleMeta, cursor )
+    ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #
   # rewrite rules with fixed data 
   # in the head
 
-  ruleMeta, factMeta = fixed_data_head_rewrites( ruleMeta, factMeta, argDict )
+  ruleMeta, factMeta = nw_tools.fixed_data_head_rewrites( ruleMeta, factMeta, argDict )
 
   # ----------------------------------------- #
   # rewrite rules with aggregate functions
   # in the head
 
-  ruleMeta = aggRewrites( ruleMeta, argDict )
+  ruleMeta = nw_tools.aggRewrites( ruleMeta, argDict )
 
   for rule in ruleMeta :
     logging.debug( "  DM : " + dumpers.reconstructRule( rule.rid, cursor ) )
@@ -101,7 +99,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # ----------------------------------------- #
   # enforce a uniform goal attribute lists
     
-  ruleMeta = setUniformAttList( ruleMeta, cursor )
+  ruleMeta = nw_tools.setUniformAttList( ruleMeta, cursor )
 
   logging.debug( "  DM : len( ruleMeta ) after setUniformAttList = " + str( len( ruleMeta ) ) )
 
@@ -136,23 +134,23 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # (do not reference these in final programs)
 
   if NW_DOM_DEF == "sip_idb" : 
-    #ruleMeta = dm_tools.change_rel_names( ruleMeta )
+    #ruleMeta = nw_tools.change_rel_names( ruleMeta )
 
     # future optimization : do this lazily:
-    ruleMeta.extend( dm_tools.generate_orig_cps( ruleMeta ) )
+    ruleMeta.extend( nw_tools.generate_orig_cps( ruleMeta ) )
 
   # ----------------------------------------- #
   # generate a map of all rids to corresponding
   # rule meta object pointers.
 
   if NW_DOM_DEF == "sip_idb" : 
-    rid_to_rule_meta_map = dm_tools.generate_rid_to_rule_meta_map( ruleMeta )
+    rid_to_rule_meta_map = nw_tools.generate_rid_to_rule_meta_map( ruleMeta )
 
   # ----------------------------------------- #
   # build all de morgan's rules
 
   COUNTER = 0
-  while stillContainsNegatedIDBs( ruleMeta, cursor ) :
+  while nw_tools.stillContainsNegatedIDBs( ruleMeta, cursor ) :
 
     logging.debug( "  DM : COUNTER = " + str( COUNTER ) )
 
@@ -168,7 +166,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
     # check if any rules include negated idb
     # subgoals
   
-    targetRuleMetaSets = getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMetaSets = nw_tools.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
     
     # ----------------------------------------- #
     # break execution if no rules contain negated IDBs.
@@ -188,13 +186,13 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
                                       cursor, \
                                       argDict )
     elif NW_DOM_DEF == "sip_edb" : 
-      ruleMeta = sip.doDeMorgans_sip_edb( factMeta, \
+      ruleMeta = dm_sip_idb.doDeMorgans_sip_edb( factMeta, \
                                           ruleMeta, \
                                           targetRuleMetaSets, \
                                           cursor, \
                                           argDict )
     elif NW_DOM_DEF == "sip_idb" : 
-      ruleMeta = sip.doDeMorgans_sip_idb( factMeta, \
+      ruleMeta = dm_sip_idb.doDeMorgans_sip_idb( factMeta, \
                                           ruleMeta, \
                                           targetRuleMetaSets, \
                                           rid_to_rule_meta_map, \
@@ -207,7 +205,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
     # ----------------------------------------- #
     # update rid to rule meta map
 
-    rid_to_rule_meta_map = dm_tools.generate_rid_to_rule_meta_map( ruleMeta )
+    rid_to_rule_meta_map = nw_tools.generate_rid_to_rule_meta_map( ruleMeta )
 
     # increment loop counter
     COUNTER += 1
@@ -219,7 +217,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # replace unused variables with wildcards
 
   if NW_DOM_DEF == "sip_idb" :
-    ruleMeta = dm_tools.replace_unused_vars( ruleMeta, cursor )
+    ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #  
   #  apply filters
@@ -1154,8 +1152,8 @@ def makeUnique( ruleSet ) :
 
         if satt in goalAttList or \
            satt == "_" or \
-           is_fixed_string( satt ) or \
-           is_fixed_int( satt ) :
+           nw_tools.is_fixed_string( satt ) or \
+           nw_tools.is_fixed_int( satt ) :
           new_subgoalAttList.append( satt )
 
         else :
@@ -1366,7 +1364,7 @@ def doDeMorgans_dm_huge( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     # ----------------------------------------- #
     # build the boolean dnf fmla
 
-    final_fmla = dm_tools.get_final_fmla( ruleSet )
+    final_fmla = nw_tools.get_final_fmla( ruleSet )
 
     # ----------------------------------------- #
     # each clause in the final dnf fmla 
@@ -1393,17 +1391,17 @@ def doDeMorgans_dm_huge( ruleMeta, targetRuleMetaSets, cursor, argDict ) :
     # with instances of the positive not_
     # subgoal
 
-    ruleMeta = dm_tools.replaceSubgoalNegations( ruleMeta, argDict )
+    ruleMeta = nw_tools.replaceSubgoalNegations( ruleMeta, argDict )
 
     # ----------------------------------------- #
     # resolve double negations
 
-    ruleMeta = dm_tools.resolveDoubleNegations( ruleMeta )
+    ruleMeta = nw_tools.resolveDoubleNegations( ruleMeta )
 
     # ----------------------------------------- #
     # order recursive rules last
 
-    ruleMeta = dm_tools.sortDMRules( ruleMeta )
+    ruleMeta = nw_tools.sortDMRules( ruleMeta )
 
   return ruleMeta
 
@@ -1500,7 +1498,7 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
       # build a table of 0s and 1s marking the binary
       # polarities of the subgoals
 
-      patternMap = getPatternMap( len( base_subgoalListOfDicts ) )
+      patternMap = nw_tools.getPatternMap( len( base_subgoalListOfDicts ) )
 
       # ----------------------------------------- #
       # build a set of new rules manifesting the
@@ -1543,7 +1541,7 @@ def buildExistentialVarsRules( ruleSet, cursor ) :
 
         ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( subgoalListOfDicts )
 
-        if isSafe( ruleData ) :
+        if nw_tools.isSafe( ruleData ) :
           rid = tools.getIDFromCounters( "rid" )
           #existentialDomRules.append( copy.deepcopy( Rule.Rule( rid, ruleData, None ) ) )
           newRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
@@ -1606,22 +1604,6 @@ def isSafe( ruleData ) :
 
   #logging.debug( "  IS SAFE : returning flag = " + str( flag ) )
   return flag
-
-
-#####################
-#  GET PATTERN MAP  #
-#####################
-# build a table of all possible combinations of 0s and 1s in rows of the input length
-def getPatternMap( numSubgoals ) :
-
-  logging.debug( "  GET PATTERN MAPsatt : numSubgoals = " + str( numSubgoals ) )
-
-  patternMap = [ ''.join( i ) for i in itertools.product( [ "0", "1" ], repeat = numSubgoals ) ]
-
-  for row in patternMap :
-    logging.debug( "  GET PATTERNMAP : row = " + row )
-
-  return patternMap
 
 
 ##############################

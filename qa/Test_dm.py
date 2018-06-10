@@ -16,11 +16,10 @@ if not os.path.abspath( __file__ + "/../../src" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../src" ) )
 
 from dedt       import dedt, dedalusParser, Fact, Rule, clockRelation, dedalusRewriter
-from utils      import dumpers, globalCounters, tools
+from utils      import dumpers, globalCounters, tools, nw_tools
 from evaluators import c4_evaluator
 
 import dm
-import dm_tools
 
 # ------------------------------------------------------ #
 
@@ -1052,7 +1051,7 @@ class Test_dm( unittest.TestCase ) :
 
     argDict = self.getArgDict( "" )
     argDict[ "settings" ] = "./settings_files/settings.ini"
-    targetRuleMeta = dm_tools.replaceSubgoalNegations( ruleMeta, argDict )
+    targetRuleMeta = nw_tools.replaceSubgoalNegations( ruleMeta, argDict )
 
     actual_ruleData = []
     for rule in targetRuleMeta :
@@ -1873,7 +1872,7 @@ class Test_dm( unittest.TestCase ) :
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      final_fmla = dm_tools.get_final_fmla( ruleSet )
+      final_fmla = nw_tools.get_final_fmla( ruleSet )
 
       argDict = self.getArgDict( "" )
       argDict[ "settings" ] = "./settings_files/settings.ini"
@@ -2093,7 +2092,7 @@ class Test_dm( unittest.TestCase ) :
       existentialVarsRules = dm.buildExistentialVarsRules( ruleSet, cursor )
 
       # get new dm rules
-      final_fmla = dm_tools.get_final_fmla( ruleSet )
+      final_fmla = nw_tools.get_final_fmla( ruleSet )
 
       argDict = self.getArgDict( "" )
       argDict[ "settings" ] = "./settings_files/settings.ini"
@@ -2290,7 +2289,7 @@ class Test_dm( unittest.TestCase ) :
     actual_pos_dnf_fmlas = []
     for ruleSet in targetRuleMeta :
       ruleSet = ruleSet[1]
-      actual_pos_dnf_fmlas.append( dm_tools.get_final_fmla( ruleSet ) )
+      actual_pos_dnf_fmlas.append( nw_tools.get_final_fmla( ruleSet ) )
 
     # --------------------------------------------------------------- #
     # check assertion

@@ -238,7 +238,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   # ========== NW_DOM_DEF ========== #
   try :
-    NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", bool )
+    NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", str )
   except ConfigParser.NoOptionError :
     raise Exception( "no 'NW_DOM_DEF' defined in 'DEFAULT' section of " + settings_path + \
                      ". aborting..." )
@@ -267,8 +267,8 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   if rewriteWildcards or \
      ( NW_DOM_DEF == "sip_idb"         and \
-     argDict[ "neg_writes" ] == "dm" ) :
-    #argDict[ "neg_writes" ] == "combo" :
+       ( argDict[ "neg_writes" ] == "dm" or \
+         argDict[ "neg_writes" ] == "combo" ) ) :
 
     logging.debug( "  REWRITE : calling wildcard rewrites..." )
 
@@ -292,13 +292,11 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
   # ----------------------------------------------------------------------------- #
   # iedb rewrites 
-  # ^ need to happen AFTER dm rewrites or else get wierd c4 eval results???
-  #   weird, dude.
 
   if RUN_IEDB_REWRITES                 or \
      ( NW_DOM_DEF == "sip_idb"         and \
-     argDict[ "neg_writes" ] == "dm" ) :
-    #argDict[ "neg_writes" ] == "combo" :
+       ( argDict[ "neg_writes" ] == "dm" or \
+         argDict[ "neg_writes" ] == "combo" ) ) :
 
     logging.debug( "  REWRITE : calling iedb rewrites..." )
     factMeta, ruleMeta = iedb_rewrites.iedb_rewrites( factMeta, \
@@ -337,8 +335,8 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   # ----------------------------------------------------------------------------- #
   # do combo rewrites
 
-  if argDict[ "neg_writes" ] == "combo" :
-      
+  if argDict[ "neg_writes" ] == "comb" :
+
     # collect the results from the original program
     original_prog = c4_translator.c4datalog( argDict, cursor )
     results_array = c4_evaluator.runC4_wrapper( original_prog, argDict )
@@ -353,6 +351,16 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
                                                              ruleMeta, \
                                                              factMeta, \
                                                              parsedResults ) 
+
+  if argDict[ "neg_writes" ] == "combo" :
+
+    logging.debug( "  REWRITE : calling combo rewrites..." )
+    factMeta, ruleMeta = combo.combo( factMeta, ruleMeta, cursor, argDict )
+
+    #for r in ruleMeta :
+    #  print dumpers.reconstructRule( r.rid, r.cursor )
+    #sys.exit( "fuck" )
+
 #  for rule in ruleMeta :
 #    rid = rule.rid
 #    cursor.execute( "SELECT attID,attName FROM GoalAtt WHERE rid=='" + str( rid ) + "'" )
@@ -363,9 +371,10 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   # ----------------------------------------------------------------------------- #
   # provenance rewrites
 
-#  logging.debug( "  REWRITE : before prov dump :" )
-#  for rule in ruleMeta :
-#    logging.debug( "  REWRITE : (0) r = " + printRuleWithTypes( rule.rid, cursor ) )
+  #logging.debug( "  REWRITE : before prov dump :" )
+  #for rule in ruleMeta :
+  #  print rule
+  #  logging.debug( "  REWRITE : (0) r = " + printRuleWithTypes( rule.rid, cursor ) )
   #sys.exit( "blah2" )
 
   # add the provenance rules to the existing rule set

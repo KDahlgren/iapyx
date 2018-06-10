@@ -310,7 +310,7 @@ class Test_comb( unittest.TestCase ) :
     argDict[ 'evaluator' ]                = "c4"
     argDict[ 'EFF' ]                      = eff
     argDict[ 'data_save_path' ]           = "./data/"
-    argDict[ 'neg_writes' ]               = "combo"
+    argDict[ 'neg_writes' ]               = "comb"
 
     if not negprov :
       argDict[ 'neg_writes' ] = ""

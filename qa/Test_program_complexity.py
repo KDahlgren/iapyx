@@ -37,7 +37,7 @@ class Test_program_complexity( unittest.TestCase ) :
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
-  DM_RUNS    = False
+  DM_RUNS    = True
   COMBO_RUNS = True
   MOLLY_RUNS = True
 
@@ -980,7 +980,7 @@ class Test_program_complexity( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
       argDict[ 'neg_writes' ]     = "dm"
-      argDict[ 'settings' ]       = "settings_files/settings_dm.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_program_complexity.ini"
   
       eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 
