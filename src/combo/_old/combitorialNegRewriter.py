@@ -42,7 +42,7 @@ def neg_rewrite(cursor, argDict, settings_path, ruleMeta, factMeta, parsedResult
 
   # add in active domain facts, this should only be done once in reality.
   factMeta = domain.getActiveDomain(cursor, factMeta, parsedResults)
-  setTypes.setTypes( cursor, argDict )
+  setTypes.setTypes( cursor, argDict, ruleMeta )
 
   while True:
     rulesToNegate     = findNegativeRules(cursor, ruleMeta)
@@ -126,7 +126,7 @@ def negateRules( cursor, \
 
     # for line in original_prog[0]:
     #   print line
-    setTypes.setTypes( cursor, argDict )
+    setTypes.setTypes( cursor, argDict, ruleMeta )
 
   return ruleMeta, factMeta
 

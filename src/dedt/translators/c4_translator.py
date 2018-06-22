@@ -5,6 +5,7 @@ c4_translator.py
    Tools for producig c4 datalog programs from the IR in the dedt compiler.
 '''
 
+import copy
 import inspect, logging, os, re, string, sqlite3, sys
 import dumpers_c4
 import ConfigParser
@@ -17,6 +18,59 @@ if not os.path.abspath( __file__ + "/../../.." ) in sys.path :
 from utils import tools
 from dedt  import Rule
 # ------------------------------------------------------ #
+
+
+#################
+#  GET C4 LINE  #
+#################
+def get_c4_line( data, conversion_type ) :
+
+  if conversion_type == "rule" :
+    rel_name = data[ "relationName" ]
+    goal_att_list = data[ "goalAttList" ]
+    subgoal_strs = []
+    for sub in data[ "subgoalListOfDicts" ] :
+      sub_name     = sub[ "subgoalName" ]
+      sub_polarity = sub[ "polarity" ]
+      sub_att_list = sub[ "subgoalAttList" ]
+      subgoal_strs.append( sub_polarity + " " + sub_name + "(" + ",".join( sub_att_list ) + ")" )
+  
+    # order negative subgoals last
+    pos = []
+    neg = []
+    for sub in subgoal_strs :
+      if sub.startswith( "notin " ) :
+        neg.append( sub )
+      else :
+        pos.append( sub )
+    subgoal_strs = copy.deepcopy( pos + neg )
+
+    head = rel_name + "(" + ",".join( goal_att_list ) + ")"
+    body = ""
+    for i in range( 0, len( subgoal_strs ) ) :
+      sub = subgoal_strs[ i ]
+      body += sub
+      if i < len( subgoal_strs )-1 :
+        body += ","
+  
+    # add eqns
+    for i in range( 0, len( data[ "eqnDict" ] ) ) :
+      if i == 0 :
+        body += ","
+      eqn = data[ "eqnDict" ].keys()[i]
+      body += eqn
+      if i < len( data[ "eqnDict" ] )-1 :
+        body += ","
+
+    return head + ":-" + body + ";"
+
+  elif conversion_type == "fact" :
+    rel_name  = data[ "relationName" ]
+    data_list = data[ "dataList" ]
+    return rel_name + "(" + ",".join( data_list ) + ");"
+
+  else :
+    raise ValueError( "unrecognized conversion type '" + conversion_type + "'. aborting..." )
 
 
 #####################

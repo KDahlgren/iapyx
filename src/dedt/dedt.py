@@ -204,7 +204,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   ruleMeta = allMeta[1]
 
   # be sure to fill in all the type info for the new rule definitions
-  #setTypes.setTypes( cursor, argDict )
+  #setTypes.setTypes( cursor, argDict, ruleMeta )
 
   for rule in ruleMeta :
     rid = rule.rid
@@ -266,7 +266,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   # always do wildcard rewrites in prep for negative writes.
 
   if rewriteWildcards or \
-     ( NW_DOM_DEF == "sip_idb"         and \
+     ( NW_DOM_DEF == "sip"         and \
        ( argDict[ "neg_writes" ] == "dm" or \
          argDict[ "neg_writes" ] == "combo" ) ) :
 
@@ -284,17 +284,17 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   
     # be sure to fill in all the type info for the new rule definitions
     logging.debug( "  REWRITE : running setTypes after wildcard rewrites." )
-    setTypes.setTypes( cursor, argDict )
+    setTypes.setTypes( cursor, argDict, ruleMeta )
   
     update_goal_types( ruleMeta )
   else :
-    setTypes.setTypes( cursor, argDict )
+    setTypes.setTypes( cursor, argDict, ruleMeta )
 
   # ----------------------------------------------------------------------------- #
   # iedb rewrites 
 
   if RUN_IEDB_REWRITES                 or \
-     ( NW_DOM_DEF == "sip_idb"         and \
+     ( NW_DOM_DEF == "sip"         and \
        ( argDict[ "neg_writes" ] == "dm" or \
          argDict[ "neg_writes" ] == "combo" ) ) :
 
@@ -311,9 +311,15 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 #      goal_atts = tools.toAscii_multiList( goal_atts )
 #      logging.debug( "  DEDT : goal_atts (3) = " + str( goal_atts ) )
 
+    #for rule in ruleMeta :
+    #  print c4_translator.get_c4_line( rule.ruleData, "rule" )
+    #for fact in factMeta :
+    #  print c4_translator.get_c4_line( fact.factData, "fact" )
+    #sys.exit( "asdf" )
+
     # be sure to fill in all the type info for the new rule definitions
     logging.debug( "  REWRITE : running setTypes after iedb rewrites." )
-    setTypes.setTypes( cursor, argDict )
+    setTypes.setTypes( cursor, argDict, ruleMeta )
 
   # ----------------------------------------------------------------------------- #
   # do dm rewrites
@@ -330,7 +336,7 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
 
     # be sure to fill in all the type info for the new rule definitions
     logging.debug( "  REWRITE : running setTypes after dm rewrites." )
-    setTypes.setTypes( cursor, argDict )
+    setTypes.setTypes( cursor, argDict, ruleMeta )
 
   # ----------------------------------------------------------------------------- #
   # do combo rewrites
@@ -381,14 +387,14 @@ def rewrite_to_datalog( argDict, factMeta, ruleMeta, cursor ) :
   logging.debug( "  REWRITE : calling provenance rewrites..." )
   ruleMeta.extend( provenanceRewriter.rewriteProvenance( ruleMeta, cursor, argDict ) )
 
-#  for rule in ruleMeta :
-#    #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
-#    logging.debug( "  REWRITE : (1) r = " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+  #for rule in ruleMeta :
+  #  #logging.debug( "rule.ruleData = " + str( rule.ruleData ) )
+  #  logging.debug( "  REWRITE : (1) rid = " + str( rule.rid ) + " : " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
   #sys.exit( "blah2" )
 
   # be sure to fill in all the type info for the new rule definitions
   logging.debug( "  REWRITE : running setTypes after provenance rewrites." )
-  setTypes.setTypes( cursor, argDict )
+  setTypes.setTypes( cursor, argDict, ruleMeta )
 
   # ----------------------------------------------------------------------------- #
 

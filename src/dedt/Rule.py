@@ -92,6 +92,8 @@ class Rule :
     self.goal_att_type_list = []
     self.lineage_not_names  = []
 
+    self.sip_color = False
+
     # =========================================== #
 
     self.rid      = rid

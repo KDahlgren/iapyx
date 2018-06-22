@@ -46,7 +46,7 @@ arithOps = [ "+", "-", "/", "*" ]
 ###############
 #  SET TYPES  #
 ###############
-def setTypes( cursor, argDict ) :
+def setTypes( cursor, argDict, ruleMeta=None ) :
 
   settings_path = argDict[ "settings" ]
 
@@ -60,7 +60,9 @@ def setTypes( cursor, argDict ) :
     raise e
 
   if SETTYPES_DATALOG :
-    setTypes_datalog( cursor, argDict )
+    if ruleMeta == None :
+      raise Exception( "  SET TYPES : trying to run setTypes_datalog, but no ruleMeta given." )
+    setTypes_datalog( cursor, argDict, ruleMeta )
   else :
     setTypes_orig( cursor )
 
@@ -73,7 +75,7 @@ def setTypes( cursor, argDict ) :
 # extract the types for all goals and subgoals in the
 # program.
 # assume use of the c4 datalog evaluator.
-def setTypes_datalog( cursor, argDict ) :
+def setTypes_datalog( cursor, argDict, ruleMeta ) :
 
   # ---------------------------------------------------- #
   # generate the setTypes program
@@ -109,7 +111,26 @@ def setTypes_datalog( cursor, argDict ) :
   # save type info
   update_facts( results_dict, cursor )
   update_rules( results_dict, cursor )
+  update_ruleMeta( ruleMeta, results_dict, cursor )
 
+
+######################
+#  UPDATE RULE META  #
+######################
+def update_ruleMeta( ruleMeta, results_dict, cursor ) :
+  logging.debug( "  UPDATE RULE META : results_dict = " + str( results_dict ) )
+  for rule in ruleMeta :
+    logging.debug( "  UPDATE RULE META : relation = " + rule.relationName + ", rid = " + str( rule.rid )  )
+    goal_type_list = results_dict[ rule.relationName ][0]
+    logging.debug( "  UPDATE RULE META : goal_type_list = " + str( goal_type_list ) )
+    if len( rule.goal_att_type_list ) != len( goal_type_list ) :
+      rule.goal_att_type_list = [ None for i in range(0,len( goal_type_list ) ) ] # wipe out the default list
+      for i in range( 0, len( goal_type_list ) ) :
+        rule.goal_att_type_list[i] = [ i, goal_type_list[i].lower() ]
+    else :
+      for i in range( 0, len( goal_type_list ) ) :
+        rule.goal_att_type_list[i][1] = goal_type_list[i].lower()
+    logging.debug( "  UPDATE RULE META : rule.goal_att_type_list = " + str( rule.goal_att_type_list ) )
 
 ##################
 #  UPDATE RULES  #
@@ -318,7 +339,9 @@ def get_setTypes_program_data( cursor ) :
 
       # wtf???
       else :
-        raise Exception( "  FATAL ERROR : datum '" + + "' in fact '" + name + "' is neither string nor integer. aborting."  )
+        raise Exception( "  FATAL ERROR : datum '" + str( datum ) + \
+                         "' in fact '" + name + \
+                         "' is neither string nor integer. aborting."  )
 
       if i < len( data_list ) - 1 :
         fact += ","
@@ -369,8 +392,18 @@ def get_setTypes_program_data( cursor ) :
 # build the rules for the set types program
 def get_rules( goal_data, cursor ) :
 
+  if len( goal_data ) > 100 :
+    print goal_data
+    cursor.execute( "SELECT rid FROM Rule" )
+    rid_list = cursor.fetchall()
+    rid_list = tools.toAscii_list( rid_list )
+    for r in rid_list :
+      print "rid = " + str( r ) + " : " + dumpers.reconstructRule( r, cursor )
+    sys.exit( "bloodyhell" )
+
   rule_list = []
 
+  COUNTER = 0
   for goal in goal_data :
 
     rid  = goal[0]
@@ -484,7 +517,6 @@ def get_rules( goal_data, cursor ) :
 
     rule += "):-"
 
-
     # add subgoals
     for i in range( 0, len( subgoals_list ) ) :
       sub             = subgoals_list[i]
@@ -529,7 +561,7 @@ def get_rules( goal_data, cursor ) :
       # only need positive subgoals because only using safe rules.
       elif name.startswith( "not_" ) and subgoalPolarity == "notin" :
         logging.debug( "  GET RULE : (1) adding subgoal..." )
-        
+
         rule += " " + subgoalName + "("
 
         for i in range( 0, len( subgoal_atts_list ) ) :
@@ -561,6 +593,14 @@ def get_rules( goal_data, cursor ) :
 
     logging.debug( "  GET RULES : adding rule '" + rule + "'" )
     rule_list.append( rule )
+
+    if COUNTER == 100 :
+      print COUNTER
+      for r in rule_list :
+        print r
+      sys.exit( "shit" )
+
+    COUNTER += 1
 
   logging.debug( "  GET RULES : rule_list :" )
   for rule in rule_list :

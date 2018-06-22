@@ -103,8 +103,8 @@ def parse( dedLine, settings_path ) :
     # ///////////////////////////////// #
     # get time arg
     ampersandIndex = dedLine.index( "@" )
-    factTimeArg = dedLine[ ampersandIndex + 1 : ]
-    factTimeArg = factTimeArg.replace( ";", "" ) # remove semicolons
+    factTimeArg    = dedLine[ ampersandIndex + 1 : ]
+    factTimeArg    = factTimeArg.replace( ";", "" ) # remove semicolons
 
     # ///////////////////////////////// #
     # save fact information
@@ -686,7 +686,9 @@ def sanityCheckSyntax_fact_postChecks( factLine, factData ) :
     if isString( data ) :
       # check quotes
       if not data.count( "'" ) == 2 and not data.count( '"' ) == 2 :
-        sys.exit( "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in fact '" + str( factLine ) + "'\n    fact definition contains string data not surrounded by either exactly two single quotes or exactly two double quotes : " + data + "\n" )
+        sys.exit( "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in fact '" + \
+                  str( factLine ) + "'\n    fact definition contains string data not " + \
+                  "surrounded by either exactly two single quotes or exactly two double quotes : " + data + "\n" )
     else :
       pass
 
@@ -694,8 +696,12 @@ def sanityCheckSyntax_fact_postChecks( factLine, factData ) :
   # check time arg
 
   factTimeArg = factData[ "factTimeArg" ]
-  if not factTimeArg.isdigit() :
-    sys.exit( "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in fact data list '" + str( factLine ) + "'\n    fact definition has no time arg." )
+  print "factTimeArg = " + str( factTimeArg )
+  if not factTimeArg.isdigit() and \
+     not factTimeArg == "constant" :
+    sys.exit( "  SANITY CHECK SYNTAX FACT : ERROR : invalid " + \
+              "syntax in fact data list '" + str( factLine ) + \
+              "'\n    fact definition has no valid time arg." )
 
   return True
 

@@ -1094,7 +1094,8 @@ class Test_dedt( unittest.TestCase ) :
       actual_results = self.getError( sys.exc_info() )
 
     # grab expected error
-    expected_results = "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in fact data list '" + str( dedLine ) + "'\n    fact definition has no time arg."
+    expected_results = "  SANITY CHECK SYNTAX FACT : ERROR : invalid syntax in fact data list '" + \
+                       str( dedLine ) + "'\n    fact definition has no valid time arg."
 
     self.assertEqual( actual_results, expected_results )
 

@@ -89,11 +89,15 @@ def iedb_rewrites( factMeta, ruleMeta, cursor, settings_path ) :
 
       fact_obj.relationName += "_edb"
       fact_obj.saveFactInfo()
+      fact_obj.factData[ "relationName" ] += "_edb" # reflect the change in the factData
 
+      logging.debug( "  IEDB REWRITES : after:" )
+      logging.debug( "  IEDB REWRITES : fact_obj.factData = " + str( fact_obj.factData ) )
       cursor.execute( "SELECT name FROM Fact WHERE fid=='" + str( fact_obj.fid ) + "'" )
       name = cursor.fetchone()
       name = tools.toAscii_str( name )
       logging.debug( "  IEBD REWRITES : name = " + str( name ) )
+      #sys.exit( "foo" )
 
   # ----------------------------------------- #
   # add a new rule with the original goal

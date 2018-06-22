@@ -161,17 +161,27 @@ def rewriteInductive( argDict, metarule, cursor ) :
   # grab the next rule handling method
 
   try :
-    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], "DEFAULT", "NEXT_RULE_HANDLING", str )
+    NEXT_RULE_HANDLING = tools.getConfig( argDict[ "settings" ], \
+                                          "DEFAULT", \
+                                          "NEXT_RULE_HANDLING", \
+                                          str )
 
   except ConfigParser.NoOptionError :
-    logging.info( "WARNING : no 'NEXT_RULE_HANDLING' defined in 'DEFAULT' section of settings file." )
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+    logging.info( "WARNING : no 'NEXT_RULE_HANDLING' defined " + \
+                  "in 'DEFAULT' section of settings file." )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : NEXT_RULE_HANDLING parameter not " + \
+      "specified in DEFAULT section of settings file. use 'USE_AGGS', 'SYNC_ASSUMPTION', or " + \
+      "'USE_NEXT_CLOCK' only." )
 
   # sanity check next rule handling value
-  if NEXT_RULE_HANDLING == "USE_AGGS" or NEXT_RULE_HANDLING == "SYNC_ASSUMPTION" or NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
+  if NEXT_RULE_HANDLING == "USE_AGGS"          or \
+     NEXT_RULE_HANDLING == "SYNC_ASSUMPTION"   or \
+     NEXT_RULE_HANDLING == "USE_NEXT_CLOCK" :
     pass
   else :
-    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
+    tools.bp( __name__, inspect.stack()[0][3], "FATAL ERROR : " + \
+       "unrecognized NEXT_RULE_HANDLING value '" + NEXT_RULE_HANDLING + \
+       "'. use 'USE_AGGS', 'SYNC_ASSUMPTION', or 'USE_NEXT_CLOCK' only." )
 
   # ------------------------------------------------------ #
   # dedalus rewrites overwrite the original rules
@@ -395,6 +405,57 @@ def rewriteAsynchronous( metarule, cursor ) :
   return new_metarule
 
 
+#####################
+#  REWRITE DATALOG  #
+#####################
+# ruleData = { relationName : 'relationNameStr', 
+#              goalAttList:[ data1, ... , dataN ], 
+#              goalTimeArg : ""/next/async/datalog,
+#              subgoalListOfDicts : [ { subgoalName : 'subgoalNameStr', 
+#                                       subgoalAttList : [ data1, ... , dataN ], 
+#                                       polarity : 'notin' OR '', 
+#                                       subgoalTimeArg : <anInteger> }, ... ],
+#              eqnDict : { 'eqn1':{ variableList : [ 'var1', ... , 'varI' ] }, 
+#                          ... , 
+#                          'eqnM':{ variableList : [ 'var1', ... , 'varJ' ] }  } }
+def rewriteDatalog( metarule, cursor ) :
+
+  logging.debug( "  REWRITE DATALOG : running process..." )
+  logging.debug( "  REWRITE DATALOG : metarule.ruleData = " + str( metarule.ruleData ) )
+
+  # ------------------------------------------------------ #
+  # dedalus rewrites overwrite the original rules
+  # so, grab the original rid
+
+  rid = metarule.rid
+
+  # ------------------------------------------------------ #
+  # initialize new version of meta rule to old version of
+  # meta rule
+
+  new_metarule_ruleData = metarule.ruleData
+
+  # ------------------------------------------------------ #
+  # remove goal time arg
+
+  new_metarule_ruleData[ "goalTimeArg"] = ""
+
+  # ------------------------------------------------------ #
+  # preserve adjustments by instantiating the new meta rule
+  # as a Rule
+
+  logging.debug( "  REWRITE RULES : overwriting old rule with new ruleData = " + str( new_metarule_ruleData ) )
+  new_metarule = Rule.Rule( rid, new_metarule_ruleData, cursor )
+
+  # ------------------------------------------------------ #
+  # populate rule type
+
+  new_metarule.rule_type = "datalog"
+
+  logging.debug( "  REWRITE DATALOG : returning new meta rule with rule data = " + str( new_metarule.ruleData ) )
+  return new_metarule
+
+
 ###################
 #  REWRITE FACTS  #
 ###################
@@ -420,12 +481,16 @@ def rewriteFacts( factMeta, cursor ) :
     # add time arg to the end of the fact data
     # list
 
-    fact.factData[ "dataList" ].append( factTimeArg )
+    if factTimeArg.isdigit() :
+      fact.factData[ "dataList" ].append( factTimeArg )
+    elif factTimeArg == "constant" :
+      pass
 
     # ------------------------------------------ #
     # update data list with types
 
-    fact.dataListWithTypes.append( [ factTimeArg, "int" ] )
+    if factTimeArg.isdigit() :
+      fact.dataListWithTypes.append( [ factTimeArg, "int" ] )
 
     # ------------------------------------------ #
     # perform saves
@@ -474,6 +539,13 @@ def rewriteDedalus( argDict, factMeta, ruleMeta, cursor ) :
       new_ruleMeta.append( rewriteAsynchronous( rule, cursor ) )
 
     # ------------------------------------ #
+    # rewrite datalog rules
+    # (aka 'datalog' rules)
+
+    elif isDatalog( rule ) :
+      new_ruleMeta.append( rewriteDatalog( rule, cursor ) )
+
+    # ------------------------------------ #
     # wtf???
 
     else :
@@ -487,6 +559,15 @@ def rewriteDedalus( argDict, factMeta, ruleMeta, cursor ) :
   logging.debug( "  REWRITE DEDALUS : returning meta = " + str( [ new_factMeta, new_ruleMeta ] ) ) 
   return [ new_factMeta, new_ruleMeta ]
 
+################
+#  IS DATALOG  #
+################
+# check if the given rule is deductive
+def isDatalog( rule ) :
+  if rule.ruleData[ "goalTimeArg" ] == "datalog" :
+    return True
+  else :
+    return False
 
 ##################
 #  IS DEDUCTIVE  #

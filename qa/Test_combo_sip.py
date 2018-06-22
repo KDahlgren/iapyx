@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_combo_sip_idb.py
+Test_combo_sip.py
 '''
 
 #############
@@ -26,14 +26,14 @@ from evaluators import c4_evaluator
 ########################
 #  TEST COMBO SIP IDB  #
 ########################
-class Test_combo_sip_idb( unittest.TestCase ) :
+class Test_combo_sip( unittest.TestCase ) :
 
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.WARNING )
 
   PRINT_STOP = False
-  MOLLY_RUNS = True
+  MOLLY_RUNS = False
   COMBO_RUNS = True
 
   ############
@@ -47,7 +47,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_replog_molly"
+      test_id        = "combo_sip_replog_molly"
       test_file_name = "replog"
 
       print " >>> RUNNING " + test_id + " <<<"
@@ -61,7 +61,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_replog"
+      test_id        = "combo_sip_replog"
       test_file_name = "replog_driver"
 
       print " >>> RUNNING " + test_id + " <<<"
@@ -72,7 +72,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
       argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
 
       eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
 
@@ -90,7 +90,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_rdlog_molly"
+      test_id        = "combo_sip_rdlog_molly"
       test_file_name = "rdlog"
 
       print " >>> RUNNING " + test_id + " <<<"
@@ -104,7 +104,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_rdlog"
+      test_id        = "combo_sip_rdlog"
       test_file_name = "rdlog_driver"
 
       print " >>> RUNNING " + test_id + " <<<"
@@ -115,7 +115,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
       argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
 
       eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
 
@@ -133,7 +133,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_simplog_molly"
+      test_id        = "combo_sip_simplog_molly"
       test_file_name = "simplog"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -147,7 +147,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_simplog"
+      test_id        = "combo_sip_simplog"
       test_file_name = "simplog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -158,8 +158,54 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
       argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
   
+      eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
+
+    if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
+      self.check_results_alignment( eval_molly, eval_combo )
+
+  ###############
+  #  PATH LINK  #
+  ###############
+  def test_path_link( self ) :
+
+    MOLLY_EVAL = True
+    COMBO_EVAL = True
+
+    # --------------------------------------------------------------- #
+
+    if self.MOLLY_RUNS :
+
+      sys.exit( "fix the oracle for molly path link." )
+
+      test_id        = "combo_sip_path_link_molly"
+      test_file_name = "path_link"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                  = "./molly_progs/" + test_file_name + ".olg"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+
+      eval_molly = self.run_workflow( test_id, argDict, input_file, "molly", MOLLY_EVAL )
+
+    # --------------------------------------------------------------- #
+
+    if self.COMBO_RUNS :
+      test_id        = "combo_sip_path_link"
+      test_file_name = "path_link_driver"
+
+      print " >>> RUNNING " + test_id + " <<<"
+
+      input_file                  = "./dedalus_drivers/" + test_file_name + ".ded"
+      argDict                     = self.getArgDict( input_file )
+      argDict[ 'data_save_path' ] = "./data/" + test_id + "/"
+      argDict[ 'EOT' ]            = 1
+      argDict[ 'nodes' ]          = [ "a" ]
+      argDict[ 'neg_writes' ]     = "combo"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
+
       eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
 
     if self.MOLLY_RUNS and self.COMBO_RUNS and MOLLY_EVAL and COMBO_EVAL :
@@ -176,7 +222,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "combo_sip_idb_small_example_molly"
+      test_id        = "combo_sip_small_example_molly"
       test_file_name = "small_example"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -190,7 +236,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.COMBO_RUNS :
-      test_id        = "combo_sip_idb_small_example"
+      test_id        = "combo_sip_small_example"
       test_file_name = "small_example_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -201,7 +247,7 @@ class Test_combo_sip_idb( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 1
       argDict[ 'nodes' ]          = [ "a" ]
       argDict[ 'neg_writes' ]     = "combo"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
   
       eval_combo = self.run_workflow( test_id, argDict, input_file, "combo", COMBO_EVAL )
 

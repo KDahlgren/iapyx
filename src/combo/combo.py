@@ -20,10 +20,11 @@ if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
 from dedt        import Fact, Rule
+from translators import c4_translator
 from evaluators  import c4_evaluator
 from utils       import clockTools, tools, dumpers, setTypes, nw_tools
 from dm          import dm_time_att_replacement
-from constraints import sip_idb
+from constraints import sip
 
 # ------------------------------------------------------ #
 
@@ -55,7 +56,7 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # ========== NW DOM DEF ========== #
   try :
     NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", str )
-    if NW_DOM_DEF == "sip_idb" :
+    if NW_DOM_DEF == "sip" :
       pass
     else :
       raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
@@ -67,7 +68,7 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # ----------------------------------------- #
   # replace unused variables with wildcards
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #
@@ -105,7 +106,7 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # generate cps of the original rules
   # (do not reference these in final programs)
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
 
     # future optimization : do this lazily:
     ruleMeta.extend( nw_tools.generate_orig_cps( ruleMeta ) )
@@ -115,10 +116,11 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # generate cps of the original rules
   # (do not reference these in final programs)
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
 
     # future optimization : do this lazily:
-    ruleMeta = get_not_template_ruleMeta( ruleMeta )
+    not_templates, ruleMeta = get_not_templates_combo( factMeta, ruleMeta )
+
     #for r in ruleMeta :
     #  print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
     #sys.exit( "blee" )
@@ -127,7 +129,7 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # generate a map of all rids to corresponding
   # rule meta object pointers.
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     rid_to_rule_meta_map = nw_tools.generate_rid_to_rule_meta_map( ruleMeta )
 
   # ----------------------------------------- #
@@ -138,6 +140,7 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
 
     logging.debug( "  COMBO : COUNTER = " + str( COUNTER ) )
     if COUNTER == 3 :
+      print "////////////"
       for r in ruleMeta :
         print dumpers.reconstructRule( r.rid, r.cursor )
       sys.exit( "wtf?" )
@@ -146,7 +149,17 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
     # check if any rules include negated idb
     # subgoals
 
-    targetRuleMetaSets = nw_tools.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor )
+    targetRuleMetaSets = nw_tools.getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, \
+                                                                                         cursor )
+
+    #if COUNTER == 2 :
+    #  print targetRuleMetaSets[0][0]
+    #  for r in targetRuleMetaSets[0][1] :
+    #    print c4_translator.get_c4_line( r.ruleData, "rule" )
+    #  print "////////////"
+    #  for r in ruleMeta :
+    #    print dumpers.reconstructRule( r.rid, r.cursor )
+    #  sys.exit( "asdf" )
 
     # ----------------------------------------- #
     # break execution if no rules contain negated IDBs.
@@ -160,20 +173,31 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
     # incorporates domcomp and existential 
     # domain subgoals.
 
-    if NW_DOM_DEF == "sip_idb" :
-      ruleMeta = do_combo_sip_idb( ruleMeta, \
-                                   targetRuleMetaSets, \
-                                   rid_to_rule_meta_map, \
-                                   cursor, \
-                                   argDict )
+    if NW_DOM_DEF == "sip" :
+      ruleMeta = do_combo_sip( factMeta, \
+                               ruleMeta, \
+                               targetRuleMetaSets, \
+                               not_templates, \
+                               rid_to_rule_meta_map, \
+                               cursor, \
+                               argDict )
     else :
       raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
                         "'. aborting..." )
+
+    #for r in ruleMeta :
+    #  print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
+    #sys.exit( "blast" )
 
     # ----------------------------------------- #
     # update rid to rule meta map
 
     rid_to_rule_meta_map = nw_tools.generate_rid_to_rule_meta_map( ruleMeta )
+
+    #if COUNTER == 2 :
+    #  for r in ruleMeta :
+    #    print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
+    #  sys.exit( "blahasdf" )
 
     # increment loop counter
     COUNTER += 1
@@ -181,35 +205,35 @@ def combo( factMeta, ruleMeta, cursor, argDict ) :
   # ----------------------------------------- #
   # replace unused variables with wildcards
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #
   # filter out unused not_ rules
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     ruleMeta = nw_tools.delete_unused_not_rules( ruleMeta, cursor )
 
   for r in ruleMeta :
     print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
-  #sys.exit( "blahasdf" )
+  sys.exit( "blahasdf" )
 
   logging.debug( "  COMBO : ...done." )
   return factMeta, ruleMeta
 
 
-######################
-#  GET NOT TEMPLATE  #
-######################
+#############################
+#  GET NOT TEMPLATES COMBO  #
+#############################
 # return a dict mapping positive relation names to 
 # lists of not_ rules derived from the target NW rewrite
 # process. The not_ rules act as templates and do not
 # include domain subgoals.
-def get_not_template_ruleMeta( ruleMeta ) :
+def get_not_templates_combo( factMeta, ruleMeta ) :
 
   cursor = ruleMeta[0].cursor # all this stuff happens on the same db.
 
-  not_template_ruleMeta = {}
+  not_template_ruleData = {}
 
   for rule in ruleMeta :
 
@@ -224,8 +248,8 @@ def get_not_template_ruleMeta( ruleMeta ) :
       continue
 
     # instantiate relation name, if applicable.
-    if not rule.relationName  in not_template_ruleMeta :
-      not_template_ruleMeta[ rule.relationName ] = []
+    if not rule.relationName  in not_template_ruleData :
+      not_template_ruleData[ rule.relationName ] = []
 
     # build the appropriate not_rules
     # combo builds not_ rules per rule,
@@ -271,59 +295,77 @@ def get_not_template_ruleMeta( ruleMeta ) :
           sub[ "polarity" ]    = ""
           sub[ "subgoalName" ] = not_ruleData[ "relationName" ]
 
-      rid                         = tools.getIDFromCounters( "rid" )
-      not_rule                    = copy.deepcopy( Rule.Rule( rid, not_ruleData, cursor ) )
-      not_rule.cursor             = cursor
-      not_rule.goal_att_type_list = rule.goal_att_type_list
-      not_rule.manually_set_types()
-      not_template_ruleMeta[ rule.relationName ].append( not_rule )
+      not_template_ruleData[ rule.relationName ].append( not_ruleData )
 
-  # add unidom and exidom subgoals
-  not_template_ruleMeta, exidom_rules = sip_idb.add_dom_subs( not_template_ruleMeta, ruleMeta, cursor )
-  #for key in not_template_ruleMeta :
-  #  for r in not_template_ruleMeta[ key ] :
-  #    print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
-  #sys.exit( "blah" )
+      #rid                         = tools.getIDFromCounters( "rid" )
+      #not_rule                    = copy.deepcopy( Rule.Rule( rid, not_ruleData, cursor ) )
+      #not_rule.cursor             = cursor
+      #not_rule.goal_att_type_list = rule.goal_att_type_list
+      #not_rule.manually_set_types()
+      #not_template_ruleMeta[ rule.relationName ].append( not_rule )
 
-  # update ruleMeta
-  for key in not_template_ruleMeta :
-    for rule in not_template_ruleMeta[ key ] :
-      ruleMeta.append( rule )
-
+  # add exidom subgoals
+  not_template_ruleData, ruleMeta = sip.add_exidom_subs( not_template_ruleData, \
+                                                         factMeta, \
+                                                         ruleMeta, \
+                                                         cursor )
+  #print "-------------------------------"
   #for r in ruleMeta :
-  #  print str( r.rid ) + " : " + dumpers.reconstructRule( r.rid, r.cursor )
-  #sys.exit( "blah" )
+  #  print c4_translator.get_c4_line( r.ruleData, "rule" )
+  #print "-------------------------------"
+  #ruleMeta[0].cursor.execute( "SELECT rid FROM Rule" )
+  #rid_list = ruleMeta[0].cursor.fetchall()
+  #rid_list = tools.toAscii_list( rid_list )
+  #for r in rid_list :
+  #  print "rid = " + str( r ) + " : " + dumpers.reconstructRule( r, ruleMeta[0].cursor )
+  #sys.exit( "asdf" )
 
-  return ruleMeta
+  return not_template_ruleData, ruleMeta
 
-######################
-#  DO COMBO SIP IDB  #
-######################
-# this fails for parent rules multiple negated subgoals sharing the same
-# name but parameterized with different sets of subgoal attributes.
-# the sip from parent to negated subgoal rule set would be
-# valid for only one of the two negated instances.
-def do_combo_sip_idb( ruleMeta, \
-                      targetRuleMetaSets, \
-                      rid_to_rule_meta_map, \
-                      cursor, \
-                      argDict ) :
+##################
+#  DO COMBO SIP  #
+##################
+def do_combo_sip( factMeta, \
+                  ruleMeta, \
+                  targetRuleMetaSets, \
+                  not_templates, \
+                  rid_to_rule_meta_map, \
+                  cursor, \
+                  argDict ) :
 
-  logging.debug( "  DO COMBO SIP IDB : running process..." )
+  logging.debug( "  DO COMBO SIP : running process..." )
+
+  #for r in targetRuleMetaSets :
+  #  print r
+  #for r in ruleMeta :
+  #  print c4_translator.get_c4_line( r.ruleData, "rule" )
+  #sys.exit( "asdf" )
 
   COUNTER = 0
   for rule_info in targetRuleMetaSets :
 
-    logging.debug( "  DO COMBO SIP IDB : >COUNTER  = " + str( COUNTER ) )
+    logging.debug( "  DO COMBO SIP : >COUNTER  = " + str( COUNTER ) )
 
     parent_list = rule_info[ 0 ]
     ruleSet     = rule_info[ 1 ]
 
+    # 0. pull the template not_ rules.
+    target_name = ruleSet[0].relationName
+    #target_not_template = copy.deepcopy( not_templates[ target_name ] )
+    if not previously_pulled( target_name, ruleMeta ) :
+      target_not_template = copy.deepcopy( not_templates[ target_name ] )
+    else :
+      target_not_template = []
+
     logging.debug( "//////////////////////////////////////////////////" )
-    logging.debug( "  DO COMBO SIP IDB : parent_list: " + str( parent_list ) )
-    logging.debug( "  DO COMBO SIP IDB : ruleSet:" )
+    logging.debug( "  DO COMBO SIP : parent_list : " + str( parent_list ) )
+    logging.debug( "  DO COMBO SIP : ruleSet:" )
     for rule in ruleSet :
       logging.debug( "    " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+    logging.debug( "  DO COMBO SIP : target_name : " + target_name )
+    logging.debug( "  DO COMBO SIP : target_not_template : " )
+    for t in target_not_template :
+      logging.debug( "     " + c4_translator.get_c4_line( t, "rule" ) )
     logging.debug( "//////////////////////////////////////////////////" )
 
     # Augment the unidom rules for this relation using the parent information.
@@ -340,108 +382,44 @@ def do_combo_sip_idb( ruleMeta, \
         pass
       else :
 
-        # 2. build the unidom definition using parent data
-        unidom_ruleData = {}
-        unidom_ruleData[ "relationName" ]       = "unidom_not_" + ruleSet[0].relationName
-        unidom_ruleData[ "goalAttList" ]        = [ "Att" + str( i ) for i in range( 0, len( ruleSet[0].goalAttList ) ) ]
-        unidom_ruleData[ "goalTimeArg" ]        = ""
-        unidom_ruleData[ "eqnDict" ]            = {}
+        # 2. build and save unidom facts derived using bindings from parent rules.
+        unidom_facts = sip.get_unidom_facts( factMeta, \
+                                             parent_rule, \
+                                             ruleSet, \
+                                             ruleMeta, \
+                                             argDict, \
+                                             rid_to_rule_meta_map )
+        factMeta.extend( unidom_facts )
 
-        # map new goal atts to existing body atts in the parent rule
-        # this breaks if the same patt appears more than once in the
-        # same subgoal!!!
-        patt_to_gatt  = {}
-        for i in range( 0, len( parent_rule.subgoalListOfDicts ) ) :
-          sub = parent_rule.subgoalListOfDicts[ i ]
-          print sub
-          if sub[ "subgoalName" ] == ruleSet[0].relationName :
-            for j in range( 0, len( sub[ "subgoalAttList" ] ) ) :
-              print sub[ "subgoalAttList" ][ j ]
-              if not sub[ "subgoalAttList" ][ j ] == "_" :
-                patt_to_gatt[ sub[ "subgoalAttList" ][ j ] ] = "Att" + str( j )
-
-        # replace fixed data in head
-        gatt_to_patt = { v : k for k, v in patt_to_gatt.iteritems() }
-        for i in range( 0, len( unidom_ruleData[ "goalAttList" ] ) ) :
-          gatt = unidom_ruleData[ "goalAttList" ][ i ]
-          try :
-            patt = gatt_to_patt[ gatt ]
-            if patt.isdigit() or \
-               "'" in patt    or \
-               '"' in patt :
-              unidom_ruleData[ "goalAttList" ][ i ] = patt
-          except KeyError :
-            pass
-
-        unidom_ruleData[ "subgoalListOfDicts" ] = copy.deepcopy( parent_rule.subgoalListOfDicts )
-        for i in range( 0, len( unidom_ruleData[ "subgoalListOfDicts" ] ) ) :
-          sub = unidom_ruleData[ "subgoalListOfDicts" ][ i ]
-
-          # make sure subgoals reference orig_ rules
-          if nw_tools.isIDB( sub[ "subgoalName" ], cursor )   and \
-             not sub[ "subgoalName" ].startswith( "unidom_" ) and \
-             not sub[ "subgoalName" ].startswith( "exidom_" ) and \
-             not sub[ "subgoalName" ].startswith( "not_" )    and \
-             not sub[ "subgoalName" ].startswith( "orig_" ) :
-            unidom_ruleData[ "subgoalListOfDicts" ][ i ][ "subgoalName" ] = "orig_" + sub[ "subgoalName" ]
-          elif sub[ "subgoalName" ].startswith( "not_" ) :
-            unidom_ruleData[ "subgoalListOfDicts" ][ i ][ "subgoalName" ] = sub[ "subgoalName" ][ 4: ]
-            unidom_ruleData[ "subgoalListOfDicts" ][ i ][ "polarity" ]    = "notin"
-
-          # replace parent att references with goal atts.
-          for j in range( 0, len( sub[ "subgoalAttList" ] ) ) :
-            satt = sub[ "subgoalAttList" ][ j ]
-            if satt in patt_to_gatt :
-              if satt.isdigit() or \
-                 "'" in satt    or \
-                 '"' in satt :
-                pass
-              else :
-                unidom_ruleData[ "subgoalListOfDicts" ][ i ][ "subgoalAttList" ][ j ] = patt_to_gatt[ satt ]
-
-        # fill out any missing gatts by referencing the original target relation
-        missing_gatts = [ gatt for gatt in unidom_ruleData[ "goalAttList" ] if not gatt in patt_to_gatt.values() ]
-        if len( missing_gatts ) > 0 :
-          orig_target_rel_sub = {}
-          orig_target_rel_sub[ "subgoalName" ]    = "orig_" + ruleSet[0].relationName
-          orig_target_rel_sub[ "polarity" ]       = ""
-          orig_target_rel_sub[ "subgoalTimeArg" ] = ""
-          orig_target_rel_sub[ "subgoalAttList" ] = []
-          for i in range( 0, len( unidom_ruleData[ "goalAttList" ] ) ) :
-            if "Att" + str( i ) in missing_gatts :
-              orig_target_rel_sub[ "subgoalAttList" ].append( "Att" + str( i ) )
-            else :
-              orig_target_rel_sub[ "subgoalAttList" ].append( "_" )
-          unidom_ruleData[ "subgoalListOfDicts" ].append( orig_target_rel_sub )
-          logging.debug( "  DO COMBO SIP IDB : adding subgoal '" + str( orig_target_rel_sub ) + "'" )
-
-        # do save
-        uni_rid         = tools.getIDFromCounters( "rid" )
-        uni_rule        = copy.deepcopy( Rule.Rule( uni_rid, unidom_ruleData, cursor ) )
-        uni_rule.cursor = cursor # need to do this for some reason or else cursor disappears?
-
-        #if unidom_ruleData[ "relationName" ] == "unidom_not_log" and COUNTER == 17 :
-        #  print "fuck"
+        #if parent_list == [['post',2]] :
         #  print COUNTER
-        #  print patt_to_gatt
-        #  print dumpers.reconstructRule( parent_rid, cursor )
-        #  print missing_gatts
-        #  print dumpers.reconstructRule( uni_rule.rid, uni_rule.cursor )
-        #  sys.exit( "blah" )
+        #  sys.exit( "here" )
 
-        # set the unidom rule types manually
-        uni_goal_types = ruleSet[0].goal_att_type_list
-        assert( len( uni_goal_types ) > 0 )
+        # 3. add the parent-specific unidom subgoal to the template not_ rule.
+        #if COUNTER == 0 : # why this???
+        if True :
 
-        uni_rule.goal_att_type_list = uni_goal_types
-        uni_rule.manually_set_types()
+          for ruleData in target_not_template :
+            uni_sub = {}
+            uni_sub[ "subgoalName" ]    = unidom_facts[0].relationName
+            uni_sub[ "subgoalAttList" ] = ruleData[ "goalAttList" ]
+            uni_sub[ "polarity" ]       = ""
+            uni_sub[ "subgoalTimeArg" ] = ""
+            ruleData[ "subgoalListOfDicts" ].append( uni_sub )
+  
+            # add rule to ruleMeta
+            rid            = tools.getIDFromCounters( "rid" )
+            newRule        = copy.deepcopy( Rule.Rule( rid, ruleData, cursor) )
+            newRule.cursor = cursor
+ 
+            newRule.goal_att_type_list = copy.deepcopy( ruleSet[0].goal_att_type_list )
+            newRule.manually_set_types()
+  
+            logging.debug( "  DO COMBO SIP : adding rule '" + \
+                           c4_translator.get_c4_line( newRule.ruleData, "rule" ) + "'" )
+            ruleMeta.append( newRule )
 
-        # check if a rule already exists
-        # to prevent duplicates.
-        if not nw_tools.identical_rule_already_exists( uni_rule, ruleMeta ) :
-          ruleMeta.append( uni_rule )
-
-      # make not_ subgoal replacements in parent rules.
+      # 4. make not_ subgoal replacements in parent rules.
       flag = False
       for i in range( 0, len( parent_rule.subgoalListOfDicts ) ) :
         sub = parent_rule.subgoalListOfDicts[ i ]
@@ -453,6 +431,13 @@ def do_combo_sip_idb( ruleMeta, \
       if flag :
         parent_rule.saveSubgoals()
 
+      #if parent_list == [['post', 2]] :
+      #  for rule in ruleMeta :
+      #    print c4_translator.get_c4_line( rule.ruleData, "rule" )
+      #  for fact in factMeta :
+      #    print c4_translator.get_c4_line( fact.factData, "fact" )
+      #  sys.exit( "lmao" )
+
       COUNTER += 1
 
   # ----------------------------------------- #
@@ -460,8 +445,14 @@ def do_combo_sip_idb( ruleMeta, \
 
   ruleMeta = nw_tools.sortDMRules( ruleMeta )
 
-  return ruleMeta
+#  if ruleSet[0].relationName == "link" :
+#    for r in ruleMeta :
+#      print dumpers.reconstructRule( r.rid, r.cursor )
+#      #print c4_translator.get_c4_line( r.ruleData, "rule" )
+#    sys.exit( "blah" )
 
+  logging.debug( "  DO COMBO SIP : ...done." )
+  return ruleMeta
 
 ##################
 #  IS RECURSIVE  #
@@ -471,6 +462,19 @@ def is_recursive( rule ) :
   for sub in rule.subgoalListOfDicts :
     if sub[ "subgoalName" ] == rule.relationName :
       return True
+  return False
+
+
+#######################
+#  PREVIOUSLY PULLED  #
+#######################
+def previously_pulled( target_name, ruleMeta ) :
+  logging.debug( "  PREVIOUSLY PULLED : checking not_ '" + target_name + "'" )
+  for rule in ruleMeta :
+    if rule.relationName == "not_" + target_name :
+      logging.debug( "  PREVIOUSLY PULLED : returning True." )
+      return True
+  logging.debug( "  PREVIOUSLY PULLED : returning False." )
   return False
 
 

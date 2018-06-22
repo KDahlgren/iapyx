@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Test_dm_sip_idb.py
+Test_dm_sip.py
 '''
 
 #############
@@ -26,7 +26,7 @@ from evaluators import c4_evaluator
 #####################
 #  TEST DM SIP IDB  #
 #####################
-class Test_dm_sip_idb( unittest.TestCase ) :
+class Test_dm_sip( unittest.TestCase ) :
 
   logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.DEBUG )
   #logging.basicConfig( format='%(levelname)s:%(message)s', level=logging.INFO )
@@ -47,7 +47,7 @@ class Test_dm_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.MOLLY_RUNS :
-      test_id        = "dm_sip_idb_simplog_molly"
+      test_id        = "dm_sip_simplog_molly"
       test_file_name = "simplog"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -61,7 +61,7 @@ class Test_dm_sip_idb( unittest.TestCase ) :
     # --------------------------------------------------------------- #
 
     if self.DM_RUNS :
-      test_id        = "dm_sip_idb_simplog"
+      test_id        = "dm_sip_simplog"
       test_file_name = "simplog_driver"
   
       print " >>> RUNNING " + test_id + " <<<"
@@ -72,7 +72,7 @@ class Test_dm_sip_idb( unittest.TestCase ) :
       argDict[ 'EOT' ]            = 6
       argDict[ 'nodes' ]          = [ "a", "b", "c" ]
       argDict[ 'neg_writes' ]     = "dm"
-      argDict[ 'settings' ]       = "settings_files/settings_sip_idb.ini"
+      argDict[ 'settings' ]       = "settings_files/settings_sip.ini"
   
       eval_dm = self.run_workflow( test_id, argDict, input_file, "dm", DM_EVAL )
 

@@ -19,6 +19,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
+import c4_translator
 from dedt       import Fact, Rule
 from evaluators import c4_evaluator
 from utils      import clockTools, tools, dumpers, setTypes
@@ -32,6 +33,28 @@ from utils      import clockTools, tools, dumpers, setTypes
 arithOps   = [ "+", "-", "*", "/" ]
 arithFuncs = [ "count", "avg", "min", "max", "sum" ]
 
+
+#################
+#  IS IDB ONLY  #
+#################
+def is_idb_only( rel_name, factMeta, ruleMeta ) :
+
+  idb_flag = False
+  for rule in ruleMeta :
+    if rule.relationName == rel_name :
+      idb_flag = True
+      break
+
+  edb_flag = False
+  for fact in factMeta :
+    if fact.relationName == rel_name :
+      edb_flag = True
+      break
+
+  if idb_flag and not edb_flag :
+    return True
+  else :
+   return False
 
 #############################
 #  DELETE UNUSED NOT RULES  #
@@ -96,7 +119,8 @@ def unused_still_exist( ruleMeta ) :
   for rule in ruleMeta :
     if not rule.relationName == "post" and \
        not is_used( rule, ruleMeta ) :
-      logging.debug( "  UNUSED STILL EXIST : '" + rule.relationName + "' is unused. returning True." )
+      logging.debug( "  UNUSED STILL EXIST : '" + rule.relationName + \
+                     "' is unused. returning True." )
       return True
   logging.debug( "  UNUSED STILL EXIST : returning False." )
   return False
@@ -139,7 +163,8 @@ def get_negated_subgoal_info( ruleMeta ) :
 
   for rule in ruleMeta :
 
-    logging.debug( "  GET NEGATED NAME LIST : rule.ruleData = " + str( rule.ruleData ) )
+    logging.debug( "  GET NEGATED NAME LIST : checking rid " + str( rule.rid ) + \
+                   " : " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
 
     parent_rule_name = rule.relationName
     parent_rule_rid  = rule.rid
@@ -166,17 +191,23 @@ def get_negated_subgoal_info( ruleMeta ) :
       for subgoalDict in subgoalListOfDicts :
 
         # save the rule object for the subgoal if the subgoal is negated and is idb
-        if subgoalDict[ "polarity" ] == "notin" and isIDB( subgoalDict[ "subgoalName" ], cursor ) and \
+        if subgoalDict[ "polarity" ] == "notin"          and \
+           isIDB( subgoalDict[ "subgoalName" ], cursor ) and \
            not subgoalDict[ "subgoalName" ].startswith( "orig_" ) :
 
           # ----------------------------------------- #
           # grab subgoal name
 
-          logging.debug( "  GET NEGATED NAME LIST : adding '" + subgoalDict[ "subgoalName" ] + "' to negatedNames_data list" )
+          logging.debug( "  GET NEGATED NAME LIST : adding '" + \
+                         subgoalDict[ "subgoalName" ] + \
+                         "' to negatedNames_data list" )
 
-          if not subgoalDict[ "subgoalName" ] in negatedNames_data : # ignore duplicates created by prov rules
+          # ignore duplicates created by prov rules
+          if not subgoalDict[ "subgoalName" ] in negatedNames_data :
             negatedNames_data[ subgoalDict[ "subgoalName" ] ] = []
-          negatedNames_data[ subgoalDict[ "subgoalName" ] ].append( [ parent_rule_name, parent_rule_rid ] )
+
+            negatedNames_data[ subgoalDict[ "subgoalName" ] ].append( \
+                                [ parent_rule_name, parent_rule_rid ] )
 
   return negatedNames_data
 
@@ -187,7 +218,8 @@ def get_negated_subgoal_info( ruleMeta ) :
 # of idbs corresponding to negated subgoals in one or more rules
 def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
 
-  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : ruleMeta with len(ruleMeta) = " + str( len( ruleMeta ) ) )
+  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : " + \
+                 "ruleMeta with len(ruleMeta) = " + str( len( ruleMeta ) ) )
 
   set_dict = {}
 
@@ -207,13 +239,15 @@ def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
 
   for name in negatedSubgoal_info.keys() :
     for rule in ruleMeta :
-      if rule.relationName == name :
+      if rule.relationName == name and \
+         not rule in set_dict[ name ] :
         set_dict[ name ].append( rule )
 
   # ----------------------------------------- #
   # convert dictionary into a list of lists
 
-  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : set_dict = " + str( set_dict ) )
+  logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED " + \
+                 "SUBGOALS : set_dict = " + str( set_dict ) )
 
   targetRuleMetaSets = []
   for name in set_dict :
@@ -223,10 +257,22 @@ def getRuleMetaSetsForRulesCorrespondingToNegatedSubgoals( ruleMeta, cursor ) :
     logging.debug( "++++++++" )
     parent_list   = r[ 0 ]
     rule_obj_list = r[ 1 ]
-    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : parent_list   : " + str( parent_list ) )
-    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED SUBGOALS : rule_obj_list :" )
+    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED " + \
+                   "SUBGOALS : parent_list   : " + str( parent_list ) )
+    logging.debug( "  GET RULE META FOR RULES CORRESPONDING TO NEGATED " + \
+                   "SUBGOALS : rule_obj_list :" )
     for p in rule_obj_list :
       logging.debug( "    " + str( dumpers.reconstructRule( p.rid, p.cursor ) ) )
+
+  #############
+  #for t in targetRuleMetaSets[0] :
+  #  print t
+  #for t in targetRuleMetaSets[0][1] :
+  #  print c4_translator.get_c4_line( t.ruleData, "rule" )
+  #print "///"
+  #for r in ruleMeta :
+  #  print c4_translator.get_c4_line( r.ruleData, "rule" )
+  #sys.exit( "qwer" )
 
   # returns an array of arrays of arrays of parent rule strings and rule objects
   # [ [ [ "missing_log" ], [ log_obj_1, ...] ], ... ]
@@ -1108,7 +1154,10 @@ def aggRewrites( ruleMeta, argDict ) :
       newRuleData[ "relationName" ]       = orig_name
       newRuleData[ "goalAttList" ]        = new_goalAttList
       newRuleData[ "goalTimeArg" ]        = rule.goalTimeArg
-      newRuleData[ "subgoalListOfDicts" ] = [ { "subgoalName": new_relationName, "subgoalAttList": new_goalAttList, "polarity": "", "subgoalTimeArg": "" } ]
+      newRuleData[ "subgoalListOfDicts" ] = [ { "subgoalName": new_relationName, \
+                                                "subgoalAttList": new_goalAttList, \
+                                                "polarity": "", \
+                                                "subgoalTimeArg": "" } ]
       #newRuleData[ "eqnDict" ]            = rule.eqnDict
       newRuleData[ "eqnDict" ]            = {}
 
@@ -1122,7 +1171,7 @@ def aggRewrites( ruleMeta, argDict ) :
       newRule.hitUniformityRewrites           = True
       new_ruleMeta.append( newRule )
 
-      setTypes.setTypes( rule.cursor, argDict )
+      setTypes.setTypes( rule.cursor, argDict, ruleMeta )
 
     else :
       new_ruleMeta.append( rule )
@@ -1284,7 +1333,7 @@ def fixed_data_head_rewrites( ruleMeta, factMeta, argDict ) :
         newFact.cursor = rule.cursor # need to do this for some reason or else cursor disappears?
         factMeta.append( newFact )
 
-        setTypes.setTypes( rule.cursor, argDict )
+        setTypes.setTypes( rule.cursor, argDict, ruleMeta )
 
   logging.debug( "  FIXED DATA HEAD REWRITES : len( ruleMeta )     = " + str( len( ruleMeta ) ) )
   logging.debug( "  FIXED DATA HEAD REWRITES : len( factMeta )     = " + str( len( factMeta ) ) )
@@ -1297,7 +1346,8 @@ def fixed_data_head_rewrites( ruleMeta, factMeta, argDict ) :
 # check if the rule given by the input rule data dictionary is safe
 def isSafe( ruleData ) :
 
-  #logging.debug( "  IS SAFE : ruleData = " + str( ruleData ) )
+  #logging.debug( "  IS SAFE : checking :" )
+  #logging.debug( c4_translator.get_c4_line( ruleData, "rule" ) )
 
   # ----------------------------------------- #
   # get the set of goat attributes
@@ -1329,7 +1379,7 @@ def isSafe( ruleData ) :
     if not gatt in subAttSet :
       flag = False
 
-  #logging.debug( "  IS SAFE : returning flag = " + str( flag ) )
+  logging.debug( "  IS SAFE : returning flag = " + str( flag ) )
   return flag
 
 
@@ -1413,20 +1463,39 @@ def get_final_fmla( ruleSet ) :
 #  IDENTICAL RULE ALREADY EXISTS  #
 ###################################
 def identical_rule_already_exists( target_rule, ruleMeta ) :
-  for rule in ruleMeta :
-    if rule.relationName == target_rule.relationName :
-      logging.debug( "  IDENTICAL RULE ALREADY EXISTS : comparing :" )
-      logging.debug( "     " + dumpers.reconstructRule( target_rule.rid, target_rule.cursor ) )
-      logging.debug( "     " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
-      IDENTICAL_SUBS = 0
-      for sub_rule in rule.subgoalListOfDicts :
-        if sub_rule in target_rule.subgoalListOfDicts :
-          IDENTICAL_SUBS += 1
-      if IDENTICAL_SUBS == len( target_rule.subgoalListOfDicts ) :
-        logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
-        return True
-  logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
-  return False
+  if type( target_rule ) == dict :
+    logging.debug( "  IDENTICAL RULE ALREADY EXISTS : " + \
+                   c4_translator.get_c4_line( target_rule, "rule" ) )
+    for rule in ruleMeta :
+      if rule.relationName == target_rule[ "relationName" ] :
+        logging.debug( "  IDENTICAL RULE ALREADY EXISTS : comparing :" )
+        logging.debug( "     " + c4_translator.get_c4_line( target_rule, "rule" ) )
+        logging.debug( "     " + c4_translator.get_c4_line( rule.rid, rule.cursor ) )
+        IDENTICAL_SUBS = 0
+        for sub_rule in rule.subgoalListOfDicts :
+          if sub_rule in target_rule[ "subgoalListOfDicts" ] :
+            IDENTICAL_SUBS += 1
+        if IDENTICAL_SUBS == len( target_rule[ "subgoalListOfDicts" ] ) :
+          logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
+          return True
+    logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
+    return False
+
+  else :
+    for rule in ruleMeta :
+      if rule.relationName == target_rule.relationName :
+        logging.debug( "  IDENTICAL RULE ALREADY EXISTS : comparing :" )
+        logging.debug( "     " + dumpers.reconstructRule( target_rule.rid, target_rule.cursor ) )
+        logging.debug( "     " + dumpers.reconstructRule( rule.rid, rule.cursor ) )
+        IDENTICAL_SUBS = 0
+        for sub_rule in rule.subgoalListOfDicts :
+          if sub_rule in target_rule.subgoalListOfDicts :
+            IDENTICAL_SUBS += 1
+        if IDENTICAL_SUBS == len( target_rule.subgoalListOfDicts ) :
+          logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
+          return True
+    logging.debug( "  IDENTICAL RULE ALREADY EXISTS : returning False." )
+    return False
 
 
 ############

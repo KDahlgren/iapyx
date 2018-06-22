@@ -22,6 +22,7 @@ if not os.path.abspath( __file__ + "/../.." ) in sys.path :
 if not os.path.abspath( __file__ + "/../../dedt/translators" ) in sys.path :
   sys.path.append( os.path.abspath( __file__ + "/../../dedt/translators" ) )
 
+import c4_translator
 from dedt        import Fact, Rule
 from evaluators  import c4_evaluator
 from utils       import clockTools, tools, dumpers, setTypes, nw_tools
@@ -65,7 +66,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   try :
     NW_DOM_DEF = tools.getConfig( settings_path, "DEFAULT", "NW_DOM_DEF", str )
     if NW_DOM_DEF == "dm_huge" or \
-       NW_DOM_DEF == "sip_idb" :
+       NW_DOM_DEF == "sip" :
       pass
     else :
       raise ValueError( "unrecognized NW_DOM_DEF option '" + NW_DOM_DEF + \
@@ -77,7 +78,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # ----------------------------------------- #
   # replace unused variables with wildcards
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #
@@ -133,7 +134,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # generate cps of the original rules
   # (do not reference these in final programs)
 
-  if NW_DOM_DEF == "sip_idb" : 
+  if NW_DOM_DEF == "sip" : 
     #ruleMeta = nw_tools.change_rel_names( ruleMeta )
 
     # future optimization : do this lazily:
@@ -143,7 +144,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # generate a map of all rids to corresponding
   # rule meta object pointers.
 
-  if NW_DOM_DEF == "sip_idb" : 
+  if NW_DOM_DEF == "sip" : 
     rid_to_rule_meta_map = nw_tools.generate_rid_to_rule_meta_map( ruleMeta )
 
   # ----------------------------------------- #
@@ -191,7 +192,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
                                           targetRuleMetaSets, \
                                           cursor, \
                                           argDict )
-    elif NW_DOM_DEF == "sip_idb" : 
+    elif NW_DOM_DEF == "sip" : 
       ruleMeta = dm_sip_idb.doDeMorgans_sip_idb( factMeta, \
                                           ruleMeta, \
                                           targetRuleMetaSets, \
@@ -216,7 +217,7 @@ def dm( factMeta, ruleMeta, cursor, argDict ) :
   # ----------------------------------------- #
   # replace unused variables with wildcards
 
-  if NW_DOM_DEF == "sip_idb" :
+  if NW_DOM_DEF == "sip" :
     ruleMeta = nw_tools.replace_unused_vars( ruleMeta, cursor )
 
   # ----------------------------------------- #  
